@@ -91,7 +91,7 @@ section, .free {
 
 /* table も同じ木肌色＆枠線太さを section と揃える */
 table {
-  background-color: #F3D38C;
+  /*background-color: #F3D38C; */
   border: 2px solid #000;        /* ← セクションと同じ太さに統一 */
 }
 
