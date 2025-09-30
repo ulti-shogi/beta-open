@@ -90,19 +90,21 @@
 </div>
 
 <div class="free">
-  <select id="sortKey">
-  <option value="kishiNumber">棋士番号</option>
-  <option value="shodanDays">四段昇段年齢</option>
-</select>
+  <span class="sort-label">並び替え：</span>
 
-<div class="sort-order">
-  <label>
-    <input type="radio" name="order" value="asc" checked> 昇順
-  </label>
-  <label>
-    <input type="radio" name="order" value="desc"> 降順
-  </label>
-</div>
+  <select id="sortKey">
+    <option value="kishiNumber">棋士番号</option>
+    <option value="shodanDays">四段昇段年齢</option>
+  </select>
+
+  <div class="sort-order">
+    <label>
+      <input type="radio" name="order" value="asc" checked> 昇順
+    </label>
+    <label>
+      <input type="radio" name="order" value="desc"> 降順
+    </label>
+  </div>
 </div>
     
   <!-- 既存の唯一の table -->
