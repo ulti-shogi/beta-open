@@ -5,7 +5,7 @@
   <title>将棋の殿堂｜四段昇段年齢</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ▼ CSSにキャッシュバスター（値は更新ごとに変えてOK） -->
-  <link rel="stylesheet" href="style.css?v=20251001-b">
+  <link rel="stylesheet" href="style.css?v=20251001-c">
   <style>
   /* section 内の p を全部中央寄せ */
   section > p { text-align: center; }
@@ -71,11 +71,10 @@
     </fieldset>
   </div>
 
-    <div class="free">
-  <!-- ▼ 追加：件数（左）＋ 下までボタン（右） -->
-    <span><!-- （n名）を自動表示 --></span>
-    <button type="button">ページの下まで移動</button>
-  </div>
+    <div class="free" id="jumpBox">
+  <span><!-- 件数表示 --></span>
+  <button type="button">ページの下まで移動</button>
+</div>
 
 <div class="free">
   <select id="sortKey">
@@ -263,7 +262,7 @@
     });
 
     // ▼ 件数表示（table 直前の .free の <span> に n名 を入れる）
-    const jumpBox = table.previousElementSibling; // ラジオの次＝件数+ボタンの箱
+    const jumpBox = document.getElementById('jumpBox');
     const countSpan = jumpBox?.querySelector('span');
     if (countSpan) countSpan.textContent = `（${n}名）`;
 
@@ -285,7 +284,7 @@
   }
 
   /* ▼ “いちばん下”の追記：値だけ変えれば即反映 */
-  const V = '20251001-b';  // ← 更新ごとに変える
+  const V = '20251001-c';  // ← 更新ごとに変える
   /* ▲ main() より上に置く（ここでOK） */
 
   main().catch(err => {
