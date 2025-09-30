@@ -336,5 +336,107 @@
     });
   });
 </script>
+
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+  const sortKeySelect = document.getElementById('sortKey');
+  const orderRadios = document.querySelectorAll('input[name="order"]');
+  const table = document.querySelector('table');
+  if (!table) return;
+  const tbody = table.querySelector('tbody');
+
+  // 「22歳3ヶ月0日」→ 日数（DAYS_PER_YEAR/12で月換算）
+  const DAYS_PER_YEAR = 365.2425;
+  const DAYS_PER_MONTH = DAYS_PER_YEAR / 12; // 30.436875
+
+  function parseAgeTextToDays(text) {
+    if (!text) return NaN;
+    // 例: "22歳3ヶ月0日" / "22歳 3ヶ月 0日" / "22歳3か月0日" などを許容
+    const s = String(text).replace(/\s+/g, '');
+    const y = /(\d+)歳/.exec(s)?.[1] ?? '0';
+    const m = /(\d+)(?:ヶ月|か月)/.exec(s)?.[1] ?? '0';
+    const d = /(\d+)日/.exec(s)?.[1] ?? '0';
+    return Number(y) * DAYS_PER_YEAR + Number(m) * DAYS_PER_MONTH + Number(d);
+  }
+
+  function numericFromString(s) {
+    const m = String(s ?? '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : NaN;
+  }
+
+  function currentOrder() {
+    const r = Array.from(orderRadios).find(x => x.checked);
+    return r ? r.value : 'asc';
+  }
+
+  function getRowKey(tr, key) {
+    const tds = tr.children;
+    if (!tds || tds.length < 3) return NaN;
+
+    if (key === 'kishiNumber') {
+      // 1列目（棋士番号）
+      return numericFromString(tds[0].textContent);
+    } else {
+      // 3列目（年齢表示）。data-days があれば最優先で使用
+      const dataDays = tr.dataset?.days ?? tds[2].dataset?.days;
+      if (dataDays != null && dataDays !== '') {
+        const n = Number(dataDays);
+        if (Number.isFinite(n)) return n;
+      }
+      // 無ければ年齢テキストから近似換算
+      return parseAgeTextToDays(tds[2].textContent);
+    }
+  }
+
+  function applySort() {
+    if (!tbody) return;
+
+    const key = sortKeySelect?.value || 'kishiNumber';
+    const order = currentOrder();
+
+    // いったん配列化（安定ソート用に元インデックスも保持）
+    const rows = Array.from(tbody.querySelectorAll('tr')).map((tr, i) => {
+      return { tr, i };
+    });
+
+    rows.sort((A, B) => {
+      const a = getRowKey(A.tr, key);
+      const b = getRowKey(B.tr, key);
+
+      // NaNは末尾へ寄せる
+      const aNaN = !Number.isFinite(a);
+      const bNaN = !Number.isFinite(b);
+      if (aNaN && bNaN) return A.i - B.i; // 元順序維持
+      if (aNaN) return 1;
+      if (bNaN) return -1;
+
+      const diff = a - b;
+      if (diff !== 0) return (order === 'asc') ? diff : -diff;
+
+      // キーが同じ場合は「棋士番号」でサブソート
+      const aNo = getRowKey(A.tr, 'kishiNumber');
+      const bNo = getRowKey(B.tr, 'kishiNumber');
+      const sub = (aNo - bNo);
+      if (sub !== 0) return (order === 'asc') ? sub : -sub;
+
+      // それでも同じなら元順
+      return A.i - B.i;
+    });
+
+    // 並び替え後にtbodyへ再挿入
+    const frag = document.createDocumentFragment();
+    rows.forEach(({ tr }) => frag.appendChild(tr));
+    tbody.appendChild(frag);
+  }
+
+  // イベント登録
+  if (sortKeySelect) sortKeySelect.addEventListener('change', applySort);
+  orderRadios.forEach(r => r.addEventListener('change', applySort));
+
+  // ページ初期表示の順序を尊重し、初回はソートしない
+  // 必要なら以下のコメントを外して即適用
+  // applySort();
+});
+</script>
 </body>
 </html>
