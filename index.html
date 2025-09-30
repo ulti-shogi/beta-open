@@ -5,7 +5,7 @@
   <title>将棋の殿堂｜四段昇段年齢</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ▼ CSSにキャッシュバスター（値は更新ごとに変えてOK） -->
-  <link rel="stylesheet" href="style.css?v=20251001-c">
+  <link rel="stylesheet" href="style.css?v=20251001-d">
   <style>
   /* section 内の p を全部中央寄せ */
   section > p { text-align: center; }
@@ -47,6 +47,19 @@
 
   /* フッターは中央寄せ（上へボタン用） */
   footer { text-align: center; }
+
+  /* 並び替えUI（セレクト＋ラジオ）を横並びにする */
+.free {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* セレクトとラジオの間隔 */
+}
+
+/* ラジオボタンのまとまりに少し余白をもたせる場合（任意） */
+.free .sort-order {
+  display: flex;
+  gap: 8px;
+}
   </style>
 </head>
 <body>
@@ -284,7 +297,7 @@
   }
 
   /* ▼ “いちばん下”の追記：値だけ変えれば即反映 */
-  const V = '20251001-c';  // ← 更新ごとに変える
+  const V = '20251001-d';  // ← 更新ごとに変える
   /* ▲ main() より上に置く（ここでOK） */
 
   main().catch(err => {
