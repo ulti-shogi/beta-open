@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>将棋棋士の四段昇段年齢</title>
+  <title>将棋の殿堂｜四段昇段年齢</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- ▼ CSSにキャッシュバスター（値は更新ごとに変えてOK） -->
-  <link rel="stylesheet" href="style.css?v=20251001a">
+  <link rel="stylesheet" href="style.css?v=20251001-b">
   <style>
   /* section 内の p を全部中央寄せ */
   section > p { text-align: center; }
@@ -77,6 +77,22 @@
     <button type="button">ページの下まで移動</button>
   </div>
 
+<div class="free">
+  <select id="sortKey">
+  <option value="kishiNumber">棋士番号</option>
+  <option value="shodanDays">四段昇段年齢</option>
+</select>
+
+<div class="sort-order">
+  <label>
+    <input type="radio" name="order" value="asc" checked> 昇順
+  </label>
+  <label>
+    <input type="radio" name="order" value="desc"> 降順
+  </label>
+</div>
+</div>
+    
   <!-- 既存の唯一の table -->
   <table>
     <thead></thead>
@@ -269,7 +285,7 @@
   }
 
   /* ▼ “いちばん下”の追記：値だけ変えれば即反映 */
-  const V = '20251001a';  // ← 更新ごとに変える
+  const V = '20251001-b';  // ← 更新ごとに変える
   /* ▲ main() より上に置く（ここでOK） */
 
   main().catch(err => {
@@ -278,6 +294,47 @@
     if (p) p.textContent = 'エラー：' + err.message;
   });
 })();
+</script>
+
+<script>
+  // ▼ 並び替え用のイベント登録
+  document.addEventListener('DOMContentLoaded', function () {
+    const sortKeySelect = document.getElementById('sortKey');
+    const orderRadios = document.querySelectorAll('input[name="order"]');
+
+    // 並び替え実行関数
+    function applySort() {
+      const key = sortKeySelect.value; // "kishiNumber" or "shodanDays"
+      const order = Array.from(orderRadios).find(r => r.checked).value; // "asc" or "desc"
+
+      items.sort((a, b) => {
+        let valA, valB;
+
+        if (key === 'kishiNumber') {
+          valA = a.kishiNoNum;  // 棋士番号の数値
+          valB = b.kishiNoNum;
+        } else {
+          valA = a.days;        // 四段昇段までの日数
+          valB = b.days;
+        }
+
+        if (order === 'asc') {
+          return valA - valB;
+        } else {
+          return valB - valA;
+        }
+      });
+
+      // 並び替え後に再描画
+      renderBody(items);
+    }
+
+    // イベント登録
+    sortKeySelect.addEventListener('change', applySort);
+    orderRadios.forEach(radio => {
+      radio.addEventListener('change', applySort);
+    });
+  });
 </script>
 </body>
 </html>
