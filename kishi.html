@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>棋士プロフィール検索</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+/* カード全体のレイアウト */
+div.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* カード間の間隔 */
+  padding: 0.5rem;
+  max-width: 480px; /* スマホ画面幅に収まるよう制限 */
+  margin: 0 auto; /* 中央寄せ */
+}
+
+/* 個々のカード */
+div.card .entry {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* 棋士名 */
+div.card .entry p:first-child {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+/* 各行の共通スタイル */
+div.card .entry p {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* 区分の行は色をつけて目立たせる */
+div.card .entry p:nth-child(2) {
+  font-weight: 600;
+  color: #444;
+}
+
+/* 背景を薄く切り替えたい場合（例：現役） */
+div.card .entry[data-status="現役"] {
+  background: #f9fff9;
+}
+</style>
+</head>
+<body>
+  <header>
+    <p><a href="">TOPページに戻る</a></p>
+  </header>
+<main>
+  <section>
+  <div id="controls">
+    <fieldset>
+      <legend>区分フィルタ</legend>
+      <label><input type="checkbox" name="kubun" value="現役" checked> 現役</label>
+      <label><input type="checkbox" name="kubun" value="引退" checked> 引退</label>
+      <label><input type="checkbox" name="kubun" value="物故" checked> 物故</label>
+      <label><input type="checkbox" name="kubun" value="退会" checked> 退会</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>段位・称号フィルタ</legend>
+      <label><input type="checkbox" name="rank" value="称号" checked> 称号</label>
+      <label><input type="checkbox" name="rank" value="九段" checked> 九段</label>
+      <label><input type="checkbox" name="rank" value="八段" checked> 八段</label>
+      <label><input type="checkbox" name="rank" value="七段" checked> 七段</label>
+      <label><input type="checkbox" name="rank" value="六段" checked> 六段</label>
+      <label><input type="checkbox" name="rank" value="五段" checked> 五段</label>
+      <label><input type="checkbox" name="rank" value="四段" checked> 四段</label>
+    </fieldset>
+
+    <div>
+      <label for="sortSelect">並び替え:</label>
+      <select id="sortSelect">
+        <option value="sekiji" selected>席次</option>
+        <option value="kishiNo">棋士番号</option>
+        <option value="currentAge">現在の年齢</option>
+        <option value="ageAt4dan">四段昇段年齢</option>
+      </select>
+    </div>
+
+    <div id="sortOrderControls">
+      <label><input type="radio" name="sortOrder" value="asc" checked> 昇順</label>
+      <label><input type="radio" name="sortOrder" value="desc"> 降順</label>
+    </div>
+  </div>
+</section>
+
+  <!-- 検索結果の描画先 -->
+  <div class="card"></div>
+
+    </main>
+  <footer>
+    将棋の殿堂
+  </footer>
+
+<script>
+const CSV_URL = "kishi.csv";
+
+async function loadCSV(url) {
+  const res = await fetch(url, { cache: "no-cache" });
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, "\n").trim().split("\n");
+  const header = lines[0].split(",");
+  return lines.slice(1).map(line => {
+    const cols = line.split(",");
+    const obj = {};
+    header.forEach((h, i) => obj[h.trim()] = (cols[i] ?? "").trim());
+    return obj;
+  });
+}
+
+// 現在年齢（または享年）を計算
+function calcCurrentAge(birth, death = null) {
+  if (!birth) return { text: "—", days: Number.POSITIVE_INFINITY };
+  const b = new Date(birth);
+  const base = death ? new Date(death) : new Date();
+
+  let y = base.getFullYear() - b.getFullYear();
+  let m = base.getMonth() - b.getMonth();
+  let d = base.getDate() - b.getDate();
+  if (d < 0) {
+    m--;
+    d += new Date(base.getFullYear(), base.getMonth(), 0).getDate();
+  }
+  if (m < 0) {
+    y--;
+    m += 12;
+  }
+
+  const diffDays = Math.floor((base - b) / 86400000);
+  return { text: `${y}歳${m}ヶ月${d}日`, days: diffDays };
+}
+
+function renderCards(data) {
+  const container = document.querySelector("div.card");
+  container.innerHTML = "";
+
+  data.forEach(row => {
+    const entry = document.createElement("div");
+    entry.className = "entry";
+    entry.innerHTML = `
+      <p><strong>${row["棋士名"]}</strong>（${row["称号"] || row["段位"] || "—"}）</p>
+      <p>区分：${row["区分"] || "—"}</p>
+      <p>棋士番号：${row["棋士番号"] || "—"}</p>
+      <p>生年月日：${row["生年月日"] || "—"}</p>
+      <p>${row["逝去日"] ? "享年" : "現在年齢"}：${row._currentAgeText}</p>
+      <p>四段昇段日：${row["四段昇段日"] || "—"}</p>
+      <p>四段昇段時年齢：${row["四段昇段年齢"] || "—"}</p>
+    `;
+    container.appendChild(entry);
+  });
+}
+
+function sortData(data, key, order = "asc") {
+  if (key === "kishiNo") {
+    data.sort((a, b) => Number(a["棋士番号"]) - Number(b["棋士番号"]));
+  } else if (key === "ageAt4dan") {
+    data.sort((a, b) => {
+      const aDays = a["四段昇段所要日数"] ? Number(a["四段昇段所要日数"]) : Number.POSITIVE_INFINITY;
+      const bDays = b["四段昇段所要日数"] ? Number(b["四段昇段所要日数"]) : Number.POSITIVE_INFINITY;
+      if (aDays !== bDays) return aDays - bDays;
+      return Number(a["席次"]) - Number(b["席次"]);
+    });
+  } else if (key === "currentAge") {
+    data.sort((a, b) => a._currentAgeDays - b._currentAgeDays || Number(a["席次"]) - Number(b["席次"]));
+  } else {
+    data.sort((a, b) => Number(a["席次"]) - Number(b["席次"]));
+  }
+  if (order === "desc") data.reverse();
+}
+
+function filterByKubun(data) {
+  const checked = [...document.querySelectorAll("input[name='kubun']:checked")].map(cb => cb.value);
+  return data.filter(row => checked.includes(row["区分"]));
+}
+
+function filterByRank(data) {
+  const checked = [...document.querySelectorAll("input[name='rank']:checked")].map(cb => cb.value);
+  return data.filter(row => {
+    if (checked.includes("称号") && row["段位"] === "") return true;
+    return checked.includes(row["段位"]);
+  });
+}
+
+function getSelectedOrder() {
+  const checked = document.querySelector('input[name="sortOrder"]:checked');
+  return checked ? checked.value : "asc";
+}
+
+async function init() {
+  let data = await loadCSV(CSV_URL);
+
+  // 現在年齢を計算して保持
+  data.forEach(row => {
+    const ageInfo = calcCurrentAge(row["生年月日"], row["逝去日"]);
+    row._currentAgeText = ageInfo.text;
+    row._currentAgeDays = ageInfo.days;
+  });
+
+  // 初期表示
+  sortData(data, "sekiji", getSelectedOrder());
+  renderCards(filterByRank(filterByKubun(data)));
+
+  // 並び替えイベント
+  document.querySelector("#sortSelect").addEventListener("change", e => {
+    const key = e.target.value;
+    sortData(data, key, getSelectedOrder());
+    renderCards(filterByRank(filterByKubun(data)));
+  });
+
+  // 昇順・降順切替イベント
+  document.querySelectorAll('input[name="sortOrder"]').forEach(rb => {
+    rb.addEventListener("change", () => {
+      const key = document.querySelector("#sortSelect").value;
+      sortData(data, key, getSelectedOrder());
+      renderCards(filterByRank(filterByKubun(data)));
+    });
+  });
+
+  // 区分フィルタイベント
+  document.querySelectorAll("input[name='kubun']").forEach(cb => {
+    cb.addEventListener("change", () => {
+      renderCards(filterByRank(filterByKubun(data)));
+    });
+  });
+
+  // 段位・称号フィルタイベント
+  document.querySelectorAll("input[name='rank']").forEach(cb => {
+    cb.addEventListener("change", () => {
+      renderCards(filterByRank(filterByKubun(data)));
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>

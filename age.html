@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>将棋棋士の四段昇段平均年齢・中央値</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- ▼ CSSにキャッシュバスター（値は更新ごとに変えてOK） -->
+  <link rel="stylesheet" href="style.css?v=20251001-d">
+  <style>
+  /* section 内の p を全部中央寄せ */
+  section > p { text-align: center; }
+
+  /* ラジオの枠線を消し、内容幅で中央寄せ */
+  fieldset{
+    border: 0;
+    padding: 0;
+    display: block;
+    width: max-content;
+    margin: 0 auto;
+  }
+  fieldset label{ display:inline-flex; align-items:center; gap:8px; }
+
+  /* === section 内 3行を等間隔＆中央に === */
+  main > section:first-of-type {
+    padding-block: 12px;
+    display: grid;
+    justify-items: center;
+    row-gap: 10px;
+  }
+  main > section:first-of-type > p { margin: 0; }
+  main > section:first-of-type > p:nth-of-type(2) strong {
+    font-weight: 800;
+    font-size: clamp(24px, 7vw, 36px);
+    line-height: 1.1;
+    letter-spacing: .02em;
+  }
+
+  /* ▼ ラジオとテーブルの間の free（= 件数 + 下へボタン） */
+  main > section + .free + .free {
+    display: flex;
+    justify-content: space-between; /* 左：件数 ／ 右：ボタン */
+    align-items: center;
+    gap: 12px;
+  }
+  main > section + .free + .free button,
+  footer button { padding: 6px 12px; font-weight: 600; }
+
+  /* フッターは中央寄せ（上へボタン用） */
+  footer { text-align: center; }
+
+#sortKey,
+.sort-order {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sort-order {
+  gap: 8px;
+}
+
+#sortKey {
+  margin-right: 10px;
+}
+
+  </style>
+</head>
+<body>
+<header>
+  <!-- ヘッダー -->
+  <p><a href="">TOPページに戻る</a></>
+</header>
+
+<main>
+  <!-- 上＝ラベル / 中央＝大きな年齢 / 下＝日数 -->
+  <section>
+    <p><!-- 例：将棋棋士の四段昇段年齢の平均年齢 --></p>
+    <p><strong><!-- 例：22歳3ヶ月0日 --></strong></p>
+    <p><!-- 例：平均日数 8127.1 日 --></p>
+  </section>
+
+  <!-- ラジオ -->
+  <div class="free">
+    <fieldset>
+      <label><input type="radio" name="stat" value="mean" checked> 平均年齢</label>
+      <label><input type="radio" name="stat" value="median"> 中央値</label>
+    </fieldset>
+  </div>
+
+    <div class="free" id="jumpBox">
+  <span><!-- 件数表示 --></span>
+  <button type="button">出典・算出方法を読む</button>
+</div>
+
+<div class="free">
+  <span class="sort-label">並び替え:</span>
+
+  <select id="sortKey">
+    <option value="kishiNumber">棋士番号</option>
+    <option value="shodanDays">四段昇段年齢</option>
+  </select>
+
+  <div class="sort-order">
+    <label>
+      <input type="radio" name="order" value="asc" checked> 昇順
+    </label>
+    <label>
+      <input type="radio" name="order" value="desc"> 降順
+    </label>
+  </div>
+</div>
+    
+  <!-- 既存の唯一の table -->
+  <table>
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- 補足情報 -->
+  <div class="free">
+    <h3>各情報の出典</h3>
+       <p>奨励会三段リーグが開始した1987年6月から2025年10月1日付で四段へ昇段した棋士までの、棋士編入試験合格者を含む棋士番号184以降の全167名の棋士が対象。</p>
+    <p>各棋士の四段昇段年齢は、日本将棋連盟の<a href="https://www.shogi.or.jp/player/" target="_blank" rel="noopener noreferrer">
+  棋士データベース</a>の各棋士の生年月日と四段昇段日より算出しました。</p>
+    </div>
+
+  <div class="free">
+    <h3>平均年齢の算出方法</h3>
+    <p>167名の棋士の、生年月日の平均の日付（1985-03-30）と四段昇段日の平均の日付（2007-06-10）を求め、その期間が22年2ヶ月11日なので、そのまま22歳2ヶ月11日としています。</p>
+    <p>その下の平均日数8107.1日（≒22年2ヶ月11日）は、各棋士の「生年月日から四段昇段日までの日数」の平均数値です。</p>
+  </div>
+    </div>
+</main>
+
+<!-- フッターに “上へ” ボタン -->
+<footer>
+  <p><button type="button">ページの一番上へ戻る</button></p>
+  <p>フッダー</p>
+</footer>
+
+<script>
+(() => {
+  const CSV_PATH = './age.csv';
+  const DAYS_PER_YEAR = 365.2425;
+  const DAYS_PER_MONTH = DAYS_PER_YEAR / 12; // 30.436875
+
+  // --- 簡易CSVパーサ（ダブルクォート対応） ---
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], col = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { col += '"'; i++; }
+          else { q = false; }
+        } else { col += c; }
+      } else {
+        if (c === '"') q = true;
+        else if (c === ',') { row.push(col); col = ''; }
+        else if (c === '\r') { /* skip */ }
+        else if (c === '\n') { row.push(col); rows.push(row); row = []; col = ''; }
+        else { col += c; }
+      }
+    }
+    if (col.length || row.length) { row.push(col); rows.push(row); }
+    return rows;
+  }
+
+  // --- 日数 → 「◯歳◯ヶ月◯日」 ---
+  function daysToYMD(daysIn) {
+    if (!Number.isFinite(daysIn) || daysIn < 0) return {y:0, m:0, d:0};
+    let d = daysIn;
+    let y = Math.floor(d / DAYS_PER_YEAR); d -= y * DAYS_PER_YEAR;
+    let m = Math.floor(d / DAYS_PER_MONTH); d -= m * DAYS_PER_MONTH;
+    let dd = Math.round(d);
+    if (dd >= Math.round(DAYS_PER_MONTH)) { dd -= Math.round(DAYS_PER_MONTH); m += 1; }
+    if (m >= 12) { m -= 12; y += 1; }
+    return { y, m, d: dd };
+  }
+  const formatYMD = o => `${o.y}歳${o.m}ヶ月${o.d}日`;
+
+  // --- 棋士番号の数値化（比較用） ---
+  function numericFromString(s) {
+    const m = String(s ?? '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : NaN;
+  }
+
+  // --- DOM（idは増やさない） ---
+  const section = document.querySelector('section');
+  const [titleP, valueP, daysP] = section.querySelectorAll('p'); // 上・中央・下
+  const valueStrong = valueP.querySelector('strong');
+
+  const statBox = document.querySelector('main > section + .free'); // ラジオ置き場
+
+  const table = document.querySelector('table');
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
+
+  function renderHead() {
+    thead.innerHTML = '';
+    const tr = document.createElement('tr');
+    ['棋士番号', '棋士名', '四段昇段時の年齢'].forEach(txt => {
+      const th = document.createElement('th'); th.textContent = txt; tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+  }
+
+  function renderBody(rows) {
+    tbody.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      const c1 = document.createElement('td'); c1.textContent = r.kishiNo;
+      const c2 = document.createElement('td'); c2.textContent = r.name;
+      const c3 = document.createElement('td'); c3.textContent = r.ageText; // CSVの文字列そのまま
+      tr.append(c1, c2, c3);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateSection(stat, useDays) {
+    const isMedian = (stat === 'median');
+    titleP.textContent = `将棋棋士の四段昇段年齢の${isMedian ? '中央値' : '平均年齢'}`;
+    valueStrong.textContent = formatYMD(daysToYMD(useDays));
+    daysP.textContent = `${isMedian ? '中央値日数' : '平均日数'} ${useDays.toFixed(1)} 日`;
+  }
+
+  async function main() {
+    // ▼ CSV取得時だけ ?v= を付加（キャッシュ回避）
+    const res = await fetch(`${CSV_PATH}?v=${V}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('CSV取得に失敗しました: ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error('CSVが空です');
+
+    const header = rows[0];
+    const idxNo   = header.indexOf('棋士番号');
+    const idxName = header.indexOf('棋士名');
+    const idxAgeT = header.indexOf('昇段時の年齢');    // 表示用（歳月日テキスト）
+    const idxDays = header.indexOf('昇段までの日数');  // 集計用（日数）
+    if (idxNo < 0 || idxName < 0 || idxAgeT < 0 || idxDays < 0) {
+      throw new Error('必要な列（棋士番号/棋士名/昇段時の年齢/昇段までの日数）が見つかりません');
+    }
+
+    const items = rows.slice(1).map(r => {
+      const kishiNo = r[idxNo];
+      return {
+        kishiNo,
+        kishiNoNum: numericFromString(kishiNo),
+        name: r[idxName],
+        ageText: r[idxAgeT],
+        days: Number(r[idxDays])
+      };
+    }).filter(r => Number.isFinite(r.days));
+
+    // 棋士番号の小さい順
+    items.sort((a, b) => {
+      const an = a.kishiNoNum, bn = b.kishiNoNum;
+      if (Number.isNaN(an) && Number.isNaN(bn)) return String(a.kishiNo).localeCompare(String(b.kishiNo), 'ja');
+      if (Number.isNaN(an)) return 1;
+      if (Number.isNaN(bn)) return -1;
+      if (an !== bn) return an - bn;
+      return String(a.name).localeCompare(String(b.name), 'ja');
+    });
+
+    // 集計
+    const n = items.length;
+    const sumDays = items.reduce((s, r) => s + r.days, 0);
+    const meanDays = n > 0 ? (sumDays / n) : 0;
+    const sortedDays = items.map(r => r.days).slice().sort((x, y) => x - y);
+    const medianDays = n === 0 ? 0 : (n % 2
+      ? sortedDays[(n - 1) / 2]
+      : (sortedDays[n / 2 - 1] + sortedDays[n / 2]) / 2);
+
+    renderHead();
+    renderBody(items);
+    updateSection('mean', meanDays);
+
+    // ラジオ切替
+    statBox.querySelectorAll('input[name="stat"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const stat = statBox.querySelector('input[name="stat"]:checked').value;
+        updateSection(stat, stat === 'median' ? medianDays : meanDays);
+      });
+    });
+
+    // ▼ 件数表示（table 直前の .free の <span> に n名 を入れる）
+    const jumpBox = document.getElementById('jumpBox');
+    const countSpan = jumpBox?.querySelector('span');
+    if (countSpan) countSpan.textContent = `（${n}名）`;
+
+    // ▼ 下へボタン
+    const jumpDownBtn = jumpBox?.querySelector('button');
+    if (jumpDownBtn) {
+      jumpDownBtn.addEventListener('click', () => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+      });
+    }
+
+    // ▼ 上へボタン（footer 内）
+    const toTopBtn = document.querySelector('footer button');
+    if (toTopBtn) {
+      toTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  }
+
+  /* ▼ “いちばん下”の追記：値だけ変えれば即反映 */
+  const V = '20251001-d';  // ← 更新ごとに変える
+  /* ▲ main() より上に置く（ここでOK） */
+
+  main().catch(err => {
+    console.error(err);
+    const p = document.querySelector('section p');
+    if (p) p.textContent = 'エラー：' + err.message;
+  });
+})();
+</script>
+
+<script>
+  // ▼ 並び替え用のイベント登録
+  document.addEventListener('DOMContentLoaded', function () {
+    const sortKeySelect = document.getElementById('sortKey');
+    const orderRadios = document.querySelectorAll('input[name="order"]');
+
+    // 並び替え実行関数
+    function applySort() {
+      const key = sortKeySelect.value; // "kishiNumber" or "shodanDays"
+      const order = Array.from(orderRadios).find(r => r.checked).value; // "asc" or "desc"
+
+      items.sort((a, b) => {
+        let valA, valB;
+
+        if (key === 'kishiNumber') {
+          valA = a.kishiNoNum;  // 棋士番号の数値
+          valB = b.kishiNoNum;
+        } else {
+          valA = a.days;        // 四段昇段までの日数
+          valB = b.days;
+        }
+
+        if (order === 'asc') {
+          return valA - valB;
+        } else {
+          return valB - valA;
+        }
+      });
+
+      // 並び替え後に再描画
+      renderBody(items);
+    }
+
+    // イベント登録
+    sortKeySelect.addEventListener('change', applySort);
+    orderRadios.forEach(radio => {
+      radio.addEventListener('change', applySort);
+    });
+  });
+</script>
+
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+  const sortKeySelect = document.getElementById('sortKey');
+  const orderRadios = document.querySelectorAll('input[name="order"]');
+  const table = document.querySelector('table');
+  if (!table) return;
+  const tbody = table.querySelector('tbody');
+
+  // 「22歳3ヶ月0日」→ 日数（DAYS_PER_YEAR/12で月換算）
+  const DAYS_PER_YEAR = 365.2425;
+  const DAYS_PER_MONTH = DAYS_PER_YEAR / 12; // 30.436875
+
+  function parseAgeTextToDays(text) {
+    if (!text) return NaN;
+    // 例: "22歳3ヶ月0日" / "22歳 3ヶ月 0日" / "22歳3か月0日" などを許容
+    const s = String(text).replace(/\s+/g, '');
+    const y = /(\d+)歳/.exec(s)?.[1] ?? '0';
+    const m = /(\d+)(?:ヶ月|か月)/.exec(s)?.[1] ?? '0';
+    const d = /(\d+)日/.exec(s)?.[1] ?? '0';
+    return Number(y) * DAYS_PER_YEAR + Number(m) * DAYS_PER_MONTH + Number(d);
+  }
+
+  function numericFromString(s) {
+    const m = String(s ?? '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : NaN;
+  }
+
+  function currentOrder() {
+    const r = Array.from(orderRadios).find(x => x.checked);
+    return r ? r.value : 'asc';
+  }
+
+  function getRowKey(tr, key) {
+    const tds = tr.children;
+    if (!tds || tds.length < 3) return NaN;
+
+    if (key === 'kishiNumber') {
+      // 1列目（棋士番号）
+      return numericFromString(tds[0].textContent);
+    } else {
+      // 3列目（年齢表示）。data-days があれば最優先で使用
+      const dataDays = tr.dataset?.days ?? tds[2].dataset?.days;
+      if (dataDays != null && dataDays !== '') {
+        const n = Number(dataDays);
+        if (Number.isFinite(n)) return n;
+      }
+      // 無ければ年齢テキストから近似換算
+      return parseAgeTextToDays(tds[2].textContent);
+    }
+  }
+
+  function applySort() {
+    if (!tbody) return;
+
+    const key = sortKeySelect?.value || 'kishiNumber';
+    const order = currentOrder();
+
+    // いったん配列化（安定ソート用に元インデックスも保持）
+    const rows = Array.from(tbody.querySelectorAll('tr')).map((tr, i) => {
+      return { tr, i };
+    });
+
+    rows.sort((A, B) => {
+      const a = getRowKey(A.tr, key);
+      const b = getRowKey(B.tr, key);
+
+      // NaNは末尾へ寄せる
+      const aNaN = !Number.isFinite(a);
+      const bNaN = !Number.isFinite(b);
+      if (aNaN && bNaN) return A.i - B.i; // 元順序維持
+      if (aNaN) return 1;
+      if (bNaN) return -1;
+
+      const diff = a - b;
+      if (diff !== 0) return (order === 'asc') ? diff : -diff;
+
+      // キーが同じ場合は「棋士番号」でサブソート
+      const aNo = getRowKey(A.tr, 'kishiNumber');
+      const bNo = getRowKey(B.tr, 'kishiNumber');
+      const sub = (aNo - bNo);
+      if (sub !== 0) return (order === 'asc') ? sub : -sub;
+
+      // それでも同じなら元順
+      return A.i - B.i;
+    });
+
+    // 並び替え後にtbodyへ再挿入
+    const frag = document.createDocumentFragment();
+    rows.forEach(({ tr }) => frag.appendChild(tr));
+    tbody.appendChild(frag);
+  }
+
+  // イベント登録
+  if (sortKeySelect) sortKeySelect.addEventListener('change', applySort);
+  orderRadios.forEach(r => r.addEventListener('change', applySort));
+
+  // ページ初期表示の順序を尊重し、初回はソートしない
+  // 必要なら以下のコメントを外して即適用
+  // applySort();
+});
+</script>
+</body>
+</html>

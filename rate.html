@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>将棋の殿堂</title>
+    <link rel="stylesheet" href="style.css?v=20251004b">
+</head>
+<body>
+<header>
+<p><a href="">TOPページに戻る</a></p>
+</header>
+  <main>
+     <section>
+       <h2>勝率8割記録一覧</h2>
+         <p>日本将棋連盟において、過去に年度勝率8割以上を達成した棋士と勝率その他の情報を一覧にまとめました。最高勝率記録は60年近く経った今でもなお破られていません。</p>
+  <select id="sortSelect">
+    <option value="winrate">勝率が高い順</option>
+    <option value="age">達成年齢が若い順</option>
+    <option value="year">達成年度が古い順</option>
+  </select>
+
+  <div style="margin-top: 10px; display: flex; flex-direction: column;">
+  <label><input type="radio" name="filter" value="all" checked> 全ての記録を表示する</label>
+  <label><input type="radio" name="filter" value="range1"> 藤井聡太登場以前の記録のみ表示する</label>
+  <label><input type="radio" name="filter" value="range2"> 藤井聡太登場以後の記録のみ表示する</label>
+</div>
+
+<div style="margin-top: 10px;">
+  <input type="number" id="limitInput" min="1" max="26" value="26">
+  <button id="limitBtn">表示切替</button>
+</div>
+</section>
+<table>
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+
+<div class="free">
+  <h3>出典</h3>
+  <p>1960〜2019年度の記録：将棋世界2020年6月号『追跡！藤井聡太2020』より</p>
+  <p>2020年度以降の記録：<a href="https://www.shogi.or.jp/game/record/archives/" target="_blank" rel="noopener noreferrer">日本将棋連盟 各年度別ランキング</a>より</p>
+      </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const thead   = document.querySelector('table thead');
+  const tbody   = document.querySelector('table tbody');
+  const select  = document.getElementById('sortSelect');
+  const radios  = document.querySelectorAll('input[name="filter"]');
+  const limitInput = document.getElementById('limitInput');
+  const limitBtn   = document.getElementById('limitBtn');
+
+  let filterMode = 'all'; // 初期値
+
+  fetch('rate.csv')
+    .then(r => r.text())
+    .then(text => {
+      const rows    = text.trim().split(/\r?\n/).map(l => l.split(',').map(s => s.trim()));
+      const header  = rows[0];
+      const dataRaw = rows.slice(1); // 基準データ
+
+      // 列インデックス
+      const idx = {
+        year : header.indexOf('年度'),
+        name : header.indexOf('棋士名'),
+        grade: header.indexOf('段位'),
+        age  : header.indexOf('年齢'),
+        rate : header.indexOf('勝率'),
+        days : header.indexOf('日数換算')
+      };
+
+      // 表示列（順位＋…）
+      const displayCols = [idx.name, idx.grade, idx.age, idx.rate, idx.year];
+
+      // thead
+      thead.innerHTML = '';
+      const trh = document.createElement('tr');
+      const thRank = document.createElement('th');
+      thRank.textContent = '順位';
+      trh.appendChild(thRank);
+      displayCols.forEach(i => {
+        const th = document.createElement('th');
+        th.textContent = header[i];
+        trh.appendChild(th);
+      });
+      thead.appendChild(trh);
+
+      // 数値変換
+      const toNum = v => {
+        const n = Number(String(v).replace(/[^0-9.\-]/g, ''));
+        return Number.isNaN(n) ? NaN : n;
+      };
+
+      // データ抽出（フィルタ）
+      function getFilteredData() {
+        if (filterMode === 'range1') {
+          return dataRaw.filter(row => {
+            const y = toNum(row[idx.year]);
+            return y >= 1960 && y <= 2016;
+          });
+        }
+        if (filterMode === 'range2') {
+          return dataRaw.filter(row => {
+            const y = toNum(row[idx.year]);
+            return y >= 2017;
+          });
+        }
+        return dataRaw.slice(); // all
+      }
+
+      // 並べ替え
+      function sortData(kind) {
+        const arr = getFilteredData();
+        if (kind === 'winrate') {
+          arr.sort((a, b) => toNum(b[idx.rate]) - toNum(a[idx.rate]));
+        } else if (kind === 'age') {
+          arr.sort((a, b) => toNum(a[idx.days]) - toNum(b[idx.days]));
+        } else if (kind === 'year') {
+          arr.sort((a, b) => toNum(a[idx.year]) - toNum(b[idx.year]));
+        }
+        return arr;
+      }
+
+      // tbody描画（順位付き）
+      function renderBody(arr, criteria) {
+        tbody.innerHTML = '';
+
+        let rank = 0;
+        let prevValue = null;
+        let actualPos = 0;
+
+        arr.forEach(row => {
+          actualPos++;
+          let currentValue;
+          if (criteria === 'winrate') {
+            currentValue = toNum(row[idx.rate]);
+          } else if (criteria === 'age') {
+            currentValue = toNum(row[idx.days]);
+          } else if (criteria === 'year') {
+            currentValue = toNum(row[idx.year]);
+          }
+
+          if (prevValue === null || currentValue !== prevValue) {
+            rank = actualPos;
+          }
+          prevValue = currentValue;
+
+          const tr = document.createElement('tr');
+
+          // 順位
+          const tdRank = document.createElement('td');
+          tdRank.textContent = rank;
+          tr.appendChild(tdRank);
+
+          // 他の列
+          displayCols.forEach(i => {
+            const td = document.createElement('td');
+            td.textContent = row[i];
+            tr.appendChild(td);
+          });
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      // 部分表示：上位N位まで (順位ベース)
+      function renderLimited(criteria) {
+        const fullArr = sortData(criteria);
+        const limitedArr = [];
+        let maxRank = Number(limitInput.value) || fullArr.length;
+
+        let prevValue = null;
+        let currentRank = 0;
+        let actualPos = 0;
+
+        for (const row of fullArr) {
+          actualPos++;
+          let currentValue;
+          if (criteria === 'winrate') {
+            currentValue = toNum(row[idx.rate]);
+          } else if (criteria === 'age') {
+            currentValue = toNum(row[idx.days]);
+          } else if (criteria === 'year') {
+            currentValue = toNum(row[idx.year]);
+          }
+
+          if (prevValue === null || currentValue !== prevValue) {
+            currentRank = actualPos;
+          }
+          prevValue = currentValue;
+
+          if (currentRank <= maxRank) {
+            limitedArr.push(row);
+          }
+        }
+
+        renderBody(limitedArr, criteria);
+      }
+
+      // 初期表示
+      renderBody(sortData('winrate'), 'winrate');
+      select.value = 'winrate';
+
+      // セレクトボックス変更
+      select.addEventListener('change', e => {
+        const criteria = e.target.value;
+        renderBody(sortData(criteria), criteria);
+      });
+
+      // ラジオボタン変更
+      radios.forEach(radio => {
+        radio.addEventListener('change', e => {
+          filterMode = e.target.value;
+          renderBody(sortData(select.value), select.value);
+        });
+      });
+
+      // ボタンで上位N位まで絞り込み
+      limitBtn.addEventListener('click', () => {
+        const criteria = select.value;
+        renderLimited(criteria);
+      });
+    });
+});
+</script>
+  </main>
+  <footer>ヘッダー</footer>
+</body>
+</html>
+
