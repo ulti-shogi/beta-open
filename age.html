@@ -318,48 +318,8 @@
 })();
 </script>
 
+<!-- ▼ 統合ソート用スクリプト（ main() の後に配置 ） -->
 <script>
-  // ▼ 並び替え用のイベント登録
-  document.addEventListener('DOMContentLoaded', function () {
-    const sortKeySelect = document.getElementById('sortKey');
-    const orderRadios = document.querySelectorAll('input[name="order"]');
-
-    // 並び替え実行関数
-    function applySort() {
-      const key = sortKeySelect.value; // "kishiNumber" or "shodanDays"
-      const order = Array.from(orderRadios).find(r => r.checked).value; // "asc" or "desc"
-
-      items.sort((a, b) => {
-        let valA, valB;
-
-        if (key === 'kishiNumber') {
-          valA = a.kishiNoNum;  // 棋士番号の数値
-          valB = b.kishiNoNum;
-        } else {
-          valA = a.days;        // 四段昇段までの日数
-          valB = b.days;
-        }
-
-        if (order === 'asc') {
-          return valA - valB;
-        } else {
-          return valB - valA;
-        }
-      });
-
-      // 並び替え後に再描画
-      renderBody(items);
-    }
-
-    // イベント登録
-    sortKeySelect.addEventListener('change', applySort);
-    orderRadios.forEach(radio => {
-      radio.addEventListener('change', applySort);
-    });
-  });
-</script>
-
-  <script>
 document.addEventListener('DOMContentLoaded', function () {
   const sortKeySelect = document.getElementById('sortKey');
   const orderRadios = document.querySelectorAll('input[name="order"]');
@@ -367,17 +327,14 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!table) return;
   const tbody = table.querySelector('tbody');
 
-  // 「22歳3ヶ月0日」→ 日数（DAYS_PER_YEAR/12で月換算）
-  const DAYS_PER_YEAR = 365.2425;
-  const DAYS_PER_MONTH = DAYS_PER_YEAR / 12; // 30.436875
-
   function parseAgeTextToDays(text) {
     if (!text) return NaN;
-    // 例: "22歳3ヶ月0日" / "22歳 3ヶ月 0日" / "22歳3か月0日" などを許容
     const s = String(text).replace(/\s+/g, '');
     const y = /(\d+)歳/.exec(s)?.[1] ?? '0';
     const m = /(\d+)(?:ヶ月|か月)/.exec(s)?.[1] ?? '0';
     const d = /(\d+)日/.exec(s)?.[1] ?? '0';
+    const DAYS_PER_YEAR = 365.2425;
+    const DAYS_PER_MONTH = DAYS_PER_YEAR / 12;
     return Number(y) * DAYS_PER_YEAR + Number(m) * DAYS_PER_MONTH + Number(d);
   }
 
@@ -386,78 +343,83 @@ document.addEventListener('DOMContentLoaded', function () {
     return m ? parseInt(m[0], 10) : NaN;
   }
 
-  function currentOrder() {
-    const r = Array.from(orderRadios).find(x => x.checked);
-    return r ? r.value : 'asc';
-  }
-
   function getRowKey(tr, key) {
     const tds = tr.children;
     if (!tds || tds.length < 3) return NaN;
 
     if (key === 'kishiNumber') {
-      // 1列目（棋士番号）
       return numericFromString(tds[0].textContent);
     } else {
-      // 3列目（年齢表示）。data-days があれば最優先で使用
       const dataDays = tr.dataset?.days ?? tds[2].dataset?.days;
       if (dataDays != null && dataDays !== '') {
         const n = Number(dataDays);
         if (Number.isFinite(n)) return n;
       }
-      // 無ければ年齢テキストから近似換算
       return parseAgeTextToDays(tds[2].textContent);
     }
   }
 
   function applySort() {
     if (!tbody) return;
-
     const key = sortKeySelect?.value || 'kishiNumber';
-    const order = currentOrder();
+    const order = Array.from(orderRadios).find(r => r.checked)?.value || 'asc';
 
-    // いったん配列化（安定ソート用に元インデックスも保持）
-    const rows = Array.from(tbody.querySelectorAll('tr')).map((tr, i) => {
-      return { tr, i };
-    });
+    const rows = Array.from(tbody.querySelectorAll('tr')).map((tr, i) => ({ tr, i }));
 
     rows.sort((A, B) => {
       const a = getRowKey(A.tr, key);
       const b = getRowKey(B.tr, key);
-
-      // NaNは末尾へ寄せる
       const aNaN = !Number.isFinite(a);
       const bNaN = !Number.isFinite(b);
-      if (aNaN && bNaN) return A.i - B.i; // 元順序維持
+      if (aNaN && bNaN) return A.i - B.i;
       if (aNaN) return 1;
       if (bNaN) return -1;
 
       const diff = a - b;
       if (diff !== 0) return (order === 'asc') ? diff : -diff;
 
-      // キーが同じ場合は「棋士番号」でサブソート
       const aNo = getRowKey(A.tr, 'kishiNumber');
       const bNo = getRowKey(B.tr, 'kishiNumber');
-      const sub = (aNo - bNo);
+      const sub = aNo - bNo;
       if (sub !== 0) return (order === 'asc') ? sub : -sub;
-
-      // それでも同じなら元順
       return A.i - B.i;
     });
 
-    // 並び替え後にtbodyへ再挿入
     const frag = document.createDocumentFragment();
     rows.forEach(({ tr }) => frag.appendChild(tr));
     tbody.appendChild(frag);
   }
 
-  // イベント登録
-  if (sortKeySelect) sortKeySelect.addEventListener('change', applySort);
+  sortKeySelect?.addEventListener('change', applySort);
   orderRadios.forEach(r => r.addEventListener('change', applySort));
+});
+</script>
 
-  // ページ初期表示の順序を尊重し、初回はソートしない
-  // 必要なら以下のコメントを外して即適用
-  // applySort();
+<!-- ▼ section画像保存スニペット -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'この内容を画像として保存';
+  saveBtn.style.margin = '15px 0';
+  document.querySelector('section')?.after(saveBtn);
+
+  saveBtn.addEventListener('click', () => {
+    const target = document.querySelector('section');
+    if (!target) return;
+
+    const now = new Date();
+    const date = now.toISOString().slice(0,10);
+    const time = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
+    const fileName = `shogi-${date}-${time}.png`;
+
+    html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = fileName;
+      link.click();
+    });
+  });
 });
 </script>
 </body>
