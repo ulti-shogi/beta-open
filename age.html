@@ -76,39 +76,8 @@
     <p><!-- 例：将棋棋士の四段昇段年齢の平均年齢 --></p>
     <p><strong><!-- 例：22歳3ヶ月0日 --></strong></p>
     <p><!-- 例：平均日数 8127.1 日 --></p>
-    <p>奨励会三段リーグが開始した1987年6月から2025年10月1日付で四段へ昇段した棋士までの、棋士編入試験合格者を含む棋士番号184以降の全167名の棋士が対象。</p>
+    <div>奨励会三段リーグが開始した1987年6月から2025年10月1日付で四段へ昇段した棋士までの、棋士編入試験合格者を含む棋士番号184以降の全167名の棋士が対象。</div>
   </section>
-
-<!-- ✅ sectionを画像として保存するボタン -->
-<button class="save-section-btn" style="margin: 15px 0;">この内容を画像として保存</button>
-
-<!-- ✅ html2canvas の読み込み（未導入ページでもそのまま使えるように重複OK） -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-<script>
-// ✅ section画像化スニペット（ファイル名 shogi-YYYY-MM-DD-HHMMSS.png 固定）
-document.querySelector('.save-section-btn').addEventListener('click', () => {
-  const target = document.querySelector('section'); // ← section1個前提
-
-  // 一時的にCSSを固定してズレを防ぐ
-  const originalBackground = target.style.backgroundColor;
-  target.style.backgroundColor = '#ffffff';
-  target.style.fontFamily = 'sans-serif';
-
-  const now = new Date();
-  const date = now.toISOString().slice(0,10); // YYYY-MM-DD
-  const time = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
-  const fileName = `shogi-${date}-${time}.png`;
-
-  html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
-    target.style.backgroundColor = originalBackground;
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = fileName;
-    link.click();
-  });
-});
-</script>
     
   <!-- ラジオ -->
   <div class="free">
