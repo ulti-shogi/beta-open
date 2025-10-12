@@ -97,31 +97,30 @@
 <!-- ✅ テーブルを画像として保存するボタン -->
 <button class="save-table-btn" style="margin: 15px 0;">この表を画像として保存</button>
 
-<!-- ✅ html2canvas の読み込み（重複しても安全なのでそのまま貼ってOK） -->
+<!-- ✅ html2canvas の読み込み -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-// ✅ テーブル画像化スニペット（共通テンプレート）
+// ✅ テーブル画像化スニペット（ファイル名＝ページタイトル＋日付）
 document.querySelector('.save-table-btn').addEventListener('click', () => {
-  const table = document.querySelector('table'); // ← テーブルが1つ前提
+  const table = document.querySelector('table'); // ← テーブル1個前提
 
-  // 一時的にズレ防止のため CSS を補正
+  // （任意）ズレ防止のために CSS を一時的に固定
   const originalBorderCollapse = table.style.borderCollapse;
   table.style.borderCollapse = 'collapse';
   table.style.backgroundColor = '#ffffff';
   table.style.fontFamily = 'sans-serif';
 
-  html2canvas(table, {
-    scale: 2,    // 解像度アップ
-    useCORS: true
-  }).then(canvas => {
-    // CSSを元に戻す
-    table.style.borderCollapse = originalBorderCollapse;
+  // ✅ ファイル名生成（ページタイトル＋YYYY-MM-DD）
+  const pageTitle = document.title || 'shogi-table';
+  const today = new Date().toISOString().slice(0,10); // "2025-10-12"
 
-    // ダウンロード処理
+  html2canvas(table, { scale: 2, useCORS: true }).then(canvas => {
+    table.style.borderCollapse = originalBorderCollapse; // CSS元に戻す
+
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');
-    link.download = 'shogi-table.png';
+    link.download = `${pageTitle}-${today}.png`;
     link.click();
   });
 });
