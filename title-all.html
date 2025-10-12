@@ -101,26 +101,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-// ✅ テーブル画像化スニペット（ファイル名＝ページタイトル＋日付）
+// ✅ テーブル画像化スニペット（ファイル名 shogi-YYYY-MM-DD-HHMMSS.png 固定）
 document.querySelector('.save-table-btn').addEventListener('click', () => {
   const table = document.querySelector('table'); // ← テーブル1個前提
 
-  // （任意）ズレ防止のために CSS を一時的に固定
   const originalBorderCollapse = table.style.borderCollapse;
   table.style.borderCollapse = 'collapse';
   table.style.backgroundColor = '#ffffff';
   table.style.fontFamily = 'sans-serif';
 
-  // ✅ ファイル名生成（ページタイトル＋YYYY-MM-DD）
-  const pageTitle = document.title || 'shogi-table';
-  const today = new Date().toISOString().slice(0,10); // "2025-10-12"
+  const now = new Date();
+  const date = now.toISOString().slice(0,10); // YYYY-MM-DD
+  const time = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
+  const fileName = `shogi-${date}-${time}.png`;
 
   html2canvas(table, { scale: 2, useCORS: true }).then(canvas => {
-    table.style.borderCollapse = originalBorderCollapse; // CSS元に戻す
-
+    table.style.borderCollapse = originalBorderCollapse;
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');
-    link.download = `${pageTitle}-${today}.png`;
+    link.download = fileName;
     link.click();
   });
 });
