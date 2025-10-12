@@ -92,6 +92,34 @@
   <button type="button">出典・算出方法を読む</button>
 </div>
 
+<!-- ▼ section画像保存スニペット --><!-- ✅ section保存ボタンを自分で置く -->
+<button class="save-section-btn" style="margin: 15px 0;">最上部を画像として保存</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const saveBtn = document.querySelector('.save-section-btn');
+  if (!saveBtn) return;
+
+  saveBtn.addEventListener('click', () => {
+    const target = document.querySelector('section');
+    if (!target) return;
+
+    const now = new Date();
+    const date = now.toISOString().slice(0,10);
+    const time = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
+    const fileName = `shogi-${date}-${time}.png`;
+
+    html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = fileName;
+      link.click();
+    });
+  });
+});
+</script>
+    
 <div class="free">
   <span class="sort-label">並び替え:</span>
 
@@ -395,32 +423,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<!-- ▼ section画像保存スニペット -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const saveBtn = document.createElement('button');
-  saveBtn.textContent = 'この内容を画像として保存';
-  saveBtn.style.margin = '15px 0';
-  document.querySelector('section')?.after(saveBtn);
-
-  saveBtn.addEventListener('click', () => {
-    const target = document.querySelector('section');
-    if (!target) return;
-
-    const now = new Date();
-    const date = now.toISOString().slice(0,10);
-    const time = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
-    const fileName = `shogi-${date}-${time}.png`;
-
-    html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = fileName;
-      link.click();
-    });
-  });
-});
-</script>
 </body>
 </html>
