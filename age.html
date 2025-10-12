@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateSection(stat, useDays) {
     const isMedian = (stat === 'median');
-    titleP.textContent = `将棋棋士の四段昇段年齢の${isMedian ? '中央値' : '平均年齢'}`;
+    titleP.textContent = `将棋棋士の四段昇段${isMedian ? '年齢の中央値' : '平均年齢'}`;
     valueStrong.textContent = formatYMD(daysToYMD(useDays));
     daysP.textContent = `${isMedian ? '中央値日数' : '平均日数'} ${useDays.toFixed(1)} 日`;
   }
