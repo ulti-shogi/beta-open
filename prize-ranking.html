@@ -63,6 +63,37 @@
     <tbody></tbody>
   </table>
 
+<!-- ✅ テーブルを画像として保存するボタン -->
+<button class="save-table-btn" style="margin: 15px 0;">この表を画像として保存</button>
+
+<!-- ✅ html2canvas の読み込み -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+// ✅ テーブル画像化スニペット（ファイル名 shogi-YYYY-MM-DD-HHMMSS.png 固定）
+document.querySelector('.save-table-btn').addEventListener('click', () => {
+  const table = document.querySelector('table'); // ← テーブル1個前提
+
+  const originalBorderCollapse = table.style.borderCollapse;
+  table.style.borderCollapse = 'collapse';
+  table.style.backgroundColor = '#ffffff';
+  table.style.fontFamily = 'sans-serif';
+
+  const now = new Date();
+  const date = now.toISOString().slice(0,10); // YYYY-MM-DD
+  const time = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
+  const fileName = `shogi-${date}-${time}.png`;
+
+  html2canvas(table, { scale: 2, useCORS: true }).then(canvas => {
+    table.style.borderCollapse = originalBorderCollapse;
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = fileName;
+    link.click();
+  });
+});
+</script>
+    
   <div class="free">
     <h3>補足情報</h3>
     <p>各棋士の年齢は、各対象年の12月31日時点のもの。</p>
