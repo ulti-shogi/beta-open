@@ -106,3 +106,9 @@ th, td {
   table { border-width: 2px; }
   th, td { border-width: 2px; }  /* ↑上と同じく、不要なら削除 */
 }
+
+/* --- 全ページ共通：テーブル枠線を1pxに強制統一 --- */
+table, th, td {
+  border: 1px solid #000 !important;
+  border-collapse: collapse;
+}
