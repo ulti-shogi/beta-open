@@ -32,6 +32,28 @@
   }
 </style>
 
+<style>
+  /* 見出しの左ラインはそのままに、縦幅・余白だけ整える調整 */
+  body#index-page h2 {
+    border-left: 4px solid #333;
+    padding-left: 8px;
+    margin: 24px 0 12px;   /* 見出しの上下バランス調整 */
+    line-height: 1.2;      /* タイトル内の縦幅を詰める */
+  }
+
+  /* 「このサイトについて」だけは上マージンを詰める */
+  body#index-page section:first-of-type h2 {
+    margin-top: 0;
+  }
+
+  /* 見出し直後の説明文やリストとの空間を少し広げる */
+  body#index-page h2 + p,
+  body#index-page h2 + ul {
+    margin-top: 4px;
+    margin-bottom: 20px;
+  }
+</style>
+
 </head>
 <body id="index-page">
 <header>
