@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
     <link rel="stylesheet" href="style.css">
-  <style>
+<style>
+  /* --- セクション全体のスタイル（index.html専用） --- */
   body#index-page section, body#index-page .free {
     border: none;
     box-shadow: none;
@@ -13,47 +14,32 @@
     margin: 16px 0;
   }
 
-  /* 見出し（h2）に左ラインを付けて視覚的に区切る */
+  /* --- 見出し（h2）スタイル（左ライン＋余白調整） --- */
   body#index-page h2 {
     border-left: 4px solid #333;
     padding-left: 8px;
-    margin: 24px 0 8px;
+    margin: 24px 0 12px;   /* 最終調整値を採用 */
+    line-height: 1.2;
   }
 
-  /* 「このサイトについて」は説明文なので余白だけ少し調整 */
+  /* --- 「このサイトについて」だけは上マージンを詰める --- */
   body#index-page section:first-of-type h2 {
     margin-top: 0;
   }
 
-  /* UL（リスト）の行間を少しだけ広げて読みやすくする */
+  /* --- リストの行間とマージン調整 --- */
   body#index-page ul {
-    padding-left: 16px; /* デフォルトより少し内側に */
+    padding-left: 16px;
     line-height: 1.6;
   }
-</style>
 
-<style>
-  /* 見出しの左ラインはそのままに、縦幅・余白だけ整える調整 */
-  body#index-page h2 {
-    border-left: 4px solid #333;
-    padding-left: 8px;
-    margin: 24px 0 12px;   /* 見出しの上下バランス調整 */
-    line-height: 1.2;      /* タイトル内の縦幅を詰める */
-  }
-
-  /* 「このサイトについて」だけは上マージンを詰める */
-  body#index-page section:first-of-type h2 {
-    margin-top: 0;
-  }
-
-  /* 見出し直後の説明文やリストとの空間を少し広げる */
   body#index-page h2 + p,
   body#index-page h2 + ul {
     margin-top: 4px;
     margin-bottom: 20px;
   }
 </style>
-
+  
 </head>
 <body id="index-page">
 <header>
