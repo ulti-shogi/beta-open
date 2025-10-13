@@ -1,77 +1,60 @@
 /* --- 共通設定 --- */
 *, *::before, *::after { box-sizing: border-box; }
 
-/* ベース：幅制限なしで流動。PCだけ後で制限する */
 body {
   margin: 0 auto;
-  padding: 8px; /* ← 元は14px。スマホでも詰めて表示 */
-  /* background-color: #F6E7B2; */
+  padding: 8px;
 }
 
-header, main, footer {
-  /*background-color: #F6E7B2; */
-}
-
-h1 { text-align: center; }
-
+/* コンテナ構造（section / .free） */
 section, .free {
-  border: 2px solid #000000;
+  border: 2px solid #000;
   width: 100%;
-  margin: 8px auto;           /* ← 元は12px。上下余白を少し圧縮 */
-  border-radius: 14px;
+  margin: 8px auto;
+  border-radius: 0;         /* 角丸は全ページで無しに統一 */
   padding: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,.25);
 }
 
-table { 
+/* テーブル共通 */
+table {
   width: 100%;
-  border-collapse: collapse; 
-  border: 2px solid #000000;
-  margin: 8px auto;           /* ← auto で中央寄せだが余白も少し圧縮 */
+  border-collapse: collapse;
+  margin: 8px auto;
 }
 
-th, td {
-  border: 2px solid #000000;
-  padding: 8px 6px;
+/* --- テーブル枠線を全ページ共通で1pxに統一 --- */
+table, th, td {
+  border: 1px solid #000 !important;
   text-align: center;
+  padding: 8px 6px;
 }
 
-/* コンテナの最初の子要素は上マージンをゼロに */
+/* 見出しなどの余白調整 */
 section > *:first-child,
 .free > *:first-child { margin-top: 0; }
 
-/* 見出し下だけ少し余白 */
 section h1, section h2, section h3, section h4, section h5, section h6,
 .free h1, .free h2, .free h3, .free h4, .free h5, .free h6 {
   margin-bottom: 0.5em;
 }
 
-/* --- レイアウト切替：PCだけ幅を制限 --- */
-@media (min-width: 600px) {
-  body {
-    max-width: 480px; /* ← ここで初めて幅制限をかける */
-    padding: 14px;    /* ← PCではゆったり余白 */
-  }
-}
-
-/* --- スマホ用微調整 --- */
+/* --- モバイル調整 --- */
 @media (max-width: 599px) {
+  body { padding: 8px; }
   section, .free {
-    border-radius: 8px;   /* ← スマホでは角丸少し小さく */
-    box-shadow: none;     /* ← 影を外してフラットに（好みで） */
-    padding: 4px;         /* ← さらに詰める */
+    padding: 4px;
+    box-shadow: none;
   }
   table {
-    font-size: 0.85em;    /* ← 表を少し小さく */
-    border-width: 1px;    /* ← 枠線細く */
+    font-size: 0.85em;
   }
   th, td {
-    padding: 4px;         /* ← セル内余白半分に */
-    border-width: 1px;
+    padding: 4px;
   }
 }
 
-/* PCだけ幅を制限して中央寄せ（スマホは全幅のまま） */
+/* --- PC表示の幅制限 --- */
 @media (min-width: 600px) {
   body {
     max-width: 480px;
@@ -80,35 +63,34 @@ section h1, section h2, section h3, section h4, section h5, section h6,
   }
 }
 
-/* --- 将棋盤スタイル（最小差分パッチ） --- */
-
-/* 角丸をやめて四角に、背景を木肌色に */
-section, .free {
-  border-radius: 0;
-  border: 2px solid #000;        /* セクション枠の太さを明示 */
-  /*background-color: #F3D38C; */     /* 将棋盤っぽい薄い木肌色 */
+/* --- ▼ index.html専用パッチ ▼ --- */
+/* （他ページには影響なし） */
+body#index-page section, 
+body#index-page .free {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+  margin: 16px 0;
 }
 
-/* table も同じ木肌色＆枠線太さを section と揃える */
-table {
-  /*background-color: #F3D38C; */
-  border: 2px solid #000;        /* ← セクションと同じ太さに統一 */
+body#index-page h2 {
+  border-left: 4px solid #333;
+  padding-left: 8px;
+  margin: 24px 0 12px;
+  line-height: 1.2;
 }
 
-/* 内側のグリッド線まで同じ太さにしたい場合は有効（不要ならこのブロックは削除可） */
-th, td {
-  border-width: 2px;             /* ← セクション/テーブル外枠と統一 */
+body#index-page section:first-of-type h2 {
+  margin-top: 0;
 }
 
-/* モバイル側の過去指定（border-width:1px 等）を確実に打ち消す */
-@media (max-width: 599px) {
-  section, .free { border-radius: 0; }
-  table { border-width: 2px; }
-  th, td { border-width: 2px; }  /* ↑上と同じく、不要なら削除 */
+body#index-page ul {
+  padding-left: 16px;
+  line-height: 1.6;
 }
 
-/* --- 全ページ共通：テーブル枠線を1pxに強制統一 --- */
-table, th, td {
-  border: 1px solid #000 !important;
-  border-collapse: collapse;
+body#index-page h2 + p,
+body#index-page h2 + ul {
+  margin-top: 4px;
+  margin-bottom: 20px;
 }
