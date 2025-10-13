@@ -12,7 +12,26 @@
     padding: 0;
     margin: 16px 0;
   }
+
+  /* 見出し（h2）に左ラインを付けて視覚的に区切る */
+  body#index-page h2 {
+    border-left: 4px solid #333;
+    padding-left: 8px;
+    margin: 24px 0 8px;
+  }
+
+  /* 「このサイトについて」は説明文なので余白だけ少し調整 */
+  body#index-page section:first-of-type h2 {
+    margin-top: 0;
+  }
+
+  /* UL（リスト）の行間を少しだけ広げて読みやすくする */
+  body#index-page ul {
+    padding-left: 16px; /* デフォルトより少し内側に */
+    line-height: 1.6;
+  }
 </style>
+
 </head>
 <body id="index-page">
 <header>
