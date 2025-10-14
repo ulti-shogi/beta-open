@@ -60,30 +60,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const tableHead = document.querySelector("table thead");
   const tableBody = document.querySelector("table tbody");
 
+  // sortKey(ラジオ値) → CSV実列名の対応
+  const SORT_MAP = {
+    ki: "期",
+    nendo: "年度",
+    age: "日数換算"
+  };
+
   let data = [];
 
   // CSV読み込み
   fetch("rookie.csv")
-    .then(response => response.text())
+    .then(res => res.text())
     .then(csvText => {
-      const rows = csvText.trim().split("\n").map(row => row.split(","));
-      rows.shift(); // ヘッダー削除
+      const rows = csvText.trim().split("\n").map(r => r.split(","));
+      rows.shift(); // ヘッダー除去
 
-      data = rows.map(row => {
-        return {
-          "期": row[0],
-          "年度": row[1],
-          "優勝者": row[2],
-          "勝敗": row[3],
-          "準優勝者": row[4],
-          "記念対局の勝敗": row[5],
-          "記念対局の相手": row[6],
-          "生年月日": row[7],
-          "優勝日": row[8],
-          "優勝年齢": row[9],
-          "日数換算": Number(row[10])
-        };
-      });
+      data = rows.map(row => ({
+        "期": row[0],
+        "年度": row[1],
+        "優勝者": row[2],
+        "勝敗": row[3],
+        "準優勝者": row[4],
+        "記念対局の勝敗": row[5],
+        "記念対局の相手": row[6],
+        "生年月日": row[7],
+        "優勝日": row[8],
+        "優勝年齢": row[9],
+        "日数換算": Number(row[10])
+      }));
 
       renderTable();
     });
@@ -92,53 +97,53 @@ document.addEventListener("DOMContentLoaded", () => {
     const viewMode = document.querySelector("input[name='viewMode']:checked").value;
     const sortKey = document.querySelector("input[name='sortKey']:checked").value;
     const sortOrder = document.querySelector("input[name='sortOrder']:checked").value;
-    const limit = Number(document.getElementById("yearRange").value) || null; // 件数抽出に転用
+    const limit = Number(document.getElementById("yearRange").value) || null; // 件数抽出
     return { viewMode, sortKey, sortOrder, limit };
+  }
+
+  function normalize(val) {
+    const n = Number(val);
+    return Number.isNaN(n) ? val : n; // 数値にできるものは数値化
   }
 
   function renderTable() {
     const { viewMode, sortKey, sortOrder, limit } = getConditions();
+    const field = SORT_MAP[sortKey] || "期"; // 実列名にマップ
 
-    // ソート（元データ破壊を防ぐため slice()）
+    // 並び替え（元配列を触らない）
     let sorted = data.slice().sort((a, b) => {
-      let keyA = sortKey === "age" ? a["日数換算"] : a[sortKey];
-      let keyB = sortKey === "age" ? b["日数換算"] : b[sortKey];
+      let A = normalize(a[field]);
+      let B = normalize(b[field]);
 
-      keyA = isNaN(keyA) ? keyA : Number(keyA);
-      keyB = isNaN(keyB) ? keyB : Number(keyB);
-
-      if (sortOrder === "asc") return keyA > keyB ? 1 : -1;
-      else return keyA < keyB ? 1 : -1;
+      if (A < B) return sortOrder === "asc" ? -1 : 1;
+      if (A > B) return sortOrder === "asc" ? 1 : -1;
+      return 0;
     });
 
-    // 件数制限
-    if (limit) {
-      sorted = sorted.slice(0, limit);
-    }
+    // 件数制限（上位◯件）
+    if (limit) sorted = sorted.slice(0, limit);
 
-    // ヘッダー生成
-    let headers = ["期", "年度", "優勝者"];
-    if (viewMode === "final") {
-      headers.push("準優勝者", "勝敗");
-    } else if (viewMode === "memorial") {
-      headers.push("記念対局の相手", "記念対局の勝敗");
-    } else if (viewMode === "age") {
-      headers.push("優勝年齢");
-    }
-
+    // ヘッダー
+    const headers = (() => {
+      const base = ["期", "年度", "優勝者"];
+      if (viewMode === "final") return [...base, "準優勝者", "勝敗"];
+      if (viewMode === "memorial") return [...base, "記念対局の相手", "記念対局の勝敗"];
+      if (viewMode === "age") return [...base, "優勝年齢"];
+      return base;
+    })();
     tableHead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
 
-    // ボディ生成
+    // ボディ
     tableBody.innerHTML = sorted.map(row => {
-      let cells = [`<td>${row["期"]}</td>`, `<td>${row["年度"]}</td>`, `<td>${row["優勝者"]}</td>`];
+      const base = [`<td>${row["期"]}</td>`, `<td>${row["年度"]}</td>`, `<td>${row["優勝者"]}</td>`];
       if (viewMode === "final") {
-        cells.push(`<td>${row["準優勝者"]}</td>`, `<td>${row["勝敗"]}</td>`);
+        base.push(`<td>${row["準優勝者"]}</td>`, `<td>${row["勝敗"]}</td>`);
       } else if (viewMode === "memorial") {
-        cells.push(`<td>${row["記念対局の相手"]}</td>`, `<td>${row["記念対局の勝敗"]}</td>`);
+        base.push(`<td>${row["記念対局の相手"]}</td>`, `<td>${row["記念対局の勝敗"]}</td>`);
       } else if (viewMode === "age") {
-        cells.push(`<td>${row["優勝年齢"]}</td>`);
+        base.push(`<td>${row["優勝年齢"]}</td>`);
       }
-      return `<tr>${cells.join("")}</tr>`;
+      return `<tr>${base.join("")}</tr>`;
     }).join("");
   }
 
