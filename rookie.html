@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>将棋の殿堂</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+<p><a href="https://ulti-shogi.github.io/beta-open/index.html">TOPページに戻る</a></>
+</header>
+  <main>
+  <section>
+
+  <!-- 表示モード切替（仮文言） -->
+  <div>
+    <label><input type="radio" name="viewMode" value="final" checked> 決勝結果</label>
+    <label><input type="radio" name="viewMode" value="memorial"> 記念対局</label>
+    <label><input type="radio" name="viewMode" value="age"> 年齢</label>
+  </div>
+
+  <!-- 表示範囲（年数指定） -->
+  <div>
+    <label>直近
+      <input type="number" id="yearRange" min="1" placeholder="7">
+      年
+    </label>
+    <button id="applyRange">表示</button>
+  </div>
+
+  <!-- 並び替え（常時表示） -->
+  <div>
+    <span>並び替え：</span>
+    <label><input type="radio" name="sortKey" value="ki" checked> 期順</label>
+    <label><input type="radio" name="sortKey" value="nendo"> 年度順</label>
+    <label><input type="radio" name="sortKey" value="age"> 年齢順</label>
+
+    <label><input type="radio" name="sortOrder" value="asc" checked> 昇順</label>
+    <label><input type="radio" name="sortOrder" value="desc"> 降順</label>
+  </div>
+
+</section>
+
+<table>
+  <thead></thead>
+    <tbody></tbody>
+</table>
+
+<div class="free">
+  <h3>自由欄</h3>
+  <p>補足情報など自由に書き込む。</p>
+      </div>
+
+  </main>
+  <footer>フッター</footer>
+
+<script>
+   
+document.addEventListener("DOMContentLoaded", () => {
+  const tableHead = document.querySelector("table thead");
+  const tableBody = document.querySelector("table tbody");
+
+  let data = [];
+
+  // CSV読み込み
+  fetch("rookie.csv")
+    .then(response => response.text())
+    .then(csvText => {
+      const rows = csvText.trim().split("\n").map(row => row.split(","));
+      const headers = rows.shift(); // 先頭行（ヘッダー）は使わないので削除
+
+      data = rows.map(row => {
+        return {
+          "期": row[0],
+          "年度": row[1],
+          "優勝者": row[2],
+          "勝敗": row[3],
+          "準優勝者": row[4],
+          "記念対局の勝敗": row[5],
+          "記念対局の相手": row[6],
+          "生年月日": row[7],
+          "優勝日": row[8],
+          "優勝年齢": row[9],
+          "日数換算": Number(row[10])
+        };
+      });
+
+      renderTable();
+    });
+
+  // 検索条件の取得
+  function getConditions() {
+    const viewMode = document.querySelector("input[name='viewMode']:checked").value;
+    const sortKey = document.querySelector("input[name='sortKey']:checked").value;
+    const sortOrder = document.querySelector("input[name='sortOrder']:checked").value;
+    const yearRange = Number(document.getElementById("yearRange").value) || null; // 未入力ならnull
+    return { viewMode, sortKey, sortOrder, yearRange };
+  }
+
+  // 描画処理
+  function renderTable() {
+    const { viewMode, sortKey, sortOrder, yearRange } = getConditions();
+    const currentYear = new Date().getFullYear();
+
+    // フィルタ処理（年度範囲）
+    let filtered = data;
+    if (yearRange) {
+      filtered = data.filter(row => Number(row["年度"]) >= currentYear - (yearRange - 1));
+    }
+
+    // ソート
+    filtered.sort((a, b) => {
+      let valA = a[sortKey === "age" ? "日数換算" : sortKey];
+      let valB = b[sortKey === "age" ? "日数換算" : sortKey];
+
+      if (sortKey !== "age") {
+        valA = isNaN(valA) ? valA : Number(valA);
+        valB = isNaN(valB) ? valB : Number(valB);
+      }
+
+      if (sortOrder === "asc") return valA > valB ? 1 : -1;
+      else return valA < valB ? 1 : -1;
+    });
+
+    // ヘッダー生成（モード依存）
+    let headers = ["期", "年度", "優勝者"];
+    if (viewMode === "final") {
+      headers.push("準優勝者", "勝敗");
+    } else if (viewMode === "memorial") {
+      headers.push("記念対局の相手", "記念対局の勝敗");
+    } else if (viewMode === "age") {
+      headers.push("優勝年齢");
+    }
+
+    tableHead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
+
+    // ボディ生成
+    tableBody.innerHTML = filtered.map(row => {
+      let cells = [`<td>${row["期"]}</td>`, `<td>${row["年度"]}</td>`, `<td>${row["優勝者"]}</td>`];
+      if (viewMode === "final") {
+        cells.push(`<td>${row["準優勝者"]}</td>`, `<td>${row["勝敗"]}</td>`);
+      } else if (viewMode === "memorial") {
+        cells.push(`<td>${row["記念対局の相手"]}</td>`, `<td>${row["記念対局の勝敗"]}</td>`);
+      } else if (viewMode === "age") {
+        cells.push(`<td>${row["優勝年齢"]}</td>`);
+      }
+      return `<tr>${cells.join("")}</tr>`;
+    }).join("");
+  }
+
+  // UIイベント
+  document.querySelectorAll("input[name='viewMode'], input[name='sortKey'], input[name='sortOrder']")
+    .forEach(el => el.addEventListener("change", renderTable));
+
+  document.getElementById("applyRange").addEventListener("click", renderTable);
+});
+</script>
+
+</body>
+</html>
+
