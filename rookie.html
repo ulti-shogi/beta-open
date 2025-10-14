@@ -32,8 +32,7 @@
   <!-- 並び替え（常時表示） -->
   <div>
     <span>並び替え：</span>
-    <label><input type="radio" name="sortKey" value="ki" checked> 期順</label>
-    <label><input type="radio" name="sortKey" value="nendo"> 年度順</label>
+    <label><input type="radio" name="sortKey" value="nendo" checked> 年度順</label>
     <label><input type="radio" name="sortKey" value="age"> 年齢順</label>
 
     <label><input type="radio" name="sortOrder" value="asc" checked> 昇順</label>
@@ -62,7 +61,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // sortKey(ラジオ値) → CSV実列名の対応
   const SORT_MAP = {
-    ki: "期",
     nendo: "年度",
     age: "日数換算"
   };
