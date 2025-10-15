@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>将棋の殿堂</title>
+    <link rel="stylesheet" href="style.css?v=2025">
+</head>
+<body>
+<header>
+<p><a href="https://ulti-shogi.github.io/beta-open/index.html">TOPページに戻る</a></>
+</header>
+  <main>
+<section>
+  <label>
+    <select>
+      <option value="三番勝負">歴代三番勝負</option>
+      <option value="記念対局">新人王記念対局</option>
+    </select>
+  </label>
+
+  <div>
+    <label><input type="radio" name="order" value="new" checked> 新しい順</label>
+    <label><input type="radio" name="order" value="old"> 古い順</label>
+  </div>
+
+  <label>
+    表示件数：
+    <input type="number" min="1" value="20">
+  </label>
+</section>
+
+<table>
+  <thead></thead>
+    <tbody></tbody>
+</table>
+
+<div class="free">
+  <h3>自由欄</h3>
+  <p>補足情報など自由に書き込む。</p>
+      </div>
+
+  </main>
+  <footer>フッター</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  let csvData = [];
+
+  // CSV読み込み
+  fetch("akahata.csv")
+    .then(response => response.text())
+    .then(text => {
+      const rows = text.trim().split("\n").map(row => row.split(","));
+      const headers = rows[0];
+      csvData = rows.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = r[i]);
+        return obj;
+      });
+      drawTable();
+    });
+
+  // UI変更イベント
+  document.querySelector("select").addEventListener("change", drawTable);
+  document.querySelectorAll("input[name='order']").forEach(r => r.addEventListener("change", drawTable));
+  document.querySelector("input[type='number']").addEventListener("input", drawTable);
+
+  // 表示更新
+  function drawTable() {
+    const mode = document.querySelector("select").value;
+    const order = document.querySelector("input[name='order']:checked").value;
+    const limit = parseInt(document.querySelector("input[type='number']").value, 10);
+
+    let data = csvData.filter(row => {
+      if (mode === "三番勝負") {
+        return row["score"];        // score がある行だけ
+      } else {
+        return row["result"];       // result がある行だけ
+      }
+    });
+
+    // 並び替え
+    data.sort((a, b) => {
+      const ay = parseInt(a["years"]);
+      const by = parseInt(b["years"]);
+      return order === "new" ? by - ay : ay - by;
+    });
+
+    // 件数制限
+    data = data.slice(0, limit);
+
+    // thead生成
+    const thead = document.querySelector("thead");
+    if (mode === "三番勝負") {
+      thead.innerHTML = "<tr><th>期</th><th>年度</th><th>新人王</th><th>勝敗</th><th>準優勝</th></tr>";
+    } else {
+      thead.innerHTML = "<tr><th>期</th><th>年度</th><th>新人王</th><th>結果</th><th>保持者</th></tr>";
+    }
+
+    // tbody生成
+    const tbody = document.querySelector("tbody");
+    tbody.innerHTML = data.map(row => {
+      if (mode === "三番勝負") {
+        return `<tr>
+          <td>${row["period"]}</td>
+          <td>${row["years"]}</td>
+          <td>${row["winner"]}</td>
+          <td>${row["score"]}</td>
+          <td>${row["second"]}</td>
+        </tr>`;
+      } else {
+        return `<tr>
+          <td>${row["period"]}</td>
+          <td>${row["years"]}</td>
+          <td>${row["winner"]}</td>
+          <td>${row["result"]}</td>
+          <td>${row["champion"]}</td>
+        </tr>`;
+      }
+    }).join("");
+  }
+});
+</script>
+</body>
+</html>
+
