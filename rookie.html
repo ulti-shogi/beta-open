@@ -11,36 +11,41 @@
 <p><a href="https://ulti-shogi.github.io/beta-open/index.html">TOPページに戻る</a></>
 </header>
   <main>
-  <section>
+<section>
 
-  <!-- 表示モード切替（仮文言） -->
+  <!-- 表示モード（セレクト） -->
   <div>
-    <label><input type="radio" name="viewMode" value="final" checked> 決勝結果</label>
-    <label><input type="radio" name="viewMode" value="memorial"> 記念対局</label>
-    <label><input type="radio" name="viewMode" value="age"> 年齢</label>
+    <label>表示：
+      <select id="viewMode">
+        <option value="">表示するものを選んでください</option>
+        <option value="final">決勝三番勝負の結果一覧</option>
+        <option value="memorial">記念対局一覧</option>
+        <option value="age">年齢順一覧</option>
+      </select>
+    </label>
   </div>
 
-  <!-- 表示範囲（年数指定） -->
+  <!-- 件数フィルタ（上位◯件） -->
   <div>
-    <label>直近
-      <input type="number" id="yearRange" min="1" placeholder="7">
-      年
+    <label>上位
+      <input type="number" id="yearRange" min="1" placeholder="10">
+      件
     </label>
     <button id="applyRange">表示</button>
   </div>
 
-  <!-- 並び替え（常時表示） -->
+  <!-- 並び替え -->
   <div>
     <span>並び替え：</span>
     <label><input type="radio" name="sortKey" value="nendo" checked> 年度順</label>
     <label><input type="radio" name="sortKey" value="age"> 年齢順</label>
 
-    <label><input type="radio" name="sortOrder" value="asc" checked> 昇順</label>
-    <label><input type="radio" name="sortOrder" value="desc"> 降順</label>
+    <label><input type="radio" name="sortOrder" value="asc"> 昇順</label>
+    <label><input type="radio" name="sortOrder" value="desc" checked> 降順</label>
   </div>
 
 </section>
-
+      
 <table>
   <thead></thead>
     <tbody></tbody>
@@ -58,35 +63,27 @@
 document.addEventListener("DOMContentLoaded", () => {
   const tableHead = document.querySelector("table thead");
   const tableBody = document.querySelector("table tbody");
+  const viewModeSelect = document.getElementById("viewMode");
 
-  // 英数字列名 → 日本語表示ラベル
   const LABELS = {
-    period: "期",
-    years: "年度",
-    winner: "優勝者",
-    score: "勝敗",
-    "runner-up": "準優勝",
-    result: "結果",
-    champion: "保持者",
-    birth: "生年月日",
-    victory: "優勝日",
-    age: "年齢",
-    days: "日数換算",
+    period: "期", years: "年度", winner: "優勝者", score: "勝敗",
+    "runner-up": "準優勝", result: "結果", champion: "保持者",
+    birth: "生年月日", victory: "優勝日", age: "年齢", days: "日数換算",
     ranking: "順位"
   };
 
   let data = [];
+  let initialRendered = false;
 
-  // CSV読み込み
   fetch("rookie.csv")
     .then(res => res.text())
     .then(csvText => {
       const rows = csvText.trim().split("\n").map(r => r.split(","));
-      const headers = rows.shift(); // ヘッダーは読み捨て
+      rows.shift();
 
       data = rows.map(row => ({
         period: row[0],
-        years: row[1],
+        years: Number(row[1]),
         winner: row[2],
         score: row[3],
         "runner-up": row[4],
@@ -103,24 +100,46 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   function getConditions() {
-    const viewMode = document.querySelector("input[name='viewMode']:checked").value;
-    const sortKey = document.querySelector("input[name='sortKey']:checked").value; // nendo / age
-    const sortOrder = document.querySelector("input[name='sortOrder']:checked").value; // asc / desc
-    const limit = Number(document.getElementById("yearRange").value) || null; // 件数フィルタ
+    const viewMode = viewModeSelect.value;
+    const sortKey = document.querySelector("input[name='sortKey']:checked").value;
+    const sortOrder = document.querySelector("input[name='sortOrder']:checked").value;
+    const limit = Number(document.getElementById("yearRange").value) || null;
     return { viewMode, sortKey, sortOrder, limit };
   }
 
-  function normalize(val) {
-    const n = Number(val);
-    return Number.isNaN(n) ? val : n;
+  function normalize(v) {
+    const n = Number(v);
+    return Number.isNaN(n) ? v : n;
   }
 
   function renderTable() {
     const { viewMode, sortKey, sortOrder, limit } = getConditions();
+    const field = sortKey === "age" ? "days" : "years";
 
-    const field = sortKey === "age" ? "days" : "years"; // 年度 or 年齢(=days)
+    let filtered = data.slice();
 
-    let sorted = data.slice().sort((a, b) => {
+    // ✅ 初期表示＝「決勝モード + 直近10年」
+    if (!initialRendered) {
+      const latest = Math.max(...data.map(d => d.years));
+      filtered = filtered.filter(row => row["years"] >= latest - 9);
+      viewModeSelect.value = ""; // 選ばれてない状態のまま表示される
+      document.querySelector("input[value='nendo']").checked = true;
+      document.querySelector("input[value='desc']").checked = true;
+      initialRendered = true;
+    } else {
+      // ✅ セレクト選択後は全件表示
+      if (viewMode === "final") {
+        filtered = data.slice();
+      } else if (viewMode === "memorial") {
+        filtered = data.slice();
+      } else if (viewMode === "age") {
+        filtered = data.slice();
+      } else {
+        filtered = [];
+      }
+    }
+
+    let sorted = filtered.sort((a, b) => {
       const A = normalize(a[field]);
       const B = normalize(b[field]);
       if (A < B) return sortOrder === "asc" ? -1 : 1;
@@ -131,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (limit) sorted = sorted.slice(0, limit);
 
     let headers = ["period", "years", "winner"];
-    if (viewMode === "final") {
+    if (viewMode === "final" || (!initialRendered && viewMode === "")) {
       headers.push("score", "runner-up");
     } else if (viewMode === "memorial") {
       headers.push("result", "champion");
@@ -139,16 +158,14 @@ document.addEventListener("DOMContentLoaded", () => {
       headers.push("age", "ranking");
     }
 
-    tableHead.innerHTML = `<tr>${headers.map(key => `<th>${LABELS[key]}</th>`).join("")}</tr>`;
-
+    tableHead.innerHTML = `<tr>${headers.map(k => `<th>${LABELS[k]}</th>`).join("")}</tr>`;
     tableBody.innerHTML = sorted.map(row => {
-      return `<tr>${headers.map(key => `<td>${row[key] || ""}</td>`).join("")}</tr>`;
+      return `<tr>${headers.map(k => `<td>${row[k] || ""}</td>`).join("")}</tr>`;
     }).join("");
   }
 
-  document.querySelectorAll("input[name='viewMode'], input[name='sortKey'], input[name='sortOrder']")
-    .forEach(el => el.addEventListener("change", renderTable));
-
+  viewModeSelect.addEventListener("change", renderTable);
+  document.querySelectorAll("input[name='sortKey'], input[name='sortOrder']").forEach(el => el.addEventListener("change", renderTable));
   document.getElementById("applyRange").addEventListener("click", renderTable);
 });
 </script>
