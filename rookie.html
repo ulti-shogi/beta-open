@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251016-a">
+    <link rel="stylesheet" href="style.css?v=20251016-b">
 </head>
 <body>
 <header>
@@ -61,6 +61,17 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  const tableHead = document.querySelector("table thead");
+  const tableBody = document.querySelector("table tbody");
+  const viewModeSelect = document.getElementById("viewMode");
+
+  const LABELS = {
+    period: "期", years: "年度", winner: "優勝者", score: "勝敗",
+    "runner-up": "準優勝", result: "結果", champion: "保持者",
+    birth: "生年月日", victory: "優勝日", age: "年齢", days: "日数換算",
+    ranking: "順位"
+  };
+
   let data = [];
   let initialRendered = false;
 
@@ -88,78 +99,76 @@ document.addEventListener("DOMContentLoaded", () => {
       renderTable();
     });
 
-  const viewModeSelect = document.querySelector("select[name='viewMode']");
-  const sortFieldRadios = document.querySelectorAll("input[name='sortField']");
-  const sortDirRadios = document.querySelectorAll("input[name='sortDir']");
-  const countInput = document.querySelector("input[name='count']");
-  const tableBody = document.querySelector("#result tbody");
-  const tableHead = document.querySelector("#result thead");
+  function getConditions() {
+    const viewMode = viewModeSelect.value;
+    const sortKey = document.querySelector("input[name='sortKey']:checked").value;
+    const sortOrder = document.querySelector("input[name='sortOrder']:checked").value;
+    const limit = Number(document.getElementById("yearRange").value) || null;
+    return { viewMode, sortKey, sortOrder, limit };
+  }
+
+  function normalize(v) {
+    const n = Number(v);
+    return Number.isNaN(n) ? v : n;
+  }
 
   function renderTable() {
-    let filtered = [...data];
-    let viewMode = viewModeSelect.value;
-    let sortField = document.querySelector("input[name='sortField']:checked").value;
-    let sortDir = document.querySelector("input[name='sortDir']:checked").value;
-    let count = Number(countInput.value);
+    const { viewMode, sortKey, sortOrder, limit } = getConditions();
+    const field = sortKey === "age" ? "days" : "years";
 
-    // ✅ 初期表示は強制的に「決勝モード + 直近10年 + 5列表示」
+    let filtered = data.slice();
+
+    // ✅ 初期表示＝「決勝モード + 直近10年」
     if (!initialRendered) {
       const latest = Math.max(...data.map(d => d.years));
       filtered = filtered.filter(row => row["years"] >= latest - 9);
-      viewMode = "final";  // ← 強制決勝モード
-      viewModeSelect.value = ""; // 視覚上は未選択のまま
-      sortField = "nendo";
-      sortDir = "desc";
+      viewModeSelect.value = ""; // 選ばれてない状態のまま表示される
+      document.querySelector("input[value='nendo']").checked = true;
+      document.querySelector("input[value='desc']").checked = true;
       initialRendered = true;
-    }
-
-    // ✅ 並び替え
-    filtered.sort((a, b) => {
-      let vA, vB;
-      if (sortField === "nendo") { vA = a.years; vB = b.years; }
-      else if (sortField === "age") { vA = a.days; vB = b.days; }
-      if (vA < vB) return sortDir === "asc" ? -1 : 1;
-      if (vA > vB) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    if (count > 0) {
-      filtered = filtered.slice(0, count);
-    }
-
-    // ✅ 列構成（初期表示中は無条件で5列固定）
-    let headers = ["period", "years", "winner", "score", "runner-up"];
-
-    // ✅ セレクトで解放された後のみ通常判定に戻す
-    if (initialRendered && viewMode !== "" && viewMode !== "final") {
-      headers = ["period", "years", "winner"];
-      if (viewMode === "memorial") {
-        headers.push("result", "champion");
+    } else {
+      // ✅ セレクト選択後は全件表示
+      if (viewMode === "final") {
+        filtered = data.slice();
+      } else if (viewMode === "memorial") {
+        filtered = data.slice();
       } else if (viewMode === "age") {
-        headers.push("age", "ranking");
+        filtered = data.slice();
+      } else {
+        filtered = [];
       }
     }
 
-    const LABELS = {
-      period: "期", years: "年度", winner: "優勝者", score: "勝敗",
-      "runner-up": "準優勝", result: "結果", champion: "保持者",
-      birth: "生年月日", victory: "優勝日", age: "年齢", days: "日数換算",
-      ranking: "順位"
-    };
+    let sorted = filtered.sort((a, b) => {
+      const A = normalize(a[field]);
+      const B = normalize(b[field]);
+      if (A < B) return sortOrder === "asc" ? -1 : 1;
+      if (A > B) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    if (limit) sorted = sorted.slice(0, limit);
+
+    let headers = ["period", "years", "winner"];
+    if (viewMode === "final" || (!initialRendered && viewMode === "")) {
+      headers.push("score", "runner-up");
+    } else if (viewMode === "memorial") {
+      headers.push("result", "champion");
+    } else if (viewMode === "age") {
+      headers.push("age", "ranking");
+    }
 
     tableHead.innerHTML = `<tr>${headers.map(k => `<th>${LABELS[k]}</th>`).join("")}</tr>`;
-    tableBody.innerHTML = filtered.map(row => `
-      <tr>${headers.map(k => `<td>${row[k] || ""}</td>`).join("")}</tr>
-    `).join("");
+    tableBody.innerHTML = sorted.map(row => {
+      return `<tr>${headers.map(k => `<td>${row[k] || ""}</td>`).join("")}</tr>`;
+    }).join("");
   }
 
   viewModeSelect.addEventListener("change", renderTable);
-  sortFieldRadios.forEach(r => r.addEventListener("change", renderTable));
-  sortDirRadios.forEach(r => r.addEventListener("change", renderTable));
-  countInput.addEventListener("input", renderTable);
+  document.querySelectorAll("input[name='sortKey'], input[name='sortOrder']").forEach(el => el.addEventListener("change", renderTable));
+  document.getElementById("applyRange").addEventListener("click", renderTable);
 });
 </script>
 
 </body>
 </html>
-
