@@ -1,0 +1,197 @@
+ごめん。ローカル（file://）でも確実に動く超ミニ版を用意したよ。まずはこれで「動く」体験を先に取ろう。音は一旦オフ（無音）にして、タイマー周りだけ極力シンプル化してある。
+
+clock-simple.html（コピペ保存→ダブルクリックでOK）
+
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>将棋 対局時計（超シンプル・秒読み対応）</title>
+<style>
+  body{margin:0;background:#0f172a;color:#e5e7eb;font-family:system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:16px;display:grid;gap:12px}
+  h1{margin:0 0 6px;font-size:18px;color:#e5e7eb}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .card{background:#0b1222;border:1px solid #1f2937;border-radius:12px;padding:12px}
+  .time{font:700 48px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace;text-align:left}
+  .label{color:#94a3b8;font-size:12px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  button,input{border:0;border-radius:10px;background:#1f2937;color:#e5e7eb;padding:10px 14px;font-size:14px}
+  .primary{background:#2563eb} .ghost{background:#334155} .danger{background:#dc2626} .ok{background:#16a34a}
+  .current{outline:2px solid #4ade80}
+  .num{width:100%;text-align:center;background:#0a1426;border:1px solid #1e293b}
+</style>
+<body>
+<div class="wrap">
+  <h1>将棋 対局時計（超シンプル・ローカルOK）</h1>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <div class="label">先手</div>
+        <div id="p0" class="time">10:00</div>
+        <div class="label" id="s0">main</div>
+      </div>
+      <div>
+        <div class="label">後手</div>
+        <div id="p1" class="time">10:00</div>
+        <div class="label" id="s1">main</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <div class="label">メイン持ち時間（分）</div>
+        <input id="mainMin" type="number" class="num" value="10" min="0" max="600">
+      </div>
+      <div>
+        <div class="label">秒読み（秒/手）</div>
+        <input id="byoSec" type="number" class="num" value="30" min="0" max="120">
+      </div>
+    </div>
+    <div class="controls">
+      <button id="apply" class="primary">設定を反映</button>
+      <button id="start" class="ok">開始 / 再開（Enter）</button>
+      <button id="pause" class="ghost">一時停止</button>
+      <button id="switch" class="primary">手番交代（Space）</button>
+      <button id="reset" class="danger">リセット</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const elP = [document.getElementById('p0'), document.getElementById('p1')];
+  const elS = [document.getElementById('s0'), document.getElementById('s1')];
+  const mainMin = document.getElementById('mainMin');
+  const byoSec  = document.getElementById('byoSec');
+  const apply   = document.getElementById('apply');
+  const startB  = document.getElementById('start');
+  const pauseB  = document.getElementById('pause');
+  const switchB = document.getElementById('switch');
+  const resetB  = document.getElementById('reset');
+
+  let state, timer = null, last = 0;
+
+  function fmt(ms){
+    if(ms<0) ms=0;
+    const s = Math.floor(ms/1000);
+    const m = Math.floor(s/60);
+    const ss = String(s%60).padStart(2,'0');
+    const mm = String(m).padStart(2,'0');
+    return `${mm}:${ss}`;
+  }
+
+  function applySettings(){
+    const main = Math.max(0, Number(mainMin.value||0))*60*1000;
+    const byo  = Math.max(0, Number(byoSec.value||0))*1000;
+    state = {
+      cur: 0, running: false,
+      p: [
+        { main, byo, remMain: main, remByo: byo, inByo: byo===0 ? false : false },
+        { main, byo, remMain: main, remByo: byo, inByo: byo===0 ? false : false },
+      ],
+    };
+    updateUI();
+  }
+
+  function updateUI(){
+    for(let i=0;i<2;i++){
+      const p = state.p[i];
+      elP[i].textContent = fmt(p.inByo ? p.remByo : p.remMain);
+      elS[i].textContent = p.inByo ? 'byo' : 'main';
+      elP[i].parentElement.classList.toggle('current', state.running && state.cur===i);
+    }
+  }
+
+  function tick(){
+    const now = performance.now();
+    const dt = now - last; last = now;
+    const p = state.p[state.cur];
+
+    if(!p.inByo){
+      p.remMain -= dt;
+      if(p.remMain <= 0){
+        p.remMain = 0;
+        if(p.byo > 0){ p.inByo = true; p.remByo = p.byo; }
+        else { pause(); alert((state.cur? '後手':'先手')+' の持ち時間切れ'); return; }
+      }
+    } else {
+      p.remByo -= dt;
+      if(p.remByo <= 0){
+        p.remByo = 0; pause();
+        alert((state.cur? '後手':'先手')+' の秒読み切れ');
+        return;
+      }
+    }
+    updateUI();
+  }
+
+  function start(){
+    if(state.running) return;
+    state.running = true; last = performance.now();
+    timer = setInterval(tick, 100);
+    updateUI();
+  }
+
+  function pause(){
+    state.running = false;
+    if(timer){ clearInterval(timer); timer=null; }
+    updateUI();
+  }
+
+  function switchTurn(){
+    if(!state.running) return;
+    const next = state.cur ^ 1;
+    const np = state.p[next];
+    if(np.byo > 0) np.remByo = np.byo; // 相手手番の秒読みをリフレッシュ
+    state.cur = next;
+    updateUI();
+  }
+
+  function reset(){ pause(); applySettings(); }
+
+  // events
+  apply.addEventListener('click', applySettings);
+  startB.addEventListener('click', start);
+  pauseB.addEventListener('click', pause);
+  switchB.addEventListener('click', switchTurn);
+  resetB.addEventListener('click', reset);
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.code==='Space'){ e.preventDefault(); switchTurn(); }
+    if(e.code==='Enter'){ e.preventDefault(); state.running ? pause() : start(); }
+  });
+
+  // init
+  applySettings();
+})();
+</script>
+</body>
+</html>
+
+使い方（確認フロー）
+
+1. 上のコードを clock-simple.html として保存
+
+
+2. そのファイルをダブルクリックで開く
+
+
+3. 「開始 / 再開」を押す → 先手のタイマーが動く
+
+
+4. スペースで手番交代 → 後手のタイマーが動く
+
+
+5. 一時停止（Enterでも可）、リセット
+
+
+
+これで動いたら、元の派手版に「音」や装飾を少しずつ戻していこう。
+（音はブラウザの“ユーザー操作後でないと再生できない”制限が絡むので、まずは無音でOKにしてる）
+
+もしこれでも動かないなら、ブラウザの種類（Chrome/Safari/Edge）を教えて。
+そのブラウザでローカル実行に強い書き方に差し替える。
