@@ -1,182 +1,195 @@
 <!doctype html>
 <html lang="ja">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>将棋 対局時計（秒読みつき・単一HTML）</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>将棋 対局時計（安全版：音はオプション）</title>
 <style>
-  :root{
-    --bg:#0f172a; --fg:#e5e7eb; --muted:#94a3b8; --acc:#4ade80; --warn:#f87171; --btn:#1f2937; --btn2:#334155;
-  }
-  html,body{height:100%;}
-  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP",sans-serif;}
-  .wrap{max-width:900px;margin:0 auto;padding:16px;display:grid;gap:12px}
-  h1{font-size:20px;margin:0 0 4px}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .card{background:#0b1222;border:1px solid #1f2937;border-radius:14px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
-  .clock{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
-  .time{font-variant-numeric:tabular-nums;letter-spacing:1px;font-size:56px;line-height:1.1;font-weight:700}
-  .label{color:var(--muted);font-size:13px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap}
-  button,select,input{appearance:none;border:none;border-radius:12px;padding:10px 14px;background:var(--btn);color:var(--fg);font-size:15px}
-  button:hover{filter:brightness(1.08)}
-  button:active{transform:translateY(1px)}
-  .primary{background:#2563eb}
-  .danger{background:#dc2626}
-  .ok{background:#16a34a}
-  .ghost{background:var(--btn2)}
-  .big{font-size:18px;padding:12px 16px}
-  .current{outline:2px solid var(--acc);}
-  .footer{color:var(--muted);font-size:12px;text-align:center;margin-top:6px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  body{margin:0;background:#0f172a;color:#e5e7eb;font-family:system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:16px;display:grid;gap:12px}
+  h1{margin:0 0 6px;font-size:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .card{background:#0b1222;border:1px solid #1f2937;border-radius:12px;padding:12px}
+  .time{font:700 48px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace}
+  .label{color:#94a3b8;font-size:12px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  button,input{border:0;border-radius:10px;background:#1f2937;color:#e5e7eb;padding:10px 14px;font-size:14px}
+  .primary{background:#2563eb} .ghost{background:#334155} .danger{background:#dc2626} .ok{background:#16a34a}
+  .current{outline:2px solid #4ade80}
   .num{width:100%;text-align:center;background:#0a1426;border:1px solid #1e293b}
-  @media (max-width:720px){.row{grid-template-columns:1fr} .time{font-size:44px}}
 </style>
-</head>
 <body>
 <div class="wrap">
-  <div>
-    <h1>将棋 対局時計（秒読みつき）</h1>
-    <div class="label">データ収集一切なし・この1ファイルだけで動作。メイン持ち時間と秒読み（1手ごと）を設定して使えます。</div>
-  </div>
+  <h1>将棋 対局時計（安全版：音はオプション）</h1>
 
   <div class="card">
-    <div class="row">
+    <div class="grid">
       <div>
-        <div class="label">先手（Black）</div>
-        <div class="clock" id="p0">
-          <div class="time" id="t0">00:00</div>
-          <div class="label" id="s0">main</div>
-        </div>
+        <div class="label">先手</div>
+        <div id="p0" class="time">10:00</div>
+        <div class="label" id="s0">main</div>
       </div>
       <div>
-        <div class="label">後手（White）</div>
-        <div class="clock" id="p1">
-          <div class="time" id="t1">00:00</div>
-          <div class="label" id="s1">main</div>
-        </div>
+        <div class="label">後手</div>
+        <div id="p1" class="time">10:00</div>
+        <div class="label" id="s1">main</div>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="grid2">
+    <div class="grid">
       <div>
         <div class="label">メイン持ち時間（分）</div>
-        <input id="mainMin" class="num" type="number" min="0" max="600" value="10">
+        <input id="mainMin" type="number" class="num" value="10" min="0" max="600">
       </div>
       <div>
         <div class="label">秒読み（秒/手）</div>
-        <input id="byoSec" class="num" type="number" min="0" max="120" value="30">
+        <input id="byoSec" type="number" class="num" value="30" min="0" max="120">
       </div>
     </div>
-    <div class="controls" style="margin-top:10px">
+    <div class="controls">
       <button id="apply" class="primary">設定を反映</button>
-      <button id="start" class="ok big">開始 / 再開</button>
+      <button id="start" class="ok">開始 / 再開（Enter）</button>
       <button id="pause" class="ghost">一時停止</button>
-      <button id="switch" class="primary big">手番交代（スペース）</button>
+      <button id="switch" class="primary">手番交代（Space）</button>
       <button id="reset" class="danger">リセット</button>
       <label class="label" style="display:flex;align-items:center;gap:8px;margin-left:auto">
-        <input id="beep" type="checkbox" checked> ビープ音
+        <input id="beep" type="checkbox" checked> ビープ
       </label>
     </div>
   </div>
-
-  <div class="footer">操作: スペース=手番交代 / エンター=開始・一時停止</div>
 </div>
 
 <script>
-(function(){
-  const elT=[document.getElementById('t0'),document.getElementById('t1')];
-  const elS=[document.getElementById('s0'),document.getElementById('s1')];
-  const panels=[document.getElementById('p0'),document.getElementById('p1')];
-  const mainMin=document.getElementById('mainMin');
-  const byoSec=document.getElementById('byoSec');
-  const btnApply=document.getElementById('apply');
-  const btnStart=document.getElementById('start');
-  const btnPause=document.getElementById('pause');
-  const btnSwitch=document.getElementById('switch');
-  const btnReset=document.getElementById('reset');
-  const chkBeep=document.getElementById('beep');
+(() => {
+  const elP = [document.getElementById('p0'), document.getElementById('p1')];
+  const elS = [document.getElementById('s0'), document.getElementById('s1')];
+  const mainMin = document.getElementById('mainMin');
+  const byoSec  = document.getElementById('byoSec');
+  const apply   = document.getElementById('apply');
+  const startB  = document.getElementById('start');
+  const pauseB  = document.getElementById('pause');
+  const switchB = document.getElementById('switch');
+  const resetB  = document.getElementById('reset');
+  const chkBeep = document.getElementById('beep');
 
-  let state;
-  let timer=null; let last=0;
-  const ctx=new (window.AudioContext||window.webkitAudioContext||function(){return {resume(){},createOscillator(){return{connect(){},start(){},stop(){}}},createGain(){return{connect(){},gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}}}}})();
-
-  function beep(freq=880,ms=120){
-    if(!chkBeep.checked||!ctx.createOscillator) return;
-    const o=ctx.createOscillator(); const g=ctx.createGain();
-    o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination);
-    const t=ctx.currentTime; g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+ms/1000);
-    o.start(); o.stop(t+ms/1000);
+  // ===== 安全なビープ（音は“出ればラッキー”運用） =====
+  let ctx = null, audioReady = false;
+  function ensureAudio(){
+    if (audioReady) return true;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return false;
+    try {
+      ctx = ctx || new Ctx();
+      audioReady = !!ctx;
+    } catch(_) { return false; }
+    return audioReady;
   }
+  function beep(freq=880, ms=120){
+    if (!chkBeep.checked) return;
+    try{
+      if (!ensureAudio()) return;
+      if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(()=>{});
+      const o = ctx.createOscillator?.(); const g = ctx.createGain?.();
+      if (!o || !g || !ctx.destination || typeof ctx.currentTime !== 'number') return;
+      o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination);
+      const t = ctx.currentTime;
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.exponentialRampToValueAtTime(0.2, t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t+ms/1000);
+      o.start(); o.stop(t+ms/1000);
+    }catch(_){ /* 音が出なくても無視 */ }
+  }
+
+  // ===== タイマー本体 =====
+  let state, timer = null, last = 0;
 
   function fmt(ms){
     if(ms<0) ms=0;
-    const s=Math.floor(ms/1000); const m=Math.floor(s/60); const sec=s%60;
-    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    const s = Math.floor(ms/1000);
+    const m = Math.floor(s/60);
+    return `${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
   }
 
   function applySettings(){
-    const main=Number(mainMin.value||0)*60*1000;
-    const byo =Number(byoSec.value||0)*1000;
-    state={
-      cur:0, running:false,
-      p:[{main, byoyomi:byo, remMain:main, remByo:byo, inByo:false},{main, byoyomi:byo, remMain:main, remByo:byo, inByo:false}],
+    const main = Math.max(0, Number(mainMin.value||0))*60*1000;
+    const byo  = Math.max(0, Number(byoSec.value||0))*1000;
+    state = {
+      cur: 0, running: false,
+      p: [
+        { main, byo, remMain: main, remByo: byo, inByo: false },
+        { main, byo, remMain: main, remByo: byo, inByo: false },
+      ],
     };
     updateUI();
   }
 
   function updateUI(){
     for(let i=0;i<2;i++){
-      const p=state.p[i];
-      elT[i].textContent=fmt(p.inByo? p.remByo : p.remMain);
-      elS[i].textContent=p.inByo? 'byo' : 'main';
-      panels[i].classList.toggle('current', state.running && state.cur===i);
+      const p = state.p[i];
+      elP[i].textContent = fmt(p.inByo ? p.remByo : p.remMain);
+      elS[i].textContent = p.inByo ? 'byo' : 'main';
+      elP[i].parentElement.classList.toggle('current', state.running && state.cur===i);
     }
   }
 
   function tick(){
-    const now=performance.now();
-    const dt=now-last; last=now;
-    const p=state.p[state.cur];
+    const now = performance.now();
+    const dt = now - last; last = now;
+    const p = state.p[state.cur];
+
     if(!p.inByo){
-      p.remMain-=dt;
-      if(p.remMain<=0){ p.remMain=0; p.inByo=true; p.remByo=p.byoyomi; beep(660,120); }
+      p.remMain -= dt;
+      if(p.remMain <= 0){
+        p.remMain = 0;
+        if(p.byo > 0){ p.inByo = true; p.remByo = p.byo; beep(660,120); }
+        else { pause(); alert((state.cur? '後手':'先手')+' の持ち時間切れ'); return; }
+      }
     } else {
-      p.remByo-=dt;
-      if(p.remByo<=0){ p.remByo=0; beep(330,250); pause(); alert((state.cur? '後手':'先手')+' の持ち時間切れ'); return; }
+      p.remByo -= dt;
+      if(p.remByo <= 0){
+        p.remByo = 0; pause(); beep(330,200);
+        alert((state.cur? '後手':'先手')+' の秒読み切れ'); return;
+      }
     }
     updateUI();
   }
 
   function start(){
-    if(state.running) return; state.running=true; last=performance.now();
-    if(ctx.resume) ctx.resume();
-    timer=setInterval(tick, 100);
+    if(state.running) return;
+    ensureAudio(); // クリック時に初期化を試みる
+    state.running = true; last = performance.now();
+    timer = setInterval(tick, 100);
     updateUI();
   }
+
   function pause(){
-    state.running=false; if(timer){clearInterval(timer); timer=null;} updateUI();
+    state.running = false;
+    if(timer){ clearInterval(timer); timer=null; }
+    updateUI();
   }
+
   function switchTurn(){
-    // 手番交代：相手の byoyomi をリセット（メイン時間はそのまま）
-    const next=state.cur^1; const p=state.p[next];
-    if(p.inByo) p.remByo=p.byoyomi; // 秒読みをリフレッシュ
-    state.cur=next; beep(880,90); updateUI();
+    if(!state.running) return;
+    const next = state.cur ^ 1;
+    const np = state.p[next];
+    if(np.byo > 0) np.remByo = np.byo; // 相手手番の秒読みをリフレッシュ
+    state.cur = next; beep(880,90);
+    updateUI();
   }
-  function reset(){ applySettings(); pause(); }
+
+  function reset(){ pause(); applySettings(); }
 
   // events
-  btnApply.addEventListener('click', ()=>{applySettings();});
-  btnStart.addEventListener('click', ()=>{start();});
-  btnPause.addEventListener('click', ()=>{pause();});
-  btnSwitch.addEventListener('click', ()=>{if(state.running) switchTurn();});
-  btnReset.addEventListener('click', ()=>{reset();});
+  apply.addEventListener('click', applySettings);
+  startB.addEventListener('click', start);
+  pauseB.addEventListener('click', pause);
+  switchB.addEventListener('click', switchTurn);
+  resetB.addEventListener('click', reset);
 
   window.addEventListener('keydown', (e)=>{
-    if(e.code==='Space'){ e.preventDefault(); if(state.running) switchTurn(); }
-    if(e.code==='Enter'){ e.preventDefault(); state.running? pause(): start(); }
+    if(e.code==='Space'){ e.preventDefault(); switchTurn(); }
+    if(e.code==='Enter'){ e.preventDefault(); state.running ? pause() : start(); }
   });
 
   // init
@@ -185,23 +198,3 @@
 </script>
 </body>
 </html>
-
-
-いいよ、いまのモチベでも即ゴールできるやつを用意した。
-キャンバスに「秒読みつきの将棋対局時計（単一HTMLファイル）」を置いたから、そのままコピペして index.html としてアップすれば完成。データ集めゼロ、外部ライブラリなし、音も出せる。
-
-使い方（超シンプル）
-
-メイン持ち時間（分）、秒読み（秒/手）を入れて「設定を反映」
-
-「開始 / 再開」→対局開始
-
-手が進んだら「手番交代（スペース）」
-
-一時停止＝Enter（またはボタン）、リセットあり
-
-どっちかの時間が切れるとアラート＆ビープ
-
-
-もし色や文言だけ変えたい等があれば、そこだけ最小差分で直すよ。
-次に気力が出てきたら「見た目を和風に」「PWA化してオフライン対局時計に」みたいな拡張も足せるけど、**今はこれで“完成”**にしてOK。
