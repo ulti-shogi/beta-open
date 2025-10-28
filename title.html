@@ -318,17 +318,22 @@ document.addEventListener("DOMContentLoaded", () => {
   loadCSV("title-new.csv").then(data => {
     ALL = data;
 
-    // 対象セレクトをCSVから動的に（通算 + ユニーク棋戦）
-    const selects = section.querySelectorAll("select");
-    const targetSelect = selects[0];
+   // 対象セレクトをCSVから動的に（通算 + 固定順棋戦リスト）
+const selects = section.querySelectorAll("select");
+const targetSelect = selects[0];
 
-    const kisens = Array.from(
-      new Set(ALL.map(r => r["棋戦"]).filter(k => k && k !== "通算"))
-    );
+// 固定順（現行公式棋戦の標準順）
+const orderList = ["竜王戦","名人戦","叡王戦","王位戦","王座戦","棋聖戦","棋王戦","王将戦","十段戦","九段戦"];
 
-    targetSelect.innerHTML = ["通算", ...kisens]
-      .map(k => `<option value="${k}">${k}</option>`)
-      .join("");
+// CSVに存在する棋戦だけを採用
+const kisens = Array.from(new Set(ALL.map(r => r["棋戦"]).filter(k => k && k !== "通算")));
+
+// 固定順に従って整列（CSVに無い棋戦は自動で除外）
+const sortedKisens = orderList.filter(k => kisens.includes(k));
+
+targetSelect.innerHTML = ["通算", ...sortedKisens]
+  .map(k => `<option value="${k}">${k}</option>`)
+  .join("");
 
     // 初期表示：通算 × 指標=獲得 × 降順
     const sortSelect = selects[1];
