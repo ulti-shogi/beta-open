@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251101-a">
+    <link rel="stylesheet" href="style.css?v=20251101-b">
 </head>
 <body>
 <header>
@@ -32,24 +32,18 @@
 
 <script>
 // =======================================
-// profile.html 初期表示用
-// 原則10か条対応版
-// 1) sectionにUI（今回は最小）
-// 2) tableに結果
-// 3) CSVは列名で参照
-// 4) スマホ前提なので最初は5列だけ表示
-// 5) 後で列を増やせるようにtdはループで生成
+// profile.html 初期表示用（スマホ4列版）
+// 区分 / 棋士番号 / 棋士名 / 段位または称号
+// 段位または称号：称号があれば称号、なければ段位、どちらも無ければ空欄
 // =======================================
 
 const CSV_URL = 'profile.csv';
 
-// 初期表示で出す列（表示ラベルとキーを分けておく）
+// 初期表示で出す4列
 const INITIAL_COLUMNS = [
   { key: '区分', label: '区分' },
-  { key: '席次', label: '席次' },
   { key: '棋士番号', label: '棋士番号' },
   { key: '棋士名', label: '棋士名' },
-  // 段位または称号はCSVの列には無いので、後で作る
   { key: '__dan_or_title__', label: '段位/称号' }
 ];
 
@@ -57,6 +51,7 @@ fetch(CSV_URL)
   .then(res => res.text())
   .then(text => {
     const rows = parseCSV(text);
+    rows.sort((a, b) => Number(a['席次'] || 0) - Number(b['席次'] || 0));
     const enriched = rows.map(r => makeDanOrTitle(r));
     renderInitialTable(enriched);
   })
@@ -66,7 +61,6 @@ fetch(CSV_URL)
 
 // -------------------------------
 // CSVを配列にする（列名で参照）
-// ※ ダブルクォートなど複雑なCSVは想定しない
 // -------------------------------
 function parseCSV(csvText) {
   const lines = csvText.trim().split(/\r?\n/);
@@ -87,26 +81,24 @@ function parseCSV(csvText) {
 }
 
 // -------------------------------
-// 段位/称号を生成する
-// 称号があればそれを、なければ段位を、どちらも無ければ空欄
+// 段位/称号を生成
 // -------------------------------
 function makeDanOrTitle(row) {
   const title = (row['称号'] || '').trim();
   const dan = (row['段位'] || '').trim();
   const danOrTitle = title ? title : dan ? dan : '';
-  // 新しいキーを追加して返す
   return Object.assign({}, row, { '__dan_or_title__': danOrTitle });
 }
 
 // -------------------------------
-// 初期表示テーブルを描画する
+// 初期表示テーブル描画
 // -------------------------------
 function renderInitialTable(rows) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
   const tbody = table.querySelector('tbody');
 
-  // theadを作成
+  // thead
   thead.innerHTML = '';
   const trHead = document.createElement('tr');
   INITIAL_COLUMNS.forEach(col => {
@@ -116,7 +108,7 @@ function renderInitialTable(rows) {
   });
   thead.appendChild(trHead);
 
-  // tbodyを作成
+  // tbody
   tbody.innerHTML = '';
   rows.forEach(row => {
     const tr = document.createElement('tr');
