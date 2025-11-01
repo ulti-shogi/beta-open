@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251102-d">
+    <link rel="stylesheet" href="style.css?v=20251102-e">
 </head>
 <body>
 <header>
@@ -125,32 +125,48 @@ function parseCSV(csvText) {
 // 年齢の仕様：
 // ・没年月日があれば「享年」= 没 - 生
 // ・なければ「現在の年齢」= 今日 - 生
-// 表示は「◯歳」だけ（細かい月日は後回し）
+// 表示は「◯歳◯か月◯日」まで算出
 // ---------------------------------------
 function enrichRow(row) {
   const title = (row['称号'] || '').trim();
   const dan = (row['段位'] || '').trim();
   const danOrTitle = title ? title : dan ? dan : '';
 
-  // 生年月日
   const birth = toDateSafe(row['生年月日']);
-  // 没年月日
   const died = toDateSafe(row['没年月日']);
+  const endDate = died ? died : today;
 
   let ageDays = null;
   let ageDisplay = '';
 
   if (birth) {
-    // 没があるなら享年、なければ現在年齢
-    const endDate = died ? died : today;
     ageDays = diffDays(birth, endDate);
 
-    // 年齢を大ざっぱに年にする（365で割るだけ：細かいのは後回し）
-    if (ageDays !== null) {
-      const ageYears = Math.floor(ageDays / 365);
-      // 享年かどうかで文言を変えてもいいが、いったん「◯歳」で統一
-      ageDisplay = ageYears + '歳';
+    // 年・月・日の差分を細かく計算
+    const y1 = birth.getUTCFullYear();
+    const m1 = birth.getUTCMonth();
+    const d1 = birth.getUTCDate();
+
+    const y2 = endDate.getUTCFullYear();
+    const m2 = endDate.getUTCMonth();
+    const d2 = endDate.getUTCDate();
+
+    let year = y2 - y1;
+    let month = m2 - m1;
+    let day = d2 - d1;
+
+    if (day < 0) {
+      // 前の月の日数を借りる
+      const prevMonth = new Date(Date.UTC(y2, m2, 0));
+      day += prevMonth.getUTCDate();
+      month--;
     }
+    if (month < 0) {
+      month += 12;
+      year--;
+    }
+
+    ageDisplay = `${year}歳${month}か月${day}日`;
   }
 
   return Object.assign({}, row, {
