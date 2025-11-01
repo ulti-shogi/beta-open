@@ -42,14 +42,16 @@
 
 <script>
 // =======================================
-// profile.html 初期表示用（スマホ4列版）
-// 区分 / 棋士番号 / 棋士名 / 段位または称号
-// 段位または称号：称号があれば称号、なければ段位、どちらも無ければ空欄
+// profile.html 初期表示＋並べ替え（席次/棋士番号）版
+// 原則：
+// ・sectionの中にある <select> と <button> を順番で取る（id/classを勝手に付けない）
+// ・tableには最初は4列だけ表示
+// ・CSVは列名で参照する
 // =======================================
 
 const CSV_URL = 'profile.csv';
 
-// 初期表示で出す4列
+// 初期表示の4列
 const INITIAL_COLUMNS = [
   { key: '区分', label: '区分' },
   { key: '棋士番号', label: '棋士番号' },
@@ -57,21 +59,33 @@ const INITIAL_COLUMNS = [
   { key: '__dan_or_title__', label: '段位/称号' }
 ];
 
+// 読み込んだデータをここに保持しておく（毎回fetchしない）
+let profileData = [];
+
 fetch(CSV_URL)
   .then(res => res.text())
   .then(text => {
+    // 1) CSVを読み込んでオブジェクト配列に
     const rows = parseCSV(text);
-    rows.sort((a, b) => Number(a['席次'] || 0) - Number(b['席次'] || 0));
-    const enriched = rows.map(r => makeDanOrTitle(r));
-    renderInitialTable(enriched);
+
+    // 2) 段位/称号を作る
+    profileData = rows.map(r => makeDanOrTitle(r));
+
+    // 3) 初期表示は「席次の小さい順」
+    const sorted = sortData(profileData, 'sekiji');
+    renderTable(sorted);
+
+    // 4) UIイベントを設定
+    setupSortUI();
   })
   .catch(err => {
     console.error('CSVの読み込みに失敗しました', err);
   });
 
-// -------------------------------
-// CSVを配列にする（列名で参照）
-// -------------------------------
+
+// ---------------------------------------
+// CSVを配列に
+// ---------------------------------------
 function parseCSV(csvText) {
   const lines = csvText.trim().split(/\r?\n/);
   if (!lines.length) return [];
@@ -90,9 +104,10 @@ function parseCSV(csvText) {
   return data;
 }
 
-// -------------------------------
-// 段位/称号を生成
-// -------------------------------
+// ---------------------------------------
+// 段位/称号の生成
+// 「称号」があればそれを、「称号」が空で「段位」があればそれを表示用にする
+// ---------------------------------------
 function makeDanOrTitle(row) {
   const title = (row['称号'] || '').trim();
   const dan = (row['段位'] || '').trim();
@@ -100,10 +115,66 @@ function makeDanOrTitle(row) {
   return Object.assign({}, row, { '__dan_or_title__': danOrTitle });
 }
 
-// -------------------------------
-// 初期表示テーブル描画
-// -------------------------------
-function renderInitialTable(rows) {
+// ---------------------------------------
+// 並べ替えUIの設定
+// section内の 1個目の<select> と 1個目の<button> を拾う
+// ---------------------------------------
+function setupSortUI() {
+  const section = document.querySelector('section');
+  if (!section) return;
+
+  const sel = section.querySelector('select');
+  const btn = section.querySelector('button');
+
+  if (!sel || !btn) return;
+
+  btn.addEventListener('click', () => {
+    const mode = sel.value; // "sekiji" または "kishi-no"
+    const sorted = sortData(profileData, mode);
+    renderTable(sorted);
+  });
+}
+
+// ---------------------------------------
+// 並べ替え本体
+// mode: "sekiji" | "kishi-no"
+// どちらも数値として小さい順に並べる
+// 不正値は0扱いで末尾に寄せる
+// ---------------------------------------
+function sortData(data, mode) {
+  const copied = data.slice(); // 元データは壊さない
+
+  if (mode === 'kishi-no') {
+    // 棋士番号の小さい順
+    copied.sort((a, b) => {
+      const na = toNumberSafe(a['棋士番号']);
+      const nb = toNumberSafe(b['棋士番号']);
+      return na - nb;
+    });
+  } else {
+    // デフォルトは席次の小さい順
+    copied.sort((a, b) => {
+      const sa = toNumberSafe(a['席次']);
+      const sb = toNumberSafe(b['席次']);
+      return sa - sb;
+    });
+  }
+
+  return copied;
+}
+
+// 数値にできなければ大きい数にしておく（=末尾に押しやすくする）
+function toNumberSafe(v) {
+  const num = Number(v);
+  if (isNaN(num)) return 9999999;
+  return num;
+}
+
+// ---------------------------------------
+// テーブル描画
+// 4列だけをループで生成（ベタ打ちしない）
+// ---------------------------------------
+function renderTable(rows) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
   const tbody = table.querySelector('tbody');
@@ -122,11 +193,13 @@ function renderInitialTable(rows) {
   tbody.innerHTML = '';
   rows.forEach(row => {
     const tr = document.createElement('tr');
+
     INITIAL_COLUMNS.forEach(col => {
       const td = document.createElement('td');
       td.textContent = row[col.key] || '';
       tr.appendChild(td);
     });
+
     tbody.appendChild(tr);
   });
 }
