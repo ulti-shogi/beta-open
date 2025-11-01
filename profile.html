@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251102-c">
+    <link rel="stylesheet" href="style.css?v=20251102-d">
 </head>
 <body>
 <header>
@@ -192,13 +192,6 @@ function setupSortUI() {
   const sel = section.querySelector('select');
   const btn = section.querySelector('button');
   if (!sel || !btn) return;
-
-  // ★ ここで選択肢を追加
-  // （HTMLを直す代わりにJSで足す）
-  const optAge = document.createElement('option');
-  optAge.value = 'age';
-  optAge.textContent = '現在の年齢と享年';
-  sel.appendChild(optAge);
 
   btn.addEventListener('click', () => {
     const mode = sel.value; // "sekiji" | "kishi-no" | "age"
