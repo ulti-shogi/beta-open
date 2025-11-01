@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251101-b">
+    <link rel="stylesheet" href="style.css?v=20251102-b">
 </head>
 <body>
 <header>
@@ -13,7 +13,17 @@
   <main>
 <!-- ✅ 検索UIは後回しなので最小だけ -->
 <section>
-  <p>棋士プロフィール一覧（初期表示）</p>
+  <p>棋士プロフィール一覧（並べ替え）</p>
+
+  <!-- 並べ替え対象 -->
+  <label for="">並べ替え</label>
+  <select name="">
+    <option value="sekiji">席次の小さい順</option>
+    <option value="kishi-no">棋士番号の小さい順</option>
+  </select>
+
+  <!-- 実行ボタン -->
+  <p><button type="button">この順番で表示</button></p>
 </section>
 
 <!-- ✅ 初期表示テーブル（thead/tbodyだけ用意しておく） -->
