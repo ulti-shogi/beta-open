@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251102-b">
+    <link rel="stylesheet" href="style.css?v=20251102-c">
 </head>
 <body>
 <header>
@@ -20,6 +20,7 @@
   <select name="">
     <option value="sekiji">席次の小さい順</option>
     <option value="kishi-no">棋士番号の小さい順</option>
+    <option value="age">現在の年齢と享年</option>
   </select>
 
   <!-- 実行ボタン -->
@@ -42,16 +43,18 @@
 
 <script>
 // =======================================
-// profile.html 初期表示＋並べ替え（席次/棋士番号）版
-// 原則：
-// ・sectionの中にある <select> と <button> を順番で取る（id/classを勝手に付けない）
-// ・tableには最初は4列だけ表示
-// ・CSVは列名で参照する
+// profile.html 並べ替え＋「現在の年齢と享年」対応版
+// 今あるセレクトに ①席次 ②棋士番号 ③現在の年齢と享年 を足す
+// 選択肢が「現在の年齢と享年」のときだけ、表示カラムを
+//    区分 / 棋士名 / 年齢 / 生年月日
+// に切り替える
+// ※ id/class は付けない（sectionに1つずつしかない前提）
+// ※ CSV は列名で参照する
 // =======================================
 
 const CSV_URL = 'profile.csv';
 
-// 初期表示の4列
+// 初期表示（席次・棋士番号のとき）の4列
 const INITIAL_COLUMNS = [
   { key: '区分', label: '区分' },
   { key: '棋士番号', label: '棋士番号' },
@@ -59,23 +62,36 @@ const INITIAL_COLUMNS = [
   { key: '__dan_or_title__', label: '段位/称号' }
 ];
 
-// 読み込んだデータをここに保持しておく（毎回fetchしない）
+// 「現在の年齢と享年」を選んだときの4列
+const AGE_COLUMNS = [
+  { key: '区分', label: '区分' },
+  { key: '棋士名', label: '棋士名' },
+  { key: '__age_display__', label: '年齢' },
+  { key: '生年月日', label: '生年月日' }
+];
+
+// 読み込んだデータを保持
 let profileData = [];
+
+// 今日（年齢計算用）を固定
+const today = (function() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+})();
 
 fetch(CSV_URL)
   .then(res => res.text())
   .then(text => {
-    // 1) CSVを読み込んでオブジェクト配列に
     const rows = parseCSV(text);
 
-    // 2) 段位/称号を作る
-    profileData = rows.map(r => makeDanOrTitle(r));
+    // 段位/称号と、年齢系の派生値を付与
+    profileData = rows.map(r => enrichRow(r));
 
-    // 3) 初期表示は「席次の小さい順」
+    // 初期表示：席次の小さい順
     const sorted = sortData(profileData, 'sekiji');
-    renderTable(sorted);
+    renderTable(sorted, 'sekiji');
 
-    // 4) UIイベントを設定
+    // UIイベントをセット
     setupSortUI();
   })
   .catch(err => {
@@ -84,7 +100,7 @@ fetch(CSV_URL)
 
 
 // ---------------------------------------
-// CSVを配列に
+// CSV → オブジェクト配列
 // ---------------------------------------
 function parseCSV(csvText) {
   const lines = csvText.trim().split(/\r?\n/);
@@ -105,19 +121,69 @@ function parseCSV(csvText) {
 }
 
 // ---------------------------------------
-// 段位/称号の生成
-// 「称号」があればそれを、「称号」が空で「段位」があればそれを表示用にする
+// 行を拡張する：段位/称号 + 年齢(日数) + 表示用年齢文字列
+// 年齢の仕様：
+// ・没年月日があれば「享年」= 没 - 生
+// ・なければ「現在の年齢」= 今日 - 生
+// 表示は「◯歳」だけ（細かい月日は後回し）
 // ---------------------------------------
-function makeDanOrTitle(row) {
+function enrichRow(row) {
   const title = (row['称号'] || '').trim();
   const dan = (row['段位'] || '').trim();
   const danOrTitle = title ? title : dan ? dan : '';
-  return Object.assign({}, row, { '__dan_or_title__': danOrTitle });
+
+  // 生年月日
+  const birth = toDateSafe(row['生年月日']);
+  // 没年月日
+  const died = toDateSafe(row['没年月日']);
+
+  let ageDays = null;
+  let ageDisplay = '';
+
+  if (birth) {
+    // 没があるなら享年、なければ現在年齢
+    const endDate = died ? died : today;
+    ageDays = diffDays(birth, endDate);
+
+    // 年齢を大ざっぱに年にする（365で割るだけ：細かいのは後回し）
+    if (ageDays !== null) {
+      const ageYears = Math.floor(ageDays / 365);
+      // 享年かどうかで文言を変えてもいいが、いったん「◯歳」で統一
+      ageDisplay = ageYears + '歳';
+    }
+  }
+
+  return Object.assign({}, row, {
+    '__dan_or_title__': danOrTitle,
+    '__age_days__': ageDays,
+    '__age_display__': ageDisplay
+  });
 }
 
 // ---------------------------------------
-// 並べ替えUIの設定
-// section内の 1個目の<select> と 1個目の<button> を拾う
+// 安全な日付変換
+// ---------------------------------------
+function toDateSafe(str) {
+  if (!str) return null;
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  // UTC0時に固定
+  return new Date(Date.UTC(y, mo - 1, d));
+}
+
+// 日数差
+function diffDays(start, end) {
+  if (!start || !end) return null;
+  const ms = end.getTime() - start.getTime();
+  return Math.floor(ms / 86400000);
+}
+
+// ---------------------------------------
+// 並べ替えUIのセット
+// 既存の<select>に「現在の年齢と享年」を追加しておく
 // ---------------------------------------
 function setupSortUI() {
   const section = document.querySelector('section');
@@ -125,34 +191,50 @@ function setupSortUI() {
 
   const sel = section.querySelector('select');
   const btn = section.querySelector('button');
-
   if (!sel || !btn) return;
 
+  // ★ ここで選択肢を追加
+  // （HTMLを直す代わりにJSで足す）
+  const optAge = document.createElement('option');
+  optAge.value = 'age';
+  optAge.textContent = '現在の年齢と享年';
+  sel.appendChild(optAge);
+
   btn.addEventListener('click', () => {
-    const mode = sel.value; // "sekiji" または "kishi-no"
+    const mode = sel.value; // "sekiji" | "kishi-no" | "age"
     const sorted = sortData(profileData, mode);
-    renderTable(sorted);
+    renderTable(sorted, mode);
   });
 }
 
 // ---------------------------------------
-// 並べ替え本体
-// mode: "sekiji" | "kishi-no"
-// どちらも数値として小さい順に並べる
-// 不正値は0扱いで末尾に寄せる
+// 並べ替え
 // ---------------------------------------
 function sortData(data, mode) {
-  const copied = data.slice(); // 元データは壊さない
+  const copied = data.slice();
 
   if (mode === 'kishi-no') {
-    // 棋士番号の小さい順
     copied.sort((a, b) => {
       const na = toNumberSafe(a['棋士番号']);
       const nb = toNumberSafe(b['棋士番号']);
       return na - nb;
     });
+  } else if (mode === 'age') {
+    // 年齢（日数）の小さい順＝若い順
+    copied.sort((a, b) => {
+      const aa = a['__age_days__'];
+      const bb = b['__age_days__'];
+      const aNull = (aa === null || typeof aa === 'undefined');
+      const bNull = (bb === null || typeof bb === 'undefined');
+
+      if (aNull && bNull) return 0;
+      if (aNull) return 1;  // 年齢が出ない人は後ろ
+      if (bNull) return -1;
+
+      return aa - bb;
+    });
   } else {
-    // デフォルトは席次の小さい順
+    // デフォルト：席次の小さい順
     copied.sort((a, b) => {
       const sa = toNumberSafe(a['席次']);
       const sb = toNumberSafe(b['席次']);
@@ -163,7 +245,6 @@ function sortData(data, mode) {
   return copied;
 }
 
-// 数値にできなければ大きい数にしておく（=末尾に押しやすくする）
 function toNumberSafe(v) {
   const num = Number(v);
   if (isNaN(num)) return 9999999;
@@ -172,17 +253,20 @@ function toNumberSafe(v) {
 
 // ---------------------------------------
 // テーブル描画
-// 4列だけをループで生成（ベタ打ちしない）
+// mode によって表示する列セットを変える
 // ---------------------------------------
-function renderTable(rows) {
+function renderTable(rows, mode) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
   const tbody = table.querySelector('tbody');
 
+  // どの列を使うか決める
+  const columns = (mode === 'age') ? AGE_COLUMNS : INITIAL_COLUMNS;
+
   // thead
   thead.innerHTML = '';
   const trHead = document.createElement('tr');
-  INITIAL_COLUMNS.forEach(col => {
+  columns.forEach(col => {
     const th = document.createElement('th');
     th.textContent = col.label;
     trHead.appendChild(th);
@@ -194,7 +278,7 @@ function renderTable(rows) {
   rows.forEach(row => {
     const tr = document.createElement('tr');
 
-    INITIAL_COLUMNS.forEach(col => {
+    columns.forEach(col => {
       const td = document.createElement('td');
       td.textContent = row[col.key] || '';
       tr.appendChild(td);
