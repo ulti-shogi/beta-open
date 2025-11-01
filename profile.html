@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251102-e">
+    <link rel="stylesheet" href="style.css?v=20251102-f">
 </head>
 <body>
 <header>
@@ -166,7 +166,7 @@ function enrichRow(row) {
       year--;
     }
 
-    ageDisplay = `${year}歳${month}か月${day}日`;
+    ageDisplay = `${year}歳${month}ヶ月${day}日`;
   }
 
   return Object.assign({}, row, {
@@ -186,8 +186,8 @@ function toDateSafe(str) {
   const y = Number(m[1]);
   const mo = Number(m[2]);
   const d = Number(m[3]);
-  // UTC0時に固定
-  return new Date(Date.UTC(y, mo - 1, d));
+  // UTCではなくローカル時間を使用（JST基準）
+  return new Date(y, mo - 1, d);
 }
 
 // 日数差
