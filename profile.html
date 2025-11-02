@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251103-d">
+    <link rel="stylesheet" href="style.css?v=20251103-e">
 </head>
 <body>
 <header>
@@ -302,10 +302,10 @@ function renderTable(rows, mode) {
   } else if (mode === 'age-4d') {
     // ★ 四段昇段年齢モード
     cols = [
-      { key: '棋士名', label: '棋士名' },
-      { key: '__age_at_4d_display__', label: '四段昇段年齢' },
-      { key: '生年月日', label: '生年月日' },
-      { key: '四段昇段日', label: '四段昇段日' }
+    { key: '区分', label: '区分' },
+    { key: '棋士名', label: '棋士名' },
+    { key: '__age_at_4d_display__', label: '四段昇段年齢' },  
+    { key: '四段昇段日', label: '四段昇段日' }
     ];
   } else if (mode === 'kishi-no') {
     cols = [
