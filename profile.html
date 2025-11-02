@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251103-a">
+    <link rel="stylesheet" href="style.css?v=20251103-b">
 </head>
 <body>
 <header>
@@ -44,68 +44,60 @@
 
 <script>
 // =======================================
-// profile.html script（挙動を分離版）
-//
-// ・初期表示：席次の小さい順で表示
-// ・セレクトを変えたとき：その項目に合った「列だけ」表示する（並べ替えはしない）
-// ・ラジオで昇順/降順を選んだとき：そのとき初めて並べ替える
+// profile.html 全置き換え版 script
+// 要件：
+// 1) 初期表示 … CSVを読み込んで「席次」の小さい順で表示
+// 2) section のセレクト … 選んだ“項目に対応する列だけ”を表示する（この時点では並べ替えしない）
+//      - sekiji    → 区分・席次・棋士名・段位/称号
+//      - kishi-no  → 区分・棋士番号・棋士名・段位/称号
+//      - age       → 区分・棋士名・年齢・生年月日
+// 3) section のラジオ … 昇順/降順を選んだときにだけ並べ替える
+//      - 並び替え対象は「今セレクトで選ばれている項目」
+// 4) CSVは列名で参照
+// 5) id/classは勝手に付けない
 // =======================================
 
 const CSV_URL = 'profile.csv';
 
-// 席次・棋士番号のときの列
-const INITIAL_COLUMNS = [
-  { key: '区分', label: '区分' },
-  { key: '棋士番号', label: '棋士番号' },
-  { key: '棋士名', label: '棋士名' },
-  { key: '__dan_or_title__', label: '段位/称号' }
-];
-
-// 年齢表示のときの列
-const AGE_COLUMNS = [
-  { key: '区分', label: '区分' },
-  { key: '棋士名', label: '棋士名' },
-  { key: '__age_display__', label: '年齢' },
-  { key: '生年月日', label: '生年月日' }
-];
-
-// 読み込んだ全データ（席次昇順にして保持）
-let baseData = [];
-
-// 今どの項目を表示しているか
-let currentMode = 'sekiji'; // "sekiji" | "kishi-no" | "age"
-// 今どの並び順か
-let currentOrder = 'asc';
-
-// 今日（ローカル）※年齢計算用
+// 今日（JSTローカル扱い）※年齢計算用
 const today = (function() {
   const d = new Date();
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 })();
 
+// 読み込んだ全行（初期状態は席次昇順にしておく）
+let baseData = [];
+
+// 今選ばれている表示モード（selectの値と合わせる）
+let currentMode = 'sekiji'; // "sekiji" | "kishi-no" | "age"
+// 今選ばれている並び順
+let currentOrder = 'asc';
+
 fetch(CSV_URL)
-  .then(r => r.text())
+  .then(res => res.text())
   .then(text => {
     const rows = parseCSV(text);
-    // 段位/称号と年齢の派生を付ける
+    // 段位/称号＋年齢などを付与
     const enriched = rows.map(r => enrichRow(r));
-    // 席次昇順で固定して保持（初期表示用の“原本”）
+    // 初期状態の“原本”は席次昇順で持っておく
     baseData = enriched.slice().sort((a, b) => toNumberSafe(a['席次']) - toNumberSafe(b['席次']));
-    // 初期表示
+    // 初期表示（席次モード・席次昇順）
     renderTable(baseData, 'sekiji');
     // イベント設定
     setupUI();
   })
-  .catch(err => console.error(err));
+  .catch(err => console.error('CSV読み込み失敗:', err));
 
-// ------------------------
-// CSV読み込み
-// ------------------------
+
+// ---------------------------------------
+// CSV → オブジェクト配列（列名で参照）
+// ---------------------------------------
 function parseCSV(csvText) {
   const lines = csvText.trim().split(/\r?\n/);
   if (!lines.length) return [];
   const header = lines[0].split(',').map(h => h.trim());
   const out = [];
+
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
     const cols = lines[i].split(',');
@@ -118,14 +110,18 @@ function parseCSV(csvText) {
   return out;
 }
 
-// ------------------------
-// 行の拡張：段位/称号＋年齢(◯歳◯か月◯日)
-// ------------------------
+// ---------------------------------------
+// 行を拡張する
+// ・CSVの「段位」「称号」から表示用の段位/称号を作る
+// ・生年月日/没年月日から「◯歳◯か月◯日」も作る
+// ---------------------------------------
 function enrichRow(row) {
+  // 段位/称号
   const title = (row['称号'] || '').trim();
   const dan = (row['段位'] || '').trim();
   const danOrTitle = title ? title : dan ? dan : '';
 
+  // 年齢系
   const birth = toDateSafe(row['生年月日']);
   const died = toDateSafe(row['没年月日']);
   const endDate = died ? died : today;
@@ -139,6 +135,7 @@ function enrichRow(row) {
     const y1 = birth.getFullYear();
     const m1 = birth.getMonth();
     const d1 = birth.getDate();
+
     const y2 = endDate.getFullYear();
     const m2 = endDate.getMonth();
     const d2 = endDate.getDate();
@@ -148,6 +145,7 @@ function enrichRow(row) {
     let day = d2 - d1;
 
     if (day < 0) {
+      // 前月の日数を借りる
       const prevMonthLast = new Date(y2, m2, 0).getDate();
       day += prevMonthLast;
       month--;
@@ -168,14 +166,17 @@ function enrichRow(row) {
   });
 }
 
-// ------------------------
-// 日付まわり（ローカル）
-// ------------------------
+// ---------------------------------------
+// 日付をローカルで生成（ズレ防止）
+// ---------------------------------------
 function toDateSafe(str) {
   if (!str) return null;
   const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  return new Date(y, mo - 1, d);
 }
 
 function diffDays(start, end) {
@@ -183,9 +184,9 @@ function diffDays(start, end) {
   return Math.floor((end.getTime() - start.getTime()) / 86400000);
 }
 
-// ------------------------
-// UIのイベント
-// ------------------------
+// ---------------------------------------
+// UIイベント
+// ---------------------------------------
 function setupUI() {
   const section = document.querySelector('section');
   if (!section) return;
@@ -193,27 +194,28 @@ function setupUI() {
   const sel = section.querySelector('select');
   const radios = section.querySelectorAll('input[type="radio"][name="order"]');
 
-  // セレクトを変えたときは「表示だけ変える」
+  // セレクトを変えたら「表示だけ変える」。並べ替えはまだしない。
   sel.addEventListener('change', () => {
-    currentMode = sel.value;   // 今どの項目を見ているかだけ更新
-    // 並べ替えはしない。baseDataの順番のまま表示する。
+    currentMode = sel.value; // "sekiji" | "kishi-no" | "age"
+    // 並べ替えはしないので baseData の順番のまま、そのモードの列で表示
     renderTable(baseData, currentMode);
   });
 
-  // ラジオを変えたときは「その時点のmodeで並べ替えて表示」
+  // ラジオを変えたら「その時点のモードで並べ替えを実行」して表示
   radios.forEach(r => {
     r.addEventListener('change', () => {
       if (!r.checked) return;
-      currentOrder = r.value;  // asc / desc
+      currentOrder = r.value; // "asc" | "desc"
       const sorted = sortData(baseData, currentMode, currentOrder);
       renderTable(sorted, currentMode);
     });
   });
 }
 
-// ------------------------
-// 並べ替え本体
-// ------------------------
+// ---------------------------------------
+// 並べ替え
+// modeとorderでキーを切り替える
+// ---------------------------------------
 function sortData(data, mode, order) {
   const copied = data.slice();
   const dir = (order === 'desc') ? -1 : 1;
@@ -232,7 +234,7 @@ function sortData(data, mode, order) {
       return (aa - bb) * dir;
     });
   } else {
-    // 席次
+    // デフォルトは席次
     copied.sort((a, b) => (toNumberSafe(a['席次']) - toNumberSafe(b['席次'])) * dir);
   }
 
@@ -245,15 +247,42 @@ function toNumberSafe(v) {
   return n;
 }
 
-// ------------------------
+// ---------------------------------------
 // テーブル描画
-// ------------------------
+// modeによって列セットを変える
+// ---------------------------------------
 function renderTable(rows, mode) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
   const tbody = table.querySelector('tbody');
 
-  const cols = (mode === 'age') ? AGE_COLUMNS : INITIAL_COLUMNS;
+  // モード別に列を決める
+  let cols;
+  if (mode === 'age') {
+    // 年齢表示モード
+    cols = [
+      { key: '区分', label: '区分' },
+      { key: '棋士名', label: '棋士名' },
+      { key: '__age_display__', label: '年齢' },
+      { key: '生年月日', label: '生年月日' }
+    ];
+  } else if (mode === 'kishi-no') {
+    // 棋士番号モード
+    cols = [
+      { key: '区分', label: '区分' },
+      { key: '棋士番号', label: '棋士番号' },
+      { key: '棋士名', label: '棋士名' },
+      { key: '__dan_or_title__', label: '段位または称号' }
+    ];
+  } else {
+    // 席次モード（初期表示）
+    cols = [
+      { key: '区分', label: '区分' },
+      { key: '席次', label: '席次' },
+      { key: '棋士名', label: '棋士名' },
+      { key: '__dan_or_title__', label: '段位または称号' }
+    ];
+  }
 
   // thead
   thead.innerHTML = '';
