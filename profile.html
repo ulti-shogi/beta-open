@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251104-b">
+    <link rel="stylesheet" href="style.css?v=20251104-c">
 </head>
 <body>
 <header>
@@ -60,6 +60,15 @@
 // =======================================
 
 const CSV_URL = 'profile.csv';
+
+// 先頭あたりのユーティリティ群の近くに追加
+function formatDateYY(str) {
+  if (!str) return '';
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return str; // 不正値はそのまま
+  const yy = String(Number(m[1]) % 100).padStart(2, '0');
+  return `${yy}/${m[2]}/${m[3]}`; // 例: 2016-10-01 → 16/10/01
+}
 
 // 今日（ローカル）
 const today = (() => {
@@ -259,8 +268,8 @@ function renderTable(rows, mode) {
   } else if (mode === 'dur-4to5') {
     cols = [
       { key:'棋士名', label:'棋士名' },
-      { key:'四段昇段日', label:'四段昇段日' },
-      { key:'五段昇段日', label:'五段昇段日' },
+      { key:'四段昇段日', label:'四段' },
+      { key:'五段昇段日', label:'五段' },
       { key:'__dur_4to5_display__', label:'所要期間' }
     ];
   } else {
@@ -281,10 +290,21 @@ function renderTable(rows, mode) {
   // tbody
   tbody.innerHTML = '';
   rows.forEach(row => {
-    const tr=document.createElement('tr');
-    cols.forEach(c => { const td=document.createElement('td'); td.textContent = row[c.key] || ''; tr.appendChild(td); });
-    tbody.appendChild(tr);
+  const tr = document.createElement('tr');
+  cols.forEach(c => {
+    const td = document.createElement('td');
+    let val = row[c.key] || '';
+
+    // ★ 四→五モードのときだけ日付を短縮表示
+    if (mode === 'dur-4to5' && (c.key === '四段昇段日' || c.key === '五段昇段日')) {
+      val = formatDateYY(val);
+    }
+
+    td.textContent = val;
+    tr.appendChild(td);
   });
+  tbody.appendChild(tr);
+});
 }
 </script>
 </body>
