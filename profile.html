@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251104-a">
+    <link rel="stylesheet" href="style.css?v=20251104-b">
 </head>
 <body>
 <header>
@@ -27,6 +27,7 @@
     <option value="age-7d">七段昇段年齢</option>
     <option value="age-8d">八段昇段年齢</option>
     <option value="age-9d">九段昇段年齢</option>
+    <option value="dur-4to5">四段→五段 昇段所要期間</option>
   </select>
 
   <!-- 昇順・降順（選んだだけで即反映） -->
@@ -51,17 +52,11 @@
 
 <script>
 // =======================================
-// profile.html script（四〜九段 昇段年齢モード 追加版）
+// profile.html script（四→五 段 昇段“所要期間” 追加）
 //
-// セレクト値：
-//  - sekiji      … 区分・席次・棋士名・段位/称号
-//  - kishi-no    … 区分・棋士番号・棋士名・段位/称号
-//  - age         … 区分・棋士名・年齢（享年含む）・生年月日
-//  - age-4d..9d  … 区分・棋士名・◯段昇段年齢・◯段昇段日
-//
-// ラジオ(name="order")：keep | asc | desc
-//  - keep … 席次順のまま（セレクト切替しても席次順維持・列だけ切替）
-//  - asc/desc … セレクトで選んだ指標で並び替え
+// 追加モード: value="dur-4to5"
+// 表示列: 棋士名・四段昇段日・五段昇段日・所要期間(◯年◯か月◯日)
+// 並び: ラジオ（keep/asc/desc）に準拠
 // =======================================
 
 const CSV_URL = 'profile.csv';
@@ -72,29 +67,23 @@ const today = (() => {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 })();
 
-// 席次順で固定保持する“原本”
+// 席次順を“原本”として保持
 let baseData = [];
+let currentMode = 'sekiji';   // sekiji | kishi-no | age | age-4d..9d | dur-4to5
+let currentOrder = 'keep';     // keep | asc | desc
 
-// 現在のモード（セレクト）
-let currentMode = 'sekiji';
-// 現在の並び（ラジオ）
-let currentOrder = 'keep';
-
-// ---- 初期化 ----
 fetch(CSV_URL)
   .then(res => res.text())
   .then(text => {
     const rows = parseCSV(text);
-    const enriched = rows.map(r => enrichRow(r));
+    const enriched = rows.map(enrichRow);
     baseData = enriched.slice().sort((a, b) => toNumberSafe(a['席次']) - toNumberSafe(b['席次']));
     renderTable(baseData, 'sekiji');
     setupUI();
   })
   .catch(err => console.error('CSV読み込み失敗:', err));
 
-// -------------------------
-// CSV → 配列（列名で参照）
-// -------------------------
+// ---------- CSV ----------
 function parseCSV(csvText) {
   const lines = csvText.trim().split(/\r?\n/);
   if (!lines.length) return [];
@@ -104,42 +93,32 @@ function parseCSV(csvText) {
     if (!lines[i].trim()) continue;
     const cols = lines[i].split(',');
     const row = {};
-    header.forEach((h, idx) => {
-      row[h] = (cols[idx] || '').trim();
-    });
+    header.forEach((h, idx) => row[h] = (cols[idx] || '').trim());
     out.push(row);
   }
   return out;
 }
 
-// -------------------------
-// 行の拡張：段位/称号 + 年齢 + 各段昇段年齢（四〜九）
-// 生成キー：
-//  __dan_or_title__
-//  __age_days__, __age_display__
-//  __age_at_4d_days__/display__ 〜 __age_at_9d_days__/display__
-// -------------------------
+// ---------- 行の拡張 ----------
 function enrichRow(row) {
   // 段位/称号
   const title = (row['称号'] || '').trim();
-  const dan = (row['段位'] || '').trim();
-  const danOrTitle = title ? title : dan ? dan : '';
+  const dan   = (row['段位'] || '').trim();
+  const danOrTitle = title ? title : (dan || '');
 
-  // 生年月日・没年月日
+  // 生没と現在年齢
   const birth = toDateSafe(row['生年月日']);
   const died  = toDateSafe(row['没年月日']);
   const endDate = died ? died : today;
 
-  // 現在の年齢/享年
   let ageDays = null, ageDisplay = '';
   if (birth) {
     ageDays = diffDays(birth, endDate);
-    const { year, month, day } = diffYMD(birth, endDate);
-    const label = died ? '享年' : '';
-    ageDisplay = `${label}${year}歳${month}か月${day}日`;
+    const a = diffYMD(birth, endDate);
+    ageDisplay = `${died ? '享年' : ''}${a.year}歳${a.month}か月${a.day}日`;
   }
 
-  // 段ごとの昇段日
+  // 各段昇段日
   const p4 = toDateSafe(row['四段昇段日']);
   const p5 = toDateSafe(row['五段昇段日']);
   const p6 = toDateSafe(row['六段昇段日']);
@@ -147,217 +126,163 @@ function enrichRow(row) {
   const p8 = toDateSafe(row['八段昇段日']);
   const p9 = toDateSafe(row['九段昇段日']);
 
-  // 各段昇段年齢を生成する小関数
-  const makeAgeAt = (toDate) => {
-    if (!birth || !toDate) return { days: null, text: '' };
-    const days = diffDays(birth, toDate);
-    const { year, month, day } = diffYMD(birth, toDate);
-    return { days, text: `${year}歳${month}か月${day}日` };
+  // 指定日までの年齢
+  const ageAt = (to) => {
+    if (!birth || !to) return { days: null, text: '' };
+    const days = diffDays(birth, to);
+    const a = diffYMD(birth, to);
+    return { days, text: `${a.year}歳${a.month}か月${a.day}日` };
   };
+  const a4 = ageAt(p4), a5 = ageAt(p5), a6 = ageAt(p6), a7 = ageAt(p7), a8 = ageAt(p8), a9 = ageAt(p9);
 
-  const a4 = makeAgeAt(p4);
-  const a5 = makeAgeAt(p5);
-  const a6 = makeAgeAt(p6);
-  const a7 = makeAgeAt(p7);
-  const a8 = makeAgeAt(p8);
-  const a9 = makeAgeAt(p9);
+  // ★ 四→五 段の“所要期間”
+  let dur45_days = null, dur45_text = '';
+  if (p4 && p5) {
+    dur45_days = diffDays(p4, p5);
+    const d = diffYMD(p4, p5);
+    dur45_text = `${d.year}年${d.month}か月${d.day}日`;
+  }
 
   return Object.assign({}, row, {
     '__dan_or_title__': danOrTitle,
-    '__age_days__': ageDays,
-    '__age_display__': ageDisplay,
+    '__age_days__': ageDays, '__age_display__': ageDisplay,
     '__age_at_4d_days__': a4.days, '__age_at_4d_display__': a4.text,
     '__age_at_5d_days__': a5.days, '__age_at_5d_display__': a5.text,
     '__age_at_6d_days__': a6.days, '__age_at_6d_display__': a6.text,
     '__age_at_7d_days__': a7.days, '__age_at_7d_display__': a7.text,
     '__age_at_8d_days__': a8.days, '__age_at_8d_display__': a8.text,
-    '__age_at_9d_days__': a9.days, '__age_at_9d_display__': a9.text
+    '__age_at_9d_days__': a9.days, '__age_at_9d_display__': a9.text,
+    '__dur_4to5_days__': dur45_days,
+    '__dur_4to5_display__': dur45_text
   });
 }
 
-// -------------------------
-// 日付ユーティリティ（ローカル基準）
-// -------------------------
+// ---------- 日付 ----------
 function toDateSafe(str) {
   if (!str) return null;
   const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(+m[1], +m[2]-1, +m[3]); // ローカル
 }
-
-function diffDays(a, b) {
-  if (!a || !b) return null;
-  return Math.floor((b.getTime() - a.getTime()) / 86400000);
-}
-
+function diffDays(a, b) { if (!a || !b) return null; return Math.floor((b - a) / 86400000); }
 function diffYMD(from, to) {
-  let y1 = from.getFullYear(), m1 = from.getMonth(), d1 = from.getDate();
-  let y2 = to.getFullYear(),   m2 = to.getMonth(),   d2 = to.getDate();
-
-  let year = y2 - y1;
-  let month = m2 - m1;
-  let day = d2 - d1;
-
-  if (day < 0) {
-    const prevMonthLast = new Date(y2, m2, 0).getDate();
-    day += prevMonthLast;
-    month--;
-  }
-  if (month < 0) {
-    month += 12;
-    year--;
-  }
-  return { year, month, day };
+  let y1=from.getFullYear(), m1=from.getMonth(), d1=from.getDate();
+  let y2=to.getFullYear(),   m2=to.getMonth(),   d2=to.getDate();
+  let year=y2-y1, month=m2-m1, day=d2-d1;
+  if (day<0){ const last=new Date(y2,m2,0).getDate(); day+=last; month--; }
+  if (month<0){ month+=12; year--; }
+  return {year,month,day};
 }
 
-// -------------------------
-// UIイベント
-// -------------------------
+// ---------- UI ----------
 function setupUI() {
   const section = document.querySelector('section');
   if (!section) return;
-
   const sel = section.querySelector('select');
   const radios = section.querySelectorAll('input[type="radio"][name="order"]');
 
-  // セレクト切替：列のみ切替。ラジオがasc/descなら並び替えも適用。
   sel.addEventListener('change', () => {
-    currentMode = sel.value; // sekiji | kishi-no | age | age-4d..age-9d
-    if (currentOrder === 'keep') {
-      renderTable(baseData, currentMode);
-    } else {
-      const sorted = sortData(baseData, currentMode, currentOrder);
-      renderTable(sorted, currentMode);
-    }
+    currentMode = sel.value;
+    if (currentOrder === 'keep') renderTable(baseData, currentMode);
+    else renderTable(sortData(baseData, currentMode, currentOrder), currentMode);
   });
 
-  // ラジオ切替：keepなら席次順に戻す／asc,descなら現在モードでソート
   radios.forEach(r => {
     r.addEventListener('change', () => {
       if (!r.checked) return;
-      currentOrder = r.value; // keep | asc | desc
-      if (currentOrder === 'keep') {
-        renderTable(baseData, currentMode);
-      } else {
-        const sorted = sortData(baseData, currentMode, currentOrder);
-        renderTable(sorted, currentMode);
-      }
+      currentOrder = r.value; // keep/asc/desc
+      if (currentOrder === 'keep') renderTable(baseData, currentMode);
+      else renderTable(sortData(baseData, currentMode, currentOrder), currentMode);
     });
   });
 }
 
-// -------------------------
-// 並べ替え
-// -------------------------
+// ---------- 並び替え ----------
 function sortData(data, mode, order) {
   const copied = data.slice();
   const dir = (order === 'desc') ? -1 : 1;
 
   if (mode === 'kishi-no') {
-    copied.sort((a, b) => (toNumberSafe(a['棋士番号']) - toNumberSafe(b['棋士番号'])) * dir);
+    copied.sort((a,b)=>(toNumberSafe(a['棋士番号'])-toNumberSafe(b['棋士番号']))*dir);
   } else if (mode === 'age') {
-    copied.sort((a, b) => {
-      const aa = a['__age_days__'], bb = b['__age_days__'];
-      const aNull = (aa == null), bNull = (bb == null);
-      if (aNull && bNull) return 0;
-      if (aNull) return 1;
-      if (bNull) return -1;
-      return (aa - bb) * dir;
-    });
-  } else if (mode === 'age-4d' || mode === 'age-5d' || mode === 'age-6d' || mode === 'age-7d' || mode === 'age-8d' || mode === 'age-9d') {
-    const key = mode.replace('age-', '__age_at_') + '_days__'; // 例: age-5d → __age_at_5d_days__
-    copied.sort((a, b) => {
-      const aa = a[key], bb = b[key];
-      const aNull = (aa == null), bNull = (bb == null);
-      if (aNull && bNull) return 0;
-      if (aNull) return 1;
-      if (bNull) return -1;
-      return (aa - bb) * dir;
-    });
+    copied.sort((a,b)=>numCmp(a['__age_days__'], b['__age_days__']) * dir);
+  } else if (/^age-[4-9]d$/.test(mode)) {
+    const key = mode.replace('age-','__age_at_') + '_days__';
+    copied.sort((a,b)=>numCmp(a[key], b[key]) * dir);
+  } else if (mode === 'dur-4to5') {
+    copied.sort((a,b)=>numCmp(a['__dur_4to5_days__'], b['__dur_4to5_days__']) * dir);
   } else {
-    // 席次
-    copied.sort((a, b) => (toNumberSafe(a['席次']) - toNumberSafe(b['席次'])) * dir);
+    copied.sort((a,b)=>(toNumberSafe(a['席次'])-toNumberSafe(b['席次']))*dir);
   }
   return copied;
 }
+function numCmp(a,b){ const an=a==null, bn=b==null; if(an&&bn) return 0; if(an) return 1; if(bn) return -1; return a-b; }
+function toNumberSafe(v){ const n=Number(v); return isNaN(n) ? 9999999 : n; }
 
-function toNumberSafe(v) {
-  const n = Number(v);
-  if (isNaN(n)) return 9999999;
-  return n;
-}
-
-// -------------------------
-// テーブル描画（モード別に列を変える）
-// -------------------------
+// ---------- 描画 ----------
 function renderTable(rows, mode) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
   const tbody = table.querySelector('tbody');
 
   let cols;
-
   if (mode === 'age') {
     cols = [
-      { key: '区分', label: '区分' },
-      { key: '棋士名', label: '棋士名' },
-      { key: '__age_display__', label: '年齢' },
-      { key: '生年月日', label: '生年月日' }
+      { key:'区分', label:'区分' },
+      { key:'棋士名', label:'棋士名' },
+      { key:'__age_display__', label:'年齢' },
+      { key:'生年月日', label:'生年月日' }
     ];
   } else if (mode === 'kishi-no') {
     cols = [
-      { key: '区分', label: '区分' },
-      { key: '棋士番号', label: '棋士番号' },
-      { key: '棋士名', label: '棋士名' },
-      { key: '__dan_or_title__', label: '段位/称号' }
+      { key:'区分', label:'区分' },
+      { key:'棋士番号', label:'棋士番号' },
+      { key:'棋士名', label:'棋士名' },
+      { key:'__dan_or_title__', label:'段位/称号' }
     ];
-  } else if (mode === 'age-4d' || mode === 'age-5d' || mode === 'age-6d' || mode === 'age-7d' || mode === 'age-8d' || mode === 'age-9d') {
-    // ◯段昇段年齢モード（共通レイアウト）
-    // ラベルと日付列名を段に応じて変える
+  } else if (/^age-[4-9]d$/.test(mode)) {
     const rankMap = {
-      'age-4d': { label: '四段昇段年齢', dateCol: '四段昇段日', displayKey: '__age_at_4d_display__' },
-      'age-5d': { label: '五段昇段年齢', dateCol: '五段昇段日', displayKey: '__age_at_5d_display__' },
-      'age-6d': { label: '六段昇段年齢', dateCol: '六段昇段日', displayKey: '__age_at_6d_display__' },
-      'age-7d': { label: '七段昇段年齢', dateCol: '七段昇段日', displayKey: '__age_at_7d_display__' },
-      'age-8d': { label: '八段昇段年齢', dateCol: '八段昇段日', displayKey: '__age_at_8d_display__' },
-      'age-9d': { label: '九段昇段年齢', dateCol: '九段昇段日', displayKey: '__age_at_9d_display__' }
+      'age-4d': { label:'四段昇段年齢', dateCol:'四段昇段日', displayKey:'__age_at_4d_display__' },
+      'age-5d': { label:'五段昇段年齢', dateCol:'五段昇段日', displayKey:'__age_at_5d_display__' },
+      'age-6d': { label:'六段昇段年齢', dateCol:'六段昇段日', displayKey:'__age_at_6d_display__' },
+      'age-7d': { label:'七段昇段年齢', dateCol:'七段昇段日', displayKey:'__age_at_7d_display__' },
+      'age-8d': { label:'八段昇段年齢', dateCol:'八段昇段日', displayKey:'__age_at_8d_display__' },
+      'age-9d': { label:'九段昇段年齢', dateCol:'九段昇段日', displayKey:'__age_at_9d_display__' }
     };
     const cfg = rankMap[mode];
     cols = [
-      { key: '区分', label: '区分' },
-      { key: '棋士名', label: '棋士名' },
-      { key: cfg.displayKey, label: cfg.label },
-      { key: cfg.dateCol, label: cfg.dateCol }
+      { key:'区分', label:'区分' },
+      { key:'棋士名', label:'棋士名' },
+      { key:cfg.displayKey, label:cfg.label },
+      { key:cfg.dateCol, label:cfg.dateCol }
+    ];
+  } else if (mode === 'dur-4to5') {
+    cols = [
+      { key:'棋士名', label:'棋士名' },
+      { key:'四段昇段日', label:'四段昇段日' },
+      { key:'五段昇段日', label:'五段昇段日' },
+      { key:'__dur_4to5_display__', label:'所要期間' }
     ];
   } else {
-    // sekiji
     cols = [
-      { key: '区分', label: '区分' },
-      { key: '席次', label: '席次' },
-      { key: '棋士名', label: '棋士名' },
-      { key: '__dan_or_title__', label: '段位/称号' }
+      { key:'区分', label:'区分' },
+      { key:'席次', label:'席次' },
+      { key:'棋士名', label:'棋士名' },
+      { key:'__dan_or_title__', label:'段位/称号' }
     ];
   }
 
   // thead
   thead.innerHTML = '';
-  const trHead = document.createElement('tr');
-  cols.forEach(c => {
-    const th = document.createElement('th');
-    th.textContent = c.label;
-    trHead.appendChild(th);
-  });
-  thead.appendChild(trHead);
+  const trh = document.createElement('tr');
+  cols.forEach(c => { const th=document.createElement('th'); th.textContent=c.label; trh.appendChild(th); });
+  thead.appendChild(trh);
 
   // tbody
   tbody.innerHTML = '';
   rows.forEach(row => {
-    const tr = document.createElement('tr');
-    cols.forEach(c => {
-      const td = document.createElement('td');
-      td.textContent = row[c.key] || '';
-      tr.appendChild(td);
-    });
+    const tr=document.createElement('tr');
+    cols.forEach(c => { const td=document.createElement('td'); td.textContent = row[c.key] || ''; tr.appendChild(td); });
     tbody.appendChild(tr);
   });
 }
