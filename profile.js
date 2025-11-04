@@ -72,7 +72,7 @@ function enrichRow(row){
   if (birth){
     ageDays = diffDays(birth, endDateForAge);
     const a = diffYMD(birth, endDateForAge);
-    ageDisplay = `${died ? '享年' : ''}${a.year}歳${a.month}か月${a.day}日`;
+    ageDisplay = `${died ? '享年' : ''}${a.year}歳${a.month}ヶ月${a.day}日`;
   }
 
   // 各段昇段日
@@ -88,7 +88,7 @@ function enrichRow(row){
     if(!birth || !to) return {days:null, text:''};
     const days = diffDays(birth, to);
     const d = diffYMD(birth, to);
-    return {days, text:`${d.year}歳${d.month}か月${d.day}日`};
+    return {days, text:`${d.year}歳${d.month}ヶ月${d.day}日`};
   };
   const a4 = ageAt(p4), a5 = ageAt(p5), a6 = ageAt(p6), a7 = ageAt(p7), a8 = ageAt(p8), a9 = ageAt(p9);
 
@@ -97,7 +97,7 @@ function enrichRow(row){
     if(!from || !to) return {days:null, text:''};
     const days = diffDays(from,to);
     const d = diffYMD(from,to);
-    return {days, text:`${d.year}年${d.month}か月${d.day}日`};
+    return {days, text:`${d.year}年${d.month}ヶ月${d.day}日`};
   };
   const d45 = dur(p4,p5);
   const d56 = dur(p5,p6);
@@ -128,7 +128,7 @@ function enrichRow(row){
   if (p4 && termEndDate) {
     termDays = diffDays(p4, termEndDate);
     const t = diffYMD(p4, termEndDate);
-    termDisplay = `${t.year}年${t.month}か月${t.day}日`;
+    termDisplay = `${t.year}年${t.month}ヶ月${t.day}日`;
   }
 
   return Object.assign({}, row, {
