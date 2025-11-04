@@ -1,4 +1,3 @@
-<script>
 // =======================================
 // profile.js（現役期間 追加・丸ごと差し替え版）
 //
@@ -350,4 +349,3 @@ function renderTable(rows, mode){
     tbody.appendChild(tr);
   });
 }
-</script>
