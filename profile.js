@@ -1,21 +1,20 @@
 // =======================================
-// profile.js（全モード復活＋現役/引退統一ルール）
+// profile.js（全モード対応＋各段の昇段日モード追加）
 //
-// セレクト値（想定）:
-//   - sekiji       … 区分・席次・棋士名・段位/称号
-//   - kishi-no     … 区分・棋士番号・棋士名・段位/称号
-//   - age          … 区分・棋士名・年齢(享年含む)・生年月日
-//   - age-4d..9d   … 区分・棋士名・◯段昇段年齢・◯段昇段日
-//   - dur-4to5..8to9 … 棋士名・開始段(YY/MM/DD)・到達段(YY/MM/DD)・期間
-//   - term-active  … 現役期間（四段→終了）: 棋士名・四段(YY/MM/DD)・終了(YY/MM/DD)・期間
-//   - age-active   … 現役年齢（誕生→終了）: 棋士名・誕生(YY/MM/DD)・終了(YY/MM/DD)・年齢
+// 追加: date-4d ～ date-9d
+//  表示: 区分｜棋士名｜◯段昇段日｜棋士番号
+//  並替: ラジオ keep=席次順 / asc, desc=該当昇段日で比較
 //
-// 「終了日」の統一ルール:
-//   - 区分 = 現役 → 今日
-//   - 区分 ≠ 現役 → 引退日（※現役中没は CSV で「引退日 = 没年月日」にしておく）
+// 終了日の統一ルール:
+//   区分=現役 → 今日
+//   区分≠現役 → 引退日（※現役中没はCSVで引退日=没年月日を記入）
 //
-// ラジオ: name="order" (keep | asc | desc)
-//
+// 既存モード:
+//   sekiji, kishi-no, age,
+//   age-4d..9d（各段昇段“年齢”）,
+//   dur-4to5..8to9（昇段所要期間）,
+//   term-active（現役期間 四段→終了）,
+//   age-active（現役年齢 誕生→終了）
 // =======================================
 
 const CSV_URL = 'profile.csv';
@@ -53,9 +52,7 @@ function parseCSV(csvText) {
     if (!lines[i].trim()) continue;
     const cols = lines[i].split(',');
     const row = {};
-    header.forEach((h, idx) => {
-      row[h] = (cols[idx] || '').trim();
-    });
+    header.forEach((h, idx) => { row[h] = (cols[idx] || '').trim(); });
     out.push(row);
   }
   return out;
@@ -72,10 +69,10 @@ function enrichRow(row) {
   const died  = toDateSafe(row['没年月日']);
   const retiredAt = toDateSafe(row['引退日']);
 
-  // ★ 年齢/享年用の終了日（死んでいれば没年月日、そうでなければ今日）
+  // 年齢/享年用の終了日（死んでいれば没年月日、そうでなければ今日）
   const endForAge = died ? died : today;
 
-  // ★ 現役期間・現役年齢用の終了日（統一ルール）
+  // 現役期間・現役年齢用の終了日（統一ルール）
   const endUnified = (kubun === '現役') ? today : retiredAt;
   const endUnifiedStr = (kubun === '現役')
     ? formatDateYYYYMMDD(today)
@@ -112,7 +109,7 @@ function enrichRow(row) {
   const a8 = ageAt(p8);
   const a9 = ageAt(p9);
 
-  // 区間の所要期間（◯年◯ヶ月◯日）
+  // 区間の所要期間
   const dur = (from, to) => {
     if (!from || !to) return { days: null, text: '' };
     const days = diffDays(from, to);
@@ -178,31 +175,19 @@ function toDateSafe(str) {
   if (!m) return null;
   return new Date(+m[1], +m[2] - 1, +m[3]);
 }
-
-function diffDays(a, b) {
-  if (!a || !b) return null;
-  return Math.floor((b.getTime() - a.getTime()) / 86400000);
-}
-
+function diffDays(a, b) { if (!a || !b) return null; return Math.floor((b.getTime() - a.getTime()) / 86400000); }
 function diffYMD(from, to) {
   let y1 = from.getFullYear(), m1 = from.getMonth(), d1 = from.getDate();
   let y2 = to.getFullYear(),   m2 = to.getMonth(),   d2 = to.getDate();
-  let year = y2 - y1;
-  let month = m2 - m1;
-  let day = d2 - d1;
-
-  if (day < 0) {
-    const last = new Date(y2, m2, 0).getDate();
-    day += last;
-    month--;
-  }
-  if (month < 0) {
-    month += 12;
-    year--;
-  }
+  let year = y2 - y1, month = m2 - m1, day = d2 - d1;
+  if (day < 0) { const last = new Date(y2, m2, 0).getDate(); day += last; month--; }
+  if (month < 0) { month += 12; year--; }
   return { year, month, day };
 }
-
+function formatDateYYYYMMDD(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 function formatDateYY(str) {
   if (!str) return '';
   const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -210,26 +195,10 @@ function formatDateYY(str) {
   const yy = String(Number(m[1]) % 100).padStart(2, '0');
   return `${yy}/${m[2]}/${m[3]}`;
 }
-
-function formatDateYYYYMMDD(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function toNumberSafe(v) {
-  const n = Number(v);
-  return isNaN(n) ? 9999999 : n;
-}
-
-function numCmp(a, b) {
-  const an = (a == null), bn = (b == null);
-  if (an && bn) return 0;
-  if (an) return 1;
-  if (bn) return -1;
-  return a - b;
-}
+function toNumberSafe(v){ const n=Number(v); return isNaN(n)?9999999:n; }
+function numCmp(a,b){ const an=(a==null), bn=(b==null); if(an&&bn)return 0; if(an)return 1; if(bn)return -1; return a-b; }
+function dateValue(s){ const d=toDateSafe(s); return d ? d.getTime() : null; }
+function dateCmp(a,b){ const av=dateValue(a), bv=dateValue(b); if(av==null&&bv==null)return 0; if(av==null)return 1; if(bv==null)return -1; return av-bv; }
 
 // ---------- UI ----------
 function setupUI() {
@@ -279,6 +248,17 @@ function sortData(data, mode, order) {
     copied.sort((a, b) => numCmp(a['__term_active_days__'], b['__term_active_days__']) * dir);
   } else if (mode === 'age-active') {
     copied.sort((a, b) => numCmp(a['__age_active_days__'], b['__age_active_days__']) * dir);
+  } else if (/^date-[4-9]d$/.test(mode)) {
+    const dateMap = {
+      'date-4d':'四段昇段日',
+      'date-5d':'五段昇段日',
+      'date-6d':'六段昇段日',
+      'date-7d':'七段昇段日',
+      'date-8d':'八段昇段日',
+      'date-9d':'九段昇段日'
+    };
+    const col = dateMap[mode];
+    copied.sort((a,b)=> dateCmp(a[col], b[col]) * dir);
   } else {
     // sekiji 他
     copied.sort((a, b) => (toNumberSafe(a['席次']) - toNumberSafe(b['席次'])) * dir);
@@ -286,7 +266,7 @@ function sortData(data, mode, order) {
   return copied;
 }
 
-// ---------- 描画 ----------
+// ---------- 表示 ----------
 function renderTable(rows, mode) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
@@ -353,8 +333,24 @@ function renderTable(rows, mode) {
       { key: '__age_active_end__', label: '終了' },
       { key: '__age_active_display__', label: '年齢' }
     ];
+  } else if (/^date-[4-9]d$/.test(mode)) {
+    const dateMap = {
+      'date-4d': '四段昇段日',
+      'date-5d': '五段昇段日',
+      'date-6d': '六段昇段日',
+      'date-7d': '七段昇段日',
+      'date-8d': '八段昇段日',
+      'date-9d': '九段昇段日'
+    };
+    const dateCol = dateMap[mode];
+    cols = [
+      { key: '区分', label: '区分' },
+      { key: '棋士名', label: '棋士名' },
+      { key: dateCol, label: dateCol },
+      { key: '棋士番号', label: '棋士番号' }
+    ];
   } else {
-    // sekiji など
+    // sekiji 他
     cols = [
       { key: '区分', label: '区分' },
       { key: '席次', label: '席次' },
@@ -366,14 +362,10 @@ function renderTable(rows, mode) {
   // thead
   thead.innerHTML = '';
   const trh = document.createElement('tr');
-  cols.forEach(c => {
-    const th = document.createElement('th');
-    th.textContent = c.label;
-    trh.appendChild(th);
-  });
+  cols.forEach(c => { const th = document.createElement('th'); th.textContent = c.label; trh.appendChild(th); });
   thead.appendChild(trh);
 
-  // tbody（dur/term/age-active の日付は YY/MM/DD に短縮）
+  // tbody（dur/term/age-active だけ短縮 YY/MM/DD）
   tbody.innerHTML = '';
   rows.forEach(row => {
     const tr = document.createElement('tr');
@@ -389,15 +381,11 @@ function renderTable(rows, mode) {
           'dur-7to8': ['七段昇段日','八段昇段日'],
           'dur-8to9': ['八段昇段日','九段昇段日']
         }[mode];
-        if (dm && (c.key === dm[0] || c.key === dm[1])) {
-          val = formatDateYY(val);
-        }
+        if (dm && (c.key === dm[0] || c.key === dm[1])) val = formatDateYY(val);
       }
-
       if (mode === 'term-active' && (c.key === '四段昇段日' || c.key === '__term_active_end__')) {
         val = formatDateYY(val);
       }
-
       if (mode === 'age-active' && (c.key === '生年月日' || c.key === '__age_active_end__')) {
         val = formatDateYY(val);
       }
