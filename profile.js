@@ -30,6 +30,40 @@ let baseData = [];
 let currentMode  = 'sekiji';
 let currentOrder = 'keep';
 
+// 大分類 → 小分類の対応表（追加①）
+const DETAIL_OPTIONS = {
+  basic: [
+    { value: "sekiji",   label: "席次" },
+    { value: "kishi-no", label: "棋士番号" }
+  ],
+  age: [
+    { value: "age",       label: "年齢（享年）" },
+    { value: "age-active",label: "現役年齢" },
+    { value: "age-4d",    label: "四段昇段年齢" },
+    { value: "age-5d",    label: "五段昇段年齢" },
+    { value: "age-6d",    label: "六段昇段年齢" },
+    { value: "age-7d",    label: "七段昇段年齢" },
+    { value: "age-8d",    label: "八段昇段年齢" },
+    { value: "age-9d",    label: "九段昇段年齢" }
+  ],
+  term: [
+    { value: "term-active", label: "現役期間" },
+    { value: "dur-4to5",    label: "四→五段 昇段所要期間" },
+    { value: "dur-5to6",    label: "五→六段 昇段所要期間" },
+    { value: "dur-6to7",    label: "六→七段 昇段所要期間" },
+    { value: "dur-7to8",    label: "七→八段 昇段所要期間" },
+    { value: "dur-8to9",    label: "八→九段 昇段所要期間" }
+  ],
+  date: [
+    { value: "date-4d", label: "四段 昇段日" },
+    { value: "date-5d", label: "五段 昇段日" },
+    { value: "date-6d", label: "六段 昇段日" },
+    { value: "date-7d", label: "七段 昇段日" },
+    { value: "date-8d", label: "八段 昇段日" },
+    { value: "date-9d", label: "九段 昇段日" }
+  ]
+};
+
 // ---------- 初期化 ----------
 fetch(CSV_URL)
   .then(res => res.text())
@@ -199,6 +233,31 @@ function toNumberSafe(v){ const n=Number(v); return isNaN(n)?9999999:n; }
 function numCmp(a,b){ const an=(a==null), bn=(b==null); if(an&&bn)return 0; if(an)return 1; if(bn)return -1; return a-b; }
 function dateValue(s){ const d=toDateSafe(s); return d ? d.getTime() : null; }
 function dateCmp(a,b){ const av=dateValue(a), bv=dateValue(b); if(av==null&&bv==null)return 0; if(av==null)return 1; if(bv==null)return -1; return av-bv; }
+
+// 大分類に応じて小分類セレクトを書き換える（追加②）
+function updateDetailSelect(categoryValue) {
+  const detailSel = document.querySelector('select[name="detail"]');
+  detailSel.innerHTML = ''; // いったん空にする
+
+  const list = DETAIL_OPTIONS[categoryValue] || [];
+  list.forEach(obj => {
+    const opt = document.createElement('option');
+    opt.value = obj.value;
+    opt.textContent = obj.label;
+    detailSel.appendChild(opt);
+  });
+
+  // 小分類セレクトが切り替わったら、テーブル表示も実行
+  // （並び順は currentOrder を保持）
+  detailSel.addEventListener('change', () => {
+    currentMode = detailSel.value;
+    if (currentOrder === "keep") {
+      renderTable(baseData, currentMode);
+    } else {
+      renderTable(sortData(baseData, currentMode, currentOrder), currentMode);
+    }
+  });
+}
 
 // ---------- UI ----------
 function setupUI() {
