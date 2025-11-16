@@ -333,94 +333,101 @@ function sortData(data, mode, order) {
   return copied;
 }
 
-// ---------- 表示 ----------
+// ---------- 表示（4列固定：順位・棋士名・値・区分） ----------
 // ---------- 表示（4列固定：順位・棋士名・値・区分） ----------
 function renderTable(rows, mode) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
   const tbody = table.querySelector('tbody');
 
-  // ▼ モードごとに「③の列に入れるキー」を決定
-  let valueKey = '';   // データのキー
-  let isDate = false;  // 日付なら true（YY/MM/DD に整形）
+  // ▼ モードごとの「③の値のキー」と「列のラベル」を決める
+  let valueKey = '';
+  let valueLabel = '';
 
-  if (mode === 'age') {
-    valueKey = '__age_display__';
+  const labelMap = {
+    'sekiji': '席次',
+    'kishi-no': '棋士番号',
+    'age': '年齢（享年）',
+    'age-active': '現役年齢',
+    'age-4d': '四段昇段年齢',
+    'age-5d': '五段昇段年齢',
+    'age-6d': '六段昇段年齢',
+    'age-7d': '七段昇段年齢',
+    'age-8d': '八段昇段年齢',
+    'age-9d': '九段昇段年齢',
+    'term-active': '現役期間',
+    'dur-4to5': '四→五段 所要期間',
+    'dur-5to6': '五→六段 所要期間',
+    'dur-6to7': '六→七段 所要期間',
+    'dur-7to8': '七→八段 所要期間',
+    'dur-8to9': '八→九段 所要期間',
+    'date-4d': '四段昇段日',
+    'date-5d': '五段昇段日',
+    'date-6d': '六段昇段日',
+    'date-7d': '七段昇段日',
+    'date-8d': '八段昇段日',
+    'date-9d': '九段昇段日'
+  };
 
-  } else if (mode === 'age-active') {
-    valueKey = '__age_active_display__';
+  // ▼ ラベルを決定
+  valueLabel = labelMap[mode] || '';
 
-  } else if (/^age-[4-9]d$/.test(mode)) {
-    const map = {
-      'age-4d': '__age_at_4d_display__',
-      'age-5d': '__age_at_5d_display__',
-      'age-6d': '__age_at_6d_display__',
-      'age-7d': '__age_at_7d_display__',
-      'age-8d': '__age_at_8d_display__',
-      'age-9d': '__age_at_9d_display__'
-    };
-    valueKey = map[mode];
+  // ▼ キーを決定
+  const keyMap = {
+    'sekiji': '席次',
+    'kishi-no': '棋士番号',
+    'age': '__age_display__',
+    'age-active': '__age_active_display__',
 
-  } else if (/^dur-[4-9]to[5-9]$/.test(mode)) {
-    const map = {
-      'dur-4to5': '__dur_4to5_display__',
-      'dur-5to6': '__dur_5to6_display__',
-      'dur-6to7': '__dur_6to7_display__',
-      'dur-7to8': '__dur_7to8_display__',
-      'dur-8to9': '__dur_8to9_display__'
-    };
-    valueKey = map[mode];
+    'age-4d': '__age_at_4d_display__',
+    'age-5d': '__age_at_5d_display__',
+    'age-6d': '__age_at_6d_display__',
+    'age-7d': '__age_at_7d_display__',
+    'age-8d': '__age_at_8d_display__',
+    'age-9d': '__age_at_9d_display__',
 
-  } else if (mode === 'term-active') {
-    valueKey = '__term_active_display__';
+    'term-active': '__term_active_display__',
 
-  } else if (/^date-[4-9]d$/.test(mode)) {
-    const map = {
-      'date-4d': '四段昇段日',
-      'date-5d': '五段昇段日',
-      'date-6d': '六段昇段日',
-      'date-7d': '七段昇段日',
-      'date-8d': '八段昇段日',
-      'date-9d': '九段昇段日'
-    };
-    valueKey = map[mode];
-    isDate = true;
+    'dur-4to5': '__dur_4to5_display__',
+    'dur-5to6': '__dur_5to6_display__',
+    'dur-6to7': '__dur_6to7_display__',
+    'dur-7to8': '__dur_7to8_display__',
+    'dur-8to9': '__dur_8to9_display__',
 
-  } else if (mode === 'kishi-no') {
-    valueKey = '棋士番号';
+    'date-4d': '四段昇段日',
+    'date-5d': '五段昇段日',
+    'date-6d': '六段昇段日',
+    'date-7d': '七段昇段日',
+    'date-8d': '八段昇段日',
+    'date-9d': '九段昇段日'
+  };
 
-  } else {
-    // mode === 'sekiji'（基本情報）
-    valueKey = '席次';
-  }
+  valueKey = keyMap[mode];
 
   // ---------- thead ----------
   thead.innerHTML = `
     <tr>
       <th>順位</th>
       <th>棋士名</th>
-      <th>値</th>
+      <th>${valueLabel}</th>
       <th>区分</th>
     </tr>
   `;
 
   // ---------- tbody ----------
   tbody.innerHTML = '';
-  rows.forEach((row, i) => {
+  rows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+
     let val = row[valueKey] || '';
 
-    // 日付モードの場合は YY/MM/DD に整形
-    if (isDate) {
-      val = formatDateYY(val);
-    }
-
-    const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${i + 1}</td>
+      <td>${idx + 1}</td>
       <td>${row['棋士名']}</td>
       <td>${val}</td>
       <td>${row['区分']}</td>
     `;
+
     tbody.appendChild(tr);
   });
 }
