@@ -16,37 +16,50 @@
   <p>棋士プロフィール一覧（昇段日追加）</p>
 
   <!-- 並べ替え対象を選ぶと「表示する列」が切り替わる -->
-  <label for="">並べ替え</label>
+  <label for="">表示項目を選ぶ</label>
+
   <select name="">
+    <!-- 基本情報 -->
+    <option disabled>―― 基本情報 ――</option>
     <option value="sekiji">席次</option>
     <option value="kishi-no">棋士番号</option>
-    <option value="date-4d">四段昇段日</option>
-    <option value="date-5d">五段昇段日</option>
-    <option value="date-6d">六段昇段日</option>
-    <option value="date-7d">七段昇段日</option>
-    <option value="date-8d">八段昇段日</option>
-    <option value="date-9d">九段昇段日</option>
+
+    <!-- 年齢 -->
+    <option disabled>―― 年齢 ――</option>
     <option value="age">年齢（享年）</option>
+    <option value="age-active">現役年齢</option>
     <option value="age-4d">四段昇段年齢</option>
     <option value="age-5d">五段昇段年齢</option>
     <option value="age-6d">六段昇段年齢</option>
     <option value="age-7d">七段昇段年齢</option>
     <option value="age-8d">八段昇段年齢</option>
     <option value="age-9d">九段昇段年齢</option>
-    <option value="age-active">現役年齢</option>
+
+    <!-- 期間 -->
+    <option disabled>―― 期間 ――</option>
     <option value="term-active">現役期間</option>
     <option value="dur-4to5">四→五段 昇段所要期間</option>
     <option value="dur-5to6">五→六段 昇段所要期間</option>
     <option value="dur-6to7">六→七段 昇段所要期間</option>
     <option value="dur-7to8">七→八段 昇段所要期間</option>
     <option value="dur-8to9">八→九段 昇段所要期間</option>
+
+    <!-- 昇段日 -->
+    <option disabled>―― 昇段日 ――</option>
+    <option value="date-4d">四段 昇段日</option>
+    <option value="date-5d">五段 昇段日</option>
+    <option value="date-6d">六段 昇段日</option>
+    <option value="date-7d">七段 昇段日</option>
+    <option value="date-8d">八段 昇段日</option>
+    <option value="date-9d">九段 昇段日</option>
   </select>
 
-  <!-- 昇順・降順（選んだだけで即反映） -->
-  <p>並び順</p>
-<label><input type="radio" name="order" value="keep" checked> 席次順</label>
-<label><input type="radio" name="order" value="asc"> 昇順</label>
-<label><input type="radio" name="order" value="desc"> 降順</label>
+  <p>並べ替えを選択してください。</p>
+
+  <label><input type="radio" name="order" value="keep" checked>席次順</label>
+  <label><input type="radio" name="order" value="asc">昇順</label>
+  <label><input type="radio" name="order" value="desc">降順</label>
+
 </section>
 
 <table>
