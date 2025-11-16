@@ -345,7 +345,7 @@ function renderTable(rows, mode) {
   let valueLabel = '';
 
   const labelMap = {
-    'sekiji': '席次',
+    'sekiji': '段位または称号',
     'kishi-no': '棋士番号',
     'age': '年齢（享年）',
     'age-active': '現役年齢',
@@ -374,7 +374,7 @@ function renderTable(rows, mode) {
 
   // ▼ キーを決定
   const keyMap = {
-    'sekiji': '席次',
+    'sekiji': '__dan_or_title__',
     'kishi-no': '棋士番号',
     'age': '__age_display__',
     'age-active': '__age_active_display__',
