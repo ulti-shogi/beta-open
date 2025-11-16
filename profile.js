@@ -261,20 +261,21 @@ function updateDetailSelect(categoryValue) {
 
 // ---------- UI ----------
 function setupUI() {
-  const section = document.querySelector('section');
-  if (!section) return;
-  const sel = section.querySelector('select');
-  const radios = section.querySelectorAll('input[type="radio"][name="order"]');
+  const categorySel = document.querySelector('select[name="category"]');
+  const detailSel   = document.querySelector('select[name="detail"]');
+  const radios      = document.querySelectorAll('input[type="radio"][name="order"]');
 
-  sel.addEventListener('change', () => {
-    currentMode = sel.value;
-    if (currentOrder === 'keep') {
-      renderTable(baseData, currentMode);
-    } else {
-      renderTable(sortData(baseData, currentMode, currentOrder), currentMode);
-    }
+  // ▼ 初期状態：basic の小分類を反映
+  updateDetailSelect('basic');
+
+  // ▼ 大分類が変わったとき、小分類を書き換える
+  categorySel.addEventListener('change', () => {
+    updateDetailSelect(categorySel.value);
   });
 
+  // ▼ 小分類（detail）は updateDetailSelect 側で change を登録済み
+
+  // ▼ 並び替え（既存機能）
   radios.forEach(r => {
     r.addEventListener('change', () => {
       if (!r.checked) return;
