@@ -247,8 +247,7 @@ function updateDetailSelect(categoryValue) {
     detailSel.appendChild(opt);
   });
 
-  // 小分類セレクトが切り替わったら、テーブル表示も実行
-  // （並び順は currentOrder を保持）
+  // ▼ detail の change イベント（従来）
   detailSel.addEventListener('change', () => {
     currentMode = detailSel.value;
     if (currentOrder === "keep") {
@@ -257,6 +256,14 @@ function updateDetailSelect(categoryValue) {
       renderTable(sortData(baseData, currentMode, currentOrder), currentMode);
     }
   });
+
+  // ▼★ 追加：小分類の最初の項目で即時表示（自動更新）
+  currentMode = detailSel.value;
+  if (currentOrder === "keep") {
+    renderTable(baseData, currentMode);
+  } else {
+    renderTable(sortData(baseData, currentMode, currentOrder), currentMode);
+  }
 }
 
 // ---------- UI ----------
