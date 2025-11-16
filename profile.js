@@ -334,74 +334,48 @@ function sortData(data, mode, order) {
 }
 
 // ---------- 表示 ----------
+// ---------- 表示（4列固定：順位・棋士名・値・区分） ----------
 function renderTable(rows, mode) {
   const table = document.querySelector('table');
   const thead = table.querySelector('thead');
   const tbody = table.querySelector('tbody');
 
-  let cols;
+  // ▼ モードごとに「③の列に入れるキー」を決定
+  let valueKey = '';   // データのキー
+  let isDate = false;  // 日付なら true（YY/MM/DD に整形）
 
   if (mode === 'age') {
-    cols = [
-      { key: '区分', label: '区分' },
-      { key: '棋士名', label: '棋士名' },
-      { key: '__age_display__', label: '年齢' },
-      { key: '生年月日', label: '生年月日' }
-    ];
-  } else if (mode === 'kishi-no') {
-    cols = [
-      { key: '区分', label: '区分' },
-      { key: '棋士番号', label: '棋士番号' },
-      { key: '棋士名', label: '棋士名' },
-      { key: '__dan_or_title__', label: '段位/称号' }
-    ];
-  } else if (/^age-[4-9]d$/.test(mode)) {
-    const rankMap = {
-      'age-4d': { label: '四段昇段年齢', dateCol: '四段昇段日', displayKey: '__age_at_4d_display__' },
-      'age-5d': { label: '五段昇段年齢', dateCol: '五段昇段日', displayKey: '__age_at_5d_display__' },
-      'age-6d': { label: '六段昇段年齢', dateCol: '六段昇段日', displayKey: '__age_at_6d_display__' },
-      'age-7d': { label: '七段昇段年齢', dateCol: '七段昇段日', displayKey: '__age_at_7d_display__' },
-      'age-8d': { label: '八段昇段年齢', dateCol: '八段昇段日', displayKey: '__age_at_8d_display__' },
-      'age-9d': { label: '九段昇段年齢', dateCol: '九段昇段日', displayKey: '__age_at_9d_display__' }
-    };
-    const cfg = rankMap[mode];
-    cols = [
-      { key: '区分', label: '区分' },
-      { key: '棋士名', label: '棋士名' },
-      { key: cfg.displayKey, label: cfg.label },
-      { key: cfg.dateCol, label: cfg.dateCol }
-    ];
-  } else if (/^dur-[4-9]to[5-9]$/.test(mode)) {
-    const durMap = {
-      'dur-4to5': { start: '四段昇段日', end: '五段昇段日', startLabel: '四段', endLabel: '五段', displayKey: '__dur_4to5_display__' },
-      'dur-5to6': { start: '五段昇段日', end: '六段昇段日', startLabel: '五段', endLabel: '六段', displayKey: '__dur_5to6_display__' },
-      'dur-6to7': { start: '六段昇段日', end: '七段昇段日', startLabel: '六段', endLabel: '七段', displayKey: '__dur_6to7_display__' },
-      'dur-7to8': { start: '七段昇段日', end: '八段昇段日', startLabel: '七段', endLabel: '八段', displayKey: '__dur_7to8_display__' },
-      'dur-8to9': { start: '八段昇段日', end: '九段昇段日', startLabel: '八段', endLabel: '九段', displayKey: '__dur_8to9_display__' }
-    };
-    const cfg = durMap[mode];
-    cols = [
-      { key: '棋士名', label: '棋士名' },
-      { key: cfg.start, label: cfg.startLabel },
-      { key: cfg.end,   label: cfg.endLabel },
-      { key: cfg.displayKey, label: '期間' }
-    ];
-  } else if (mode === 'term-active') {
-    cols = [
-      { key: '棋士名', label: '棋士名' },
-      { key: '四段昇段日', label: '四段' },
-      { key: '__term_active_end__', label: '終了' },
-      { key: '__term_active_display__', label: '期間' }
-    ];
+    valueKey = '__age_display__';
+
   } else if (mode === 'age-active') {
-    cols = [
-      { key: '棋士名', label: '棋士名' },
-      { key: '生年月日', label: '誕生' },
-      { key: '__age_active_end__', label: '終了' },
-      { key: '__age_active_display__', label: '年齢' }
-    ];
+    valueKey = '__age_active_display__';
+
+  } else if (/^age-[4-9]d$/.test(mode)) {
+    const map = {
+      'age-4d': '__age_at_4d_display__',
+      'age-5d': '__age_at_5d_display__',
+      'age-6d': '__age_at_6d_display__',
+      'age-7d': '__age_at_7d_display__',
+      'age-8d': '__age_at_8d_display__',
+      'age-9d': '__age_at_9d_display__'
+    };
+    valueKey = map[mode];
+
+  } else if (/^dur-[4-9]to[5-9]$/.test(mode)) {
+    const map = {
+      'dur-4to5': '__dur_4to5_display__',
+      'dur-5to6': '__dur_5to6_display__',
+      'dur-6to7': '__dur_6to7_display__',
+      'dur-7to8': '__dur_7to8_display__',
+      'dur-8to9': '__dur_8to9_display__'
+    };
+    valueKey = map[mode];
+
+  } else if (mode === 'term-active') {
+    valueKey = '__term_active_display__';
+
   } else if (/^date-[4-9]d$/.test(mode)) {
-    const dateMap = {
+    const map = {
       'date-4d': '四段昇段日',
       'date-5d': '五段昇段日',
       'date-6d': '六段昇段日',
@@ -409,57 +383,44 @@ function renderTable(rows, mode) {
       'date-8d': '八段昇段日',
       'date-9d': '九段昇段日'
     };
-    const dateCol = dateMap[mode];
-    cols = [
-      { key: '区分', label: '区分' },
-      { key: '棋士名', label: '棋士名' },
-      { key: dateCol, label: dateCol },
-      { key: '棋士番号', label: '棋士番号' }
-    ];
+    valueKey = map[mode];
+    isDate = true;
+
+  } else if (mode === 'kishi-no') {
+    valueKey = '棋士番号';
+
   } else {
-    // sekiji 他
-    cols = [
-      { key: '区分', label: '区分' },
-      { key: '席次', label: '席次' },
-      { key: '棋士名', label: '棋士名' },
-      { key: '__dan_or_title__', label: '段位/称号' }
-    ];
+    // mode === 'sekiji'（基本情報）
+    valueKey = '席次';
   }
 
-  // thead
-  thead.innerHTML = '';
-  const trh = document.createElement('tr');
-  cols.forEach(c => { const th = document.createElement('th'); th.textContent = c.label; trh.appendChild(th); });
-  thead.appendChild(trh);
+  // ---------- thead ----------
+  thead.innerHTML = `
+    <tr>
+      <th>順位</th>
+      <th>棋士名</th>
+      <th>値</th>
+      <th>区分</th>
+    </tr>
+  `;
 
-  // tbody（dur/term/age-active だけ短縮 YY/MM/DD）
+  // ---------- tbody ----------
   tbody.innerHTML = '';
-  rows.forEach(row => {
+  rows.forEach((row, i) => {
+    let val = row[valueKey] || '';
+
+    // 日付モードの場合は YY/MM/DD に整形
+    if (isDate) {
+      val = formatDateYY(val);
+    }
+
     const tr = document.createElement('tr');
-    cols.forEach(c => {
-      const td = document.createElement('td');
-      let val = row[c.key] || '';
-
-      if (/^dur-[4-9]to[5-9]$/.test(mode)) {
-        const dm = {
-          'dur-4to5': ['四段昇段日','五段昇段日'],
-          'dur-5to6': ['五段昇段日','六段昇段日'],
-          'dur-6to7': ['六段昇段日','七段昇段日'],
-          'dur-7to8': ['七段昇段日','八段昇段日'],
-          'dur-8to9': ['八段昇段日','九段昇段日']
-        }[mode];
-        if (dm && (c.key === dm[0] || c.key === dm[1])) val = formatDateYY(val);
-      }
-      if (mode === 'term-active' && (c.key === '四段昇段日' || c.key === '__term_active_end__')) {
-        val = formatDateYY(val);
-      }
-      if (mode === 'age-active' && (c.key === '生年月日' || c.key === '__age_active_end__')) {
-        val = formatDateYY(val);
-      }
-
-      td.textContent = val;
-      tr.appendChild(td);
-    });
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${row['棋士名']}</td>
+      <td>${val}</td>
+      <td>${row['区分']}</td>
+    `;
     tbody.appendChild(tr);
   });
 }
