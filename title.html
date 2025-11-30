@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- title-1 -->
+<!-- title-2 -->
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251130-a">
+    <link rel="stylesheet" href="style.css?v=20251130-b">
 </head>
 <body>
 <header>
@@ -16,7 +16,7 @@
   <h2>タイトル検索</h2>
 
   <!-- ①番勝負一覧／②ランキング の切り替え -->
-  <p>表示内容を選択してください。</p>
+  <p>表示する内容を選択してください。</p>
   <label><input type="radio" name="mode" value="match" checked>番勝負一覧</label>
   <label><input type="radio" name="mode" value="ranking">タイトル獲得ランキング</label>
 
@@ -148,6 +148,52 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
+  // ===== 同じ番勝負が二重に入っている場合の重複除去 =====
+  function dedupeMatches(matches) {
+    const seen = new Set();
+    const result = [];
+
+    for (const r of matches) {
+      const key = [
+        r["棋戦"],
+        r["期"],
+        r["年度"],
+        r["優勝者"],
+        r["相手"]
+      ].join("|");
+
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      result.push(r);
+    }
+    return result;
+  }
+
+  // ===== 年度セレクトボックスの選択肢を初期化 =====
+  function initYearOptions() {
+    if (!yearSelect) return;
+
+    const yearSet = new Set();
+    ALL_MATCHES.forEach(r => {
+      const y = r["年度"];
+      if (typeof y === "number" && y > 0) {
+        yearSet.add(y);
+      }
+    });
+
+    const years = Array.from(yearSet).sort((a, b) => b - a); // 新しい年度を上に
+
+    yearSelect.innerHTML = "";
+    years.forEach(y => {
+      const opt = document.createElement("option");
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearSelect.appendChild(opt);
+    });
+  }
+
   // ===== UI の表示・非表示を切り替える =====
   function updateUIVisibility() {
     const mode = getMainMode();
@@ -160,17 +206,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // matchMode によって、棋戦/年度のUIを制御
       if (matchMode === "kisen") {
+        // 棋戦ごと：棋戦セレクトを表示、年度セレクトは隠す
         setVisible(kisenLabelP, true);
         setVisible(kisenSelect, true);
-        // 年度セレクトは現仕様では使わないので非表示
         setVisible(yearLabelP, false);
         setVisible(yearSelect, false);
       } else {
-        // 年度ごと：今は「各棋戦の最新年度の結果」を出すだけなので、セレクト自体は非表示
+        // 年度ごと：年度セレクトを表示、棋戦セレクトは隠す
         setVisible(kisenLabelP, false);
         setVisible(kisenSelect, false);
-        setVisible(yearLabelP, false);
-        setVisible(yearSelect, false);
+        setVisible(yearLabelP, true);
+        setVisible(yearSelect, true);
       }
 
       // ランキング用UIは隠す
@@ -220,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 指定棋戦の番勝負だけを抽出
     const rows = ALL_MATCHES.filter(r => r["棋戦"] === kisenName);
 
-    // 期の降順でソート（同じ年度に複数あっても期番号で並ぶ）
+    // 期の降順でソート
     rows.sort((a, b) => b["期"] - a["期"]);
 
     thead.innerHTML = `
@@ -250,23 +296,29 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join("");
   }
 
-  // ===== ①-b 各棋戦の「最新年度」の番勝負一覧 =====
-  function renderLatestByKisen() {
+  // ===== ①-b 年度ごとの番勝負一覧 =====
+  function renderMatchesByYear(year) {
     clearTable();
 
-    // 棋戦ごとに「年度の最大」を求め、その年度の行をすべて表示
-    const result = [];
+    const targetYear = Number(year);
+    if (!targetYear) {
+      thead.innerHTML = "<tr><th>年度</th></tr>";
+      tbody.innerHTML = "<tr><td>年度が正しく選択されていません。</td></tr>";
+      return;
+    }
 
-    KISEN_ORDER.forEach(kisen => {
-      const rows = ALL_MATCHES.filter(r => r["棋戦"] === kisen);
-      if (rows.length === 0) return;
+    // 指定年度の番勝負だけを抽出
+    const rows = ALL_MATCHES.filter(r => r["年度"] === targetYear);
 
-      const maxYear = rows.reduce((acc, r) => Math.max(acc, r["年度"]), 0);
-      const latestRows = rows.filter(r => r["年度"] === maxYear);
+    // 棋戦の標準順 → 同じ棋戦内では期の降順
+    rows.sort((a, b) => {
+      const ai = KISEN_ORDER.indexOf(a["棋戦"]);
+      const bi = KISEN_ORDER.indexOf(b["棋戦"]);
+      const aIdx = ai === -1 ? 999 : ai;
+      const bIdx = bi === -1 ? 999 : bi;
 
-      // 期の降順でそろえておく（同年度に複数期ある棋戦対策）
-      latestRows.sort((a, b) => b["期"] - a["期"]);
-      result.push(...latestRows);
+      if (aIdx !== bIdx) return aIdx - bIdx;
+      return b["期"] - a["期"];
     });
 
     thead.innerHTML = `
@@ -282,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </tr>
     `;
 
-    tbody.innerHTML = result.map(r => `
+    tbody.innerHTML = rows.map(r => `
       <tr>
         <td>${r["棋戦"]}</td>
         <td>${r["期"]}</td>
@@ -301,29 +353,29 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTable();
 
     // 対象となる番勝負（通算なら全棋戦、それ以外ならその棋戦だけ）
-  // ただし「タイトル戦扱いになる前」の王座戦・叡王戦はランキングから除外する
-  let baseMatches;
-  if (!targetKisen || targetKisen === "通算") {
-    baseMatches = ALL_MATCHES;
-  } else {
-    baseMatches = ALL_MATCHES.filter(r => r["棋戦"] === targetKisen);
-  }
-
-  // タイトル戦ではない期を除外
-  const matches = baseMatches.filter(r => {
-    const kisen = r["棋戦"];
-    const ki    = r["期"];   // loadCSVで数値化済み
-
-    // 王座戦: 第31期まではタイトル戦扱いではない
-    if (kisen === "王座戦" && ki <= 31) {
-      return false;
+    // ただし「タイトル戦扱いになる前」の王座戦・叡王戦はランキングから除外する
+    let baseMatches;
+    if (!targetKisen || targetKisen === "通算") {
+      baseMatches = ALL_MATCHES;
+    } else {
+      baseMatches = ALL_MATCHES.filter(r => r["棋戦"] === targetKisen);
     }
-    // 叡王戦: 第2期まではタイトル戦扱いではない
-    if (kisen === "叡王戦" && ki <= 2) {
-      return false;
-    }
-    return true;
-  });
+
+    // タイトル戦ではない期を除外
+    const matches = baseMatches.filter(r => {
+      const kisen = r["棋戦"];
+      const ki    = r["期"];   // loadCSVで数値化済み
+
+      // 王座戦: 第30期まではタイトル戦扱いではない
+      if (kisen === "王座戦" && ki <= 30) {
+        return false;
+      }
+      // 叡王戦: 第2期まではタイトル戦扱いではない
+      if (kisen === "叡王戦" && ki <= 2) {
+        return false;
+      }
+      return true;
+    });
 
     // 棋士ごとの集計
     const statsMap = new Map(); // key: 棋士名, value: {棋士名, 登場, 獲得, 敗退}
@@ -411,13 +463,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const kisenName = kisenSelect.value || "竜王戦";
         renderMatchesByKisen(kisenName);
       } else {
-        // 年度ごと：各棋戦の「最新年度」の結果
-        renderLatestByKisen();
+        // 年度ごと：セレクトで選んだ年度の結果を表示
+        let yearValue = yearSelect ? yearSelect.value : "";
+        if (!yearValue) {
+          // セレクトに値が入っていない場合は、ALL_MATCHES から最新年度を推定
+          const years = ALL_MATCHES
+            .map(r => r["年度"])
+            .filter(y => typeof y === "number" && y > 0);
+          const maxYear = years.length ? Math.max(...years) : 0;
+          yearValue = String(maxYear);
+          if (yearSelect && maxYear) {
+            yearSelect.value = yearValue;
+          }
+        }
+        renderMatchesByYear(yearValue);
       }
     } else {
       // ランキング：対象セレクトから取得（初期は通算）
       const target = rankingSelect.value || "通算";
-      // 指示どおり、少なくとも「通算」はここで表示される
       renderRanking(target);
     }
   }
@@ -426,8 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
   modeRadios.forEach(r => {
     r.addEventListener("change", () => {
       updateUIVisibility();
-      // モード切り替え時に即再描画しても良いが、
-      // とりあえずここでは見た目だけ切り替えて、描画はボタンで行う。
     });
   });
 
@@ -457,8 +518,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   Promise.all(CSV_FILES.map(path => loadCSV(path)))
     .then(arrays => {
-      // 全棋戦分をマージ
-      ALL_MATCHES = arrays.flat();
+      // 全棋戦分をマージしてから重複除去
+      const merged = arrays.flat();
+      ALL_MATCHES = dedupeMatches(merged);
+
+      // 年度セレクトの選択肢を作成
+      initYearOptions();
 
       // UI初期状態を整える
       // ①番勝負一覧 / a 棋戦ごと / 竜王戦
@@ -466,7 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (modeMatch) modeMatch.checked = true;
       const matchKisen = Array.from(matchModeRadios).find(r => r.value === "kisen");
       if (matchKisen) matchKisen.checked = true;
-      if (kisenSelect) kisenSelect.value = "竜王戦";
+      if (kisenSelect)   kisenSelect.value   = "竜王戦";
       if (rankingSelect) rankingSelect.value = "通算";
 
       updateUIVisibility();
