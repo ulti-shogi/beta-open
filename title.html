@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- title-2 -->
+<!-- title-3 -->
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -106,11 +106,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const matchModeFirstLabel = matchModeRadios[0].parentElement;
   const matchModeLabelP     = matchModeFirstLabel.previousElementSibling;
 
-  // 棋戦の標準順
+  // 通常の棋戦順（今は年度セレクトなどで使う想定）
   const KISEN_ORDER = [
     "竜王戦","名人戦","叡王戦","王位戦",
     "王座戦","棋聖戦","棋王戦","王将戦",
     "十段戦","九段戦"
+  ];
+
+  // 年度ごと表示のときの棋戦順
+  const YEAR_VIEW_ORDER = [
+    "叡王戦","名人戦","棋聖戦","王位戦",
+    "王座戦","竜王戦","王将戦","棋王戦"
   ];
 
   // 全番勝負データ（10CSV分）
@@ -260,6 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== ①-a 棋戦ごとの番勝負一覧 =====
+  // 列：年度・期・優勝者・勝・敗・相手
   function renderMatchesByKisen(kisenName) {
     clearTable();
 
@@ -271,32 +278,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     thead.innerHTML = `
       <tr>
-        <th>棋戦</th>
-        <th>期</th>
         <th>年度</th>
+        <th>期</th>
         <th>優勝者</th>
-        <th>相手</th>
         <th>勝</th>
         <th>敗</th>
-        <th>持</th>
+        <th>相手</th>
       </tr>
     `;
 
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r["棋戦"]}</td>
-        <td>${r["期"]}</td>
         <td>${r["年度"]}</td>
+        <td>${r["期"]}</td>
         <td>${r["優勝者"]}</td>
-        <td>${r["相手"]}</td>
         <td>${r["勝"]}</td>
         <td>${r["敗"]}</td>
-        <td>${r["持"]}</td>
+        <td>${r["相手"]}</td>
       </tr>
     `).join("");
   }
 
   // ===== ①-b 年度ごとの番勝負一覧 =====
+  // 列：棋戦・期・優勝者・勝・敗・相手
   function renderMatchesByYear(year) {
     clearTable();
 
@@ -310,10 +314,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // 指定年度の番勝負だけを抽出
     const rows = ALL_MATCHES.filter(r => r["年度"] === targetYear);
 
-    // 棋戦の標準順 → 同じ棋戦内では期の降順
+    // 棋戦の指定順 → 同じ棋戦内では期の降順
     rows.sort((a, b) => {
-      const ai = KISEN_ORDER.indexOf(a["棋戦"]);
-      const bi = KISEN_ORDER.indexOf(b["棋戦"]);
+      const ai = YEAR_VIEW_ORDER.indexOf(a["棋戦"]);
+      const bi = YEAR_VIEW_ORDER.indexOf(b["棋戦"]);
       const aIdx = ai === -1 ? 999 : ai;
       const bIdx = bi === -1 ? 999 : bi;
 
@@ -325,12 +329,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <th>棋戦</th>
         <th>期</th>
-        <th>年度</th>
         <th>優勝者</th>
-        <th>相手</th>
         <th>勝</th>
         <th>敗</th>
-        <th>持</th>
+        <th>相手</th>
       </tr>
     `;
 
@@ -338,12 +340,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <td>${r["棋戦"]}</td>
         <td>${r["期"]}</td>
-        <td>${r["年度"]}</td>
         <td>${r["優勝者"]}</td>
-        <td>${r["相手"]}</td>
         <td>${r["勝"]}</td>
         <td>${r["敗"]}</td>
-        <td>${r["持"]}</td>
+        <td>${r["相手"]}</td>
       </tr>
     `).join("");
   }
@@ -366,8 +366,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const kisen = r["棋戦"];
       const ki    = r["期"];   // loadCSVで数値化済み
 
-      // 王座戦: 第30期まではタイトル戦扱いではない
-      if (kisen === "王座戦" && ki <= 30) {
+      // 王座戦: 第31期まではタイトル戦扱いではない
+      if (kisen === "王座戦" && ki <= 31) {
         return false;
       }
       // 叡王戦: 第2期まではタイトル戦扱いではない
