@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251130-b">
+    <link rel="stylesheet" href="style.css?v=20251130-c">
 </head>
 <body>
 <header>
@@ -152,29 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         return rows;
       });
-  }
-
-  // ===== 同じ番勝負が二重に入っている場合の重複除去 =====
-  function dedupeMatches(matches) {
-    const seen = new Set();
-    const result = [];
-
-    for (const r of matches) {
-      const key = [
-        r["棋戦"],
-        r["期"],
-        r["年度"],
-        r["優勝者"],
-        r["相手"]
-      ].join("|");
-
-      if (seen.has(key)) {
-        continue;
-      }
-      seen.add(key);
-      result.push(r);
-    }
-    return result;
   }
 
   // ===== 年度セレクトボックスの選択肢を初期化 =====
@@ -366,8 +343,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const kisen = r["棋戦"];
       const ki    = r["期"];   // loadCSVで数値化済み
 
-      // 王座戦: 第31期まではタイトル戦扱いではない
-      if (kisen === "王座戦" && ki <= 31) {
+      // 王座戦: 第30期まではタイトル戦扱いではない
+      if (kisen === "王座戦" && ki <= 30) {
         return false;
       }
       // 叡王戦: 第2期まではタイトル戦扱いではない
@@ -518,9 +495,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   Promise.all(CSV_FILES.map(path => loadCSV(path)))
     .then(arrays => {
-      // 全棋戦分をマージしてから重複除去
-      const merged = arrays.flat();
-      ALL_MATCHES = dedupeMatches(merged);
+
+        ALL_MATCHES = arrays.flat();
 
       // 年度セレクトの選択肢を作成
       initYearOptions();
