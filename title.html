@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+<!-- title-1 -->
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=2025">
+    <link rel="stylesheet" href="style.css?v=20251130-a">
 </head>
 <body>
 <header>
@@ -300,12 +301,29 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTable();
 
     // 対象となる番勝負（通算なら全棋戦、それ以外ならその棋戦だけ）
-    let matches;
-    if (!targetKisen || targetKisen === "通算") {
-      matches = ALL_MATCHES;
-    } else {
-      matches = ALL_MATCHES.filter(r => r["棋戦"] === targetKisen);
+  // ただし「タイトル戦扱いになる前」の王座戦・叡王戦はランキングから除外する
+  let baseMatches;
+  if (!targetKisen || targetKisen === "通算") {
+    baseMatches = ALL_MATCHES;
+  } else {
+    baseMatches = ALL_MATCHES.filter(r => r["棋戦"] === targetKisen);
+  }
+
+  // タイトル戦ではない期を除外
+  const matches = baseMatches.filter(r => {
+    const kisen = r["棋戦"];
+    const ki    = r["期"];   // loadCSVで数値化済み
+
+    // 王座戦: 第31期まではタイトル戦扱いではない
+    if (kisen === "王座戦" && ki <= 31) {
+      return false;
     }
+    // 叡王戦: 第2期まではタイトル戦扱いではない
+    if (kisen === "叡王戦" && ki <= 2) {
+      return false;
+    }
+    return true;
+  });
 
     // 棋士ごとの集計
     const statsMap = new Map(); // key: 棋士名, value: {棋士名, 登場, 獲得, 敗退}
