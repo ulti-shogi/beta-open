@@ -4,346 +4,466 @@
   <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251029-a">
-    <style>
-  section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-  section .row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  section .search-row {
-    justify-content: center;
-    margin-top: 6px;
-  }
-  section input[type="number"] {
-    width: 5em;
-  }
-</style>
+    <link rel="stylesheet" href="style.css?v=2025">
 </head>
 <body>
 <header>
 <p><a href="https://ulti-shogi.github.io/beta-open/index.html">TOPページに戻る</a></>
 </header>
-<main>
-<section>
-  <!-- 1行目：対象（通算＋各棋戦をまとめたセレクト） -->
-  <div class="row mode">
-    <label>対象：
-      <select>
-        <option value="通算">通算</option>
-        <option value="竜王戦">竜王戦</option>
-        <option value="名人戦">名人戦</option>
-        <option value="叡王戦">叡王戦</option>
-        <option value="王位戦">王位戦</option>
-        <option value="王座戦">王座戦</option>
-        <option value="棋聖戦">棋聖戦</option>
-        <option value="棋王戦">棋王戦</option>
-        <option value="王将戦">王将戦</option>
-        <option value="十段戦">十段戦</option>
-        <option value="九段戦">九段戦</option>
-      </select>
-    </label>
-  </div>
+  <main>
+      <section>
+  <h2>タイトル検索</h2>
 
-  <!-- 2行目：指標 + 昇順/降順（元ファイル踏襲） -->
-  <div class="row sort">
-    <label>
-      <select>
-        <option value="獲得">獲得</option>
-        <option value="登場">登場</option>
-        <option value="勝率">勝率</option>
-        <option value="敗退">敗退</option>
-      </select>
-    </label>
-    <label><input type="radio" name="order" value="asc"> 昇順</label>
-    <label><input type="radio" name="order" value="desc" checked> 降順</label>
-  </div>
+  <!-- ①番勝負一覧／②ランキング の切り替え -->
+  <p>表示内容を選択してください。</p>
+  <label><input type="radio" name="mode" value="match" checked>番勝負一覧</label>
+  <label><input type="radio" name="mode" value="ranking">タイトル獲得ランキング</label>
 
-  <!-- 3行目：表示件数（元ファイル踏襲） -->
-  <div class="row limit">
-    <label>表示件数：
-      <input type="number" class="limit-input" value="9" placeholder="例：10" min="1">
-    </label>
-    <button class="limit-all">全件（空欄）</button>
-  </div>
-  <div>＊入力欄が空欄の場合は全件表示されます</div>
+  <!-- ① 番勝負一覧モードの設定 -->
+  <p>番勝負一覧の表示方法を選択してください。</p>
+  <label><input type="radio" name="matchMode" value="kisen" checked>棋戦ごと</label>
+  <label><input type="radio" name="matchMode" value="year">年度ごと</label>
 
-  <!-- 4行目：検索ボタン（元ファイル踏襲） -->
-  <div class="row search-row">
-    <button>検索</button>
-  </div>
+  <!-- 棋戦ごとのときに使うセレクト（初期は竜王戦） -->
+  <p>棋戦を選択してください。（棋戦ごと）</p>
+  <select name="kisen">
+    <option value="竜王戦">竜王戦</option>
+    <option value="名人戦">名人戦</option>
+    <option value="叡王戦">叡王戦</option>
+    <option value="王位戦">王位戦</option>
+    <option value="王座戦">王座戦</option>
+    <option value="棋聖戦">棋聖戦</option>
+    <option value="棋王戦">棋王戦</option>
+    <option value="王将戦">王将戦</option>
+    <option value="十段戦">十段戦</option>
+    <option value="九段戦">九段戦</option>
+  </select>
+
+  <!-- 年度ごとのときに使うセレクト（中身はscriptで埋める想定） -->
+  <p>年度を選択してください。（年度ごと）</p>
+  <select name="year">
+    <!-- JavaScriptで番勝負データから年度一覧を埋め込む -->
+  </select>
+
+  <!-- ② タイトル獲得ランキングモードの設定 -->
+  <p>ランキングの対象を選択してください。</p>
+  <select name="rankingTarget">
+    <option value="通算">通算</option>
+    <option value="竜王戦">竜王戦</option>
+    <option value="名人戦">名人戦</option>
+    <option value="叡王戦">叡王戦</option>
+    <option value="王位戦">王位戦</option>
+    <option value="王座戦">王座戦</option>
+    <option value="棋聖戦">棋聖戦</option>
+    <option value="棋王戦">棋王戦</option>
+    <option value="王将戦">王将戦</option>
+    <option value="十段戦">十段戦</option>
+    <option value="九段戦">九段戦</option>
+  </select>
+
+  <!-- 表示実行ボタン -->
+  <p>
+    <button>表示</button>
+  </p>
 </section>
-
-<div class="free">
-    
-</div>
+  
 
 <table>
-  <thead>
-  <tbody>
+  <thead></thead>
+    <tbody></tbody>
 </table>
 
-<!-- ✅ テーブルを画像として保存するボタン -->
-<button class="save-table-btn" style="margin: 15px 0;">この表を画像として保存</button>
-
-<!-- ✅ html2canvas の読み込み -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-<script>
-// ✅ テーブル画像化スニペット（ファイル名 shogi-YYYY-MM-DD-HHMMSS.png 固定）
-document.querySelector('.save-table-btn').addEventListener('click', () => {
-  const table = document.querySelector('table'); // ← テーブル1個前提
-
-  const originalBorderCollapse = table.style.borderCollapse;
-  table.style.borderCollapse = 'collapse';
-  table.style.backgroundColor = '#ffffff';
-  table.style.fontFamily = 'sans-serif';
-
-  const now = new Date();
-  const date = now.toISOString().slice(0,10); // YYYY-MM-DD
-  const time = `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
-  const fileName = `shogi-${date}-${time}.png`;
-
-  html2canvas(table, { scale: 2, useCORS: true }).then(canvas => {
-    table.style.borderCollapse = originalBorderCollapse;
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = fileName;
-    link.click();
-  });
-});
-</script>
-
 <div class="free">
-  <h3>自由欄</h3>
-<p>初期表示では通算タイトル獲得数二桁以上の棋士のみを表示しています。</p>
+  <h3>出典</h3>
+  <p>日本将棋連盟</p>
+      </div>
 
-</div>
-  
   </main>
   <footer>フッター</footer>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
-  const table = document.querySelector("table");
-  const thead = table.querySelector("thead");
-  const tbody = table.querySelector("tbody");
+  const table   = document.querySelector("table");
+  const thead   = table.querySelector("thead");
+  const tbody   = table.querySelector("tbody");
 
-  let ALL = []; // CSV全体（通算＋各棋戦）
+  // --- section 内のUIたち ---
+  const modeRadios      = section.querySelectorAll('input[name="mode"]');
+  const matchModeRadios = section.querySelectorAll('input[name="matchMode"]');
+  const kisenSelect     = section.querySelector('select[name="kisen"]');
+  const yearSelect      = section.querySelector('select[name="year"]');
+  const rankingSelect   = section.querySelector('select[name="rankingTarget"]');
+  const displayButton   = section.querySelector("button");
 
-  // ===== CSV読み込み（1本化：title-new.csv） =====
+  // 説明文の <p> たち（前の兄弟要素を使って取得）
+  const kisenLabelP   = kisenSelect.previousElementSibling;   // 「棋戦を選択してください。（棋戦ごと）」
+  const yearLabelP    = yearSelect.previousElementSibling;    // 「年度を選択してください。（年度ごと）」
+  const rankingLabelP = rankingSelect.previousElementSibling; // 「ランキングの対象を選択してください。」
+
+  // 「番勝負一覧の表示方法を選択してください。」の <p>
+  const matchModeFirstLabel = matchModeRadios[0].parentElement;
+  const matchModeLabelP     = matchModeFirstLabel.previousElementSibling;
+
+  // 棋戦の標準順
+  const KISEN_ORDER = [
+    "竜王戦","名人戦","叡王戦","王位戦",
+    "王座戦","棋聖戦","棋王戦","王将戦",
+    "十段戦","九段戦"
+  ];
+
+  // 全番勝負データ（10CSV分）
+  let ALL_MATCHES = [];
+
+  // ===== CSV読み込み（単純なカンマ区切り想定） =====
   function loadCSV(path) {
     return fetch(path)
       .then(res => res.text())
       .then(text => {
-        const lines = text.trim().split("\n");
+        const lines = text.trim().split(/\r?\n/);
+        if (lines.length === 0) return [];
         const header = lines[0].split(",").map(s => s.trim());
-        const rows = lines.slice(1).map(line => {
+
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
           const cols = line.split(",");
           const obj = {};
-          header.forEach((key, i) => obj[key] = (cols[i] ?? "").trim());
-          return obj;
-        });
-        return rows.map(row => ({
-          ...row,
-          登場: Number(row["登場"] || 0),
-          獲得: Number(row["獲得"] || 0),
-          敗退: Number(row["敗退"] || 0),
-          勝率: Number(row["勝率"] || 0),
-          並順: Number(row["並順"] || 0),
-        }));
+          header.forEach((key, idx) => {
+            obj[key] = (cols[idx] ?? "").trim();
+          });
+
+          // 数値にしておく
+          obj["期"]   = Number(obj["期"]   || 0);
+          obj["年度"] = Number(obj["年度"] || 0);
+          obj["勝"]   = Number(obj["勝"]   || 0);
+          obj["敗"]   = Number(obj["敗"]   || 0);
+          obj["持"]   = Number(obj["持"]   || 0);
+
+          rows.push(obj);
+        }
+        return rows;
       });
   }
 
-  // ===== 表示件数取得（0以下なら全件） =====
-  function getLimit(total) {
-    const input = section.querySelector('.limit-input');
-    if (!input) return total;
-    const val = Number(input.value);
-    if (!val || val < 1) return total;
-    return val;
-  }
+  // ===== UI の表示・非表示を切り替える =====
+  function updateUIVisibility() {
+    const mode = getMainMode();
+    const matchMode = getMatchMode();
 
-  // ===== 自由欄の更新 =====
-  function updateFreeText(modeText, sortKey, sortOrder, shown, total) {
-    const free = document.querySelector(".free");
-    if (!free) return;
-    free.textContent = `${modeText} / ${sortKey} ${sortOrder === "asc" ? "昇順" : "降順"} ｜ ${total}件中 ${shown}件表示`;
-  }
+    if (mode === "match") {
+      // 番勝負モード：match 用UIを表示、ranking 用UIを隠す
+      setVisible(matchModeLabelP, true);
+      matchModeRadios.forEach(r => setVisible(r.parentElement, true));
 
-  // ===== ランク付け（同値は同順位） =====
-  function assignRank(arr, sortKey) {
-    let rank = 1;
-    for (let i = 0; i < arr.length; i++) {
-      if (i > 0 && arr[i][sortKey] !== arr[i - 1][sortKey]) {
-        rank = i + 1;
+      // matchMode によって、棋戦/年度のUIを制御
+      if (matchMode === "kisen") {
+        setVisible(kisenLabelP, true);
+        setVisible(kisenSelect, true);
+        // 年度セレクトは現仕様では使わないので非表示
+        setVisible(yearLabelP, false);
+        setVisible(yearSelect, false);
+      } else {
+        // 年度ごと：今は「各棋戦の最新年度の結果」を出すだけなので、セレクト自体は非表示
+        setVisible(kisenLabelP, false);
+        setVisible(kisenSelect, false);
+        setVisible(yearLabelP, false);
+        setVisible(yearSelect, false);
       }
-      arr[i]._rank = rank;
-    }
-  }
 
-  // ===== 共通：ソート =====
-  function sortBy(arr, sortKey, sortOrder) {
-    arr.sort((a, b) => {
-      const pa = a[sortKey];
-      const pb = b[sortKey];
-      const primary = sortOrder === "asc" ? pa - pb : pb - pa;
-      if (primary !== 0) return primary;
-      return a["並順"] - b["並順"]; // タイブレーク
-    });
-  }
-
-  // ===== render（通算） =====
-  function renderTotal(data, sortKey, sortOrder) {
-    const arr = data.filter(r => r["棋戦"] === "通算");
-    sortBy(arr, sortKey, sortOrder);
-    assignRank(arr, sortKey);
-
-    const total = arr.length;
-    const limit = getLimit(total);
-    let view = arr.slice(0, limit);
-
-    // 同率延長
-    if (view.length > 0) {
-      const lastRank = view[view.length - 1]._rank;
-      for (let i = limit; i < arr.length; i++) {
-        if (arr[i]._rank === lastRank) view.push(arr[i]);
-        else break;
-      }
-    }
-
-    thead.innerHTML = `
-      <tr>
-        <th>順位</th>
-        <th>棋士名</th>
-        <th>登場</th>
-        <th>獲得</th>
-        <th>敗退</th>
-        <th>勝率</th>
-      </tr>
-    `;
-
-    tbody.innerHTML = view.map(r => `
-      <tr>
-        <td>${r._rank}</td>
-        <td>${r["棋士名"]}</td>
-        <td>${r["登場"]}</td>
-        <td>${r["獲得"]}</td>
-        <td>${r["敗退"]}</td>
-        <td>${Number.isFinite(r["勝率"]) ? r["勝率"].toFixed(4) : ""}</td>
-      </tr>
-    `).join("");
-
-    updateFreeText("対象：通算", sortKey, sortOrder, view.length, total);
-  }
-
-  // ===== render（棋戦別） =====
-  function renderKisen(data, sortKey, sortOrder, kisenName) {
-    const arr = data.filter(r => r["棋戦"] === kisenName); // すでにフィルタ済にしてもOK
-    sortBy(arr, sortKey, sortOrder);
-    assignRank(arr, sortKey);
-
-    const total = arr.length;
-    const limit = getLimit(total);
-    let view = arr.slice(0, limit);
-
-    // 同率延長
-    if (view.length > 0) {
-      const lastRank = view[view.length - 1]._rank;
-      for (let i = limit; i < arr.length; i++) {
-        if (arr[i]._rank === lastRank) view.push(arr[i]);
-        else break;
-      }
-    }
-
-    thead.innerHTML = `
-      <tr>
-        <th>順位</th>
-        <th>棋士名</th>
-        <th>登場</th>
-        <th>獲得</th>
-        <th>敗退</th>
-        <th>勝率</th>
-        <th>永世称号</th>
-      </tr>
-    `;
-
-    tbody.innerHTML = view.map(r => `
-      <tr>
-        <td>${r._rank}</td>
-        <td>${r["棋士名"]}</td>
-        <td>${r["登場"]}</td>
-        <td>${r["獲得"]}</td>
-        <td>${r["敗退"]}</td>
-        <td>${Number.isFinite(r["勝率"]) ? r["勝率"].toFixed(4) : ""}</td>
-        <td>${r["永世称号"] || ""}</td>
-      </tr>
-    `).join("");
-
-    updateFreeText(`対象：${kisenName}`, sortKey, sortOrder, view.length, total);
-  }
-
-  // ===== イベント：検索ボタン & 全件ボタン =====
-  section.addEventListener("click", e => {
-    // 全件（空欄）ボタン
-    if (e.target.classList.contains("limit-all")) {
-      const input = section.querySelector('.limit-input');
-      if (input) input.value = "";
-      return; // 検索は行わない
-    }
-
-    if (e.target.tagName !== "BUTTON") return;
-
-    const selects = section.querySelectorAll("select");
-    const targetSelect = selects[0]; // 対象（通算＋棋戦）
-    const sortSelect   = selects[1]; // 指標
-    const order = section.querySelector('input[name="order"]:checked')?.value || "desc";
-    const target = targetSelect.value;
-
-    if (target === "通算") {
-      renderTotal(ALL, sortSelect.value, order);
+      // ランキング用UIは隠す
+      setVisible(rankingLabelP, false);
+      setVisible(rankingSelect, false);
     } else {
-      renderKisen(ALL, sortSelect.value, order, target);
+      // ランキングモード：ranking 用UIを表示、match 用UIを全部隠す
+      setVisible(matchModeLabelP, false);
+      matchModeRadios.forEach(r => setVisible(r.parentElement, false));
+
+      setVisible(kisenLabelP, false);
+      setVisible(kisenSelect, false);
+      setVisible(yearLabelP, false);
+      setVisible(yearSelect, false);
+
+      setVisible(rankingLabelP, true);
+      setVisible(rankingSelect, true);
     }
+  }
+
+  function setVisible(el, show) {
+    if (!el) return;
+    el.style.display = show ? "" : "none";
+  }
+
+  // ===== モード取得 =====
+  function getMainMode() {
+    const checked = Array.from(modeRadios).find(r => r.checked);
+    return checked ? checked.value : "match";
+  }
+
+  function getMatchMode() {
+    const checked = Array.from(matchModeRadios).find(r => r.checked);
+    return checked ? checked.value : "kisen";
+  }
+
+  // ===== テーブルクリア =====
+  function clearTable() {
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+  }
+
+  // ===== ①-a 棋戦ごとの番勝負一覧 =====
+  function renderMatchesByKisen(kisenName) {
+    clearTable();
+
+    // 指定棋戦の番勝負だけを抽出
+    const rows = ALL_MATCHES.filter(r => r["棋戦"] === kisenName);
+
+    // 期の降順でソート（同じ年度に複数あっても期番号で並ぶ）
+    rows.sort((a, b) => b["期"] - a["期"]);
+
+    thead.innerHTML = `
+      <tr>
+        <th>棋戦</th>
+        <th>期</th>
+        <th>年度</th>
+        <th>優勝者</th>
+        <th>相手</th>
+        <th>勝</th>
+        <th>敗</th>
+        <th>持</th>
+      </tr>
+    `;
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r["棋戦"]}</td>
+        <td>${r["期"]}</td>
+        <td>${r["年度"]}</td>
+        <td>${r["優勝者"]}</td>
+        <td>${r["相手"]}</td>
+        <td>${r["勝"]}</td>
+        <td>${r["敗"]}</td>
+        <td>${r["持"]}</td>
+      </tr>
+    `).join("");
+  }
+
+  // ===== ①-b 各棋戦の「最新年度」の番勝負一覧 =====
+  function renderLatestByKisen() {
+    clearTable();
+
+    // 棋戦ごとに「年度の最大」を求め、その年度の行をすべて表示
+    const result = [];
+
+    KISEN_ORDER.forEach(kisen => {
+      const rows = ALL_MATCHES.filter(r => r["棋戦"] === kisen);
+      if (rows.length === 0) return;
+
+      const maxYear = rows.reduce((acc, r) => Math.max(acc, r["年度"]), 0);
+      const latestRows = rows.filter(r => r["年度"] === maxYear);
+
+      // 期の降順でそろえておく（同年度に複数期ある棋戦対策）
+      latestRows.sort((a, b) => b["期"] - a["期"]);
+      result.push(...latestRows);
+    });
+
+    thead.innerHTML = `
+      <tr>
+        <th>棋戦</th>
+        <th>期</th>
+        <th>年度</th>
+        <th>優勝者</th>
+        <th>相手</th>
+        <th>勝</th>
+        <th>敗</th>
+        <th>持</th>
+      </tr>
+    `;
+
+    tbody.innerHTML = result.map(r => `
+      <tr>
+        <td>${r["棋戦"]}</td>
+        <td>${r["期"]}</td>
+        <td>${r["年度"]}</td>
+        <td>${r["優勝者"]}</td>
+        <td>${r["相手"]}</td>
+        <td>${r["勝"]}</td>
+        <td>${r["敗"]}</td>
+        <td>${r["持"]}</td>
+      </tr>
+    `).join("");
+  }
+
+  // ===== ② タイトル獲得ランキング（通算 or 棋戦別） =====
+  function renderRanking(targetKisen) {
+    clearTable();
+
+    // 対象となる番勝負（通算なら全棋戦、それ以外ならその棋戦だけ）
+    let matches;
+    if (!targetKisen || targetKisen === "通算") {
+      matches = ALL_MATCHES;
+    } else {
+      matches = ALL_MATCHES.filter(r => r["棋戦"] === targetKisen);
+    }
+
+    // 棋士ごとの集計
+    const statsMap = new Map(); // key: 棋士名, value: {棋士名, 登場, 獲得, 敗退}
+
+    function ensure(name) {
+      if (!statsMap.has(name)) {
+        statsMap.set(name, { 棋士名: name, 登場: 0, 獲得: 0, 敗退: 0 });
+      }
+      return statsMap.get(name);
+    }
+
+    matches.forEach(row => {
+      const winner = row["優勝者"];
+      const loser  = row["相手"];
+
+      if (winner) {
+        const w = ensure(winner);
+        w.登場++;
+        w.獲得++;
+      }
+      if (loser) {
+        const l = ensure(loser);
+        l.登場++;
+        l.敗退++;
+      }
+    });
+
+    // 配列に変換して勝率を計算
+    let list = Array.from(statsMap.values());
+    list.forEach(p => {
+      p.勝率 = p.登場 > 0 ? p.獲得 / p.登場 : 0;
+    });
+
+    // ソート：
+    // 1) 獲得の多い順
+    // 2) 同率なら登場の多い順
+    // 3) さらに同じなら棋士名の五十音順
+    list.sort((a, b) => {
+      if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
+      if (b.登場 !== a.登場) return b.登場 - a.登場;
+      return a.棋士名.localeCompare(b.棋士名, "ja");
+    });
+
+    // 順位を付ける（同じ獲得・登場なら同順位）
+    let rank = 0;
+    let prev = null;
+    list.forEach((p, idx) => {
+      if (!prev || p.獲得 !== prev.獲得 || p.登場 !== prev.登場) {
+        rank = idx + 1;
+      }
+      p._rank = rank;
+      prev = p;
+    });
+
+    thead.innerHTML = `
+      <tr>
+        <th>順位</th>
+        <th>棋士名</th>
+        <th>登場</th>
+        <th>獲得</th>
+        <th>敗退</th>
+        <th>勝率</th>
+      </tr>
+    `;
+
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td>${p._rank}</td>
+        <td>${p.棋士名}</td>
+        <td>${p.登場}</td>
+        <td>${p.獲得}</td>
+        <td>${p.敗退}</td>
+        <td>${p.登場 > 0 ? p.勝率.toFixed(4) : ""}</td>
+      </tr>
+    `).join("");
+  }
+
+  // ===== 表示ボタンを押したときの動作 =====
+  function handleDisplay() {
+    const mode = getMainMode();
+
+    if (mode === "match") {
+      const matchMode = getMatchMode();
+      if (matchMode === "kisen") {
+        const kisenName = kisenSelect.value || "竜王戦";
+        renderMatchesByKisen(kisenName);
+      } else {
+        // 年度ごと：各棋戦の「最新年度」の結果
+        renderLatestByKisen();
+      }
+    } else {
+      // ランキング：対象セレクトから取得（初期は通算）
+      const target = rankingSelect.value || "通算";
+      // 指示どおり、少なくとも「通算」はここで表示される
+      renderRanking(target);
+    }
+  }
+
+  // ===== イベント設定 =====
+  modeRadios.forEach(r => {
+    r.addEventListener("change", () => {
+      updateUIVisibility();
+      // モード切り替え時に即再描画しても良いが、
+      // とりあえずここでは見た目だけ切り替えて、描画はボタンで行う。
+    });
   });
 
-  // ===== 初期化：CSV読込→対象セレクト生成→初期表示 =====
-  loadCSV("title-new.csv").then(data => {
-    ALL = data;
-
-   // 対象セレクトをCSVから動的に（通算 + 固定順棋戦リスト）
-const selects = section.querySelectorAll("select");
-const targetSelect = selects[0];
-
-// 固定順（現行公式棋戦の標準順）
-const orderList = ["竜王戦","名人戦","叡王戦","王位戦","王座戦","棋聖戦","棋王戦","王将戦","十段戦","九段戦"];
-
-// CSVに存在する棋戦だけを採用
-const kisens = Array.from(new Set(ALL.map(r => r["棋戦"]).filter(k => k && k !== "通算")));
-
-// 固定順に従って整列（CSVに無い棋戦は自動で除外）
-const sortedKisens = orderList.filter(k => kisens.includes(k));
-
-targetSelect.innerHTML = ["通算", ...sortedKisens]
-  .map(k => `<option value="${k}">${k}</option>`)
-  .join("");
-
-    // 初期表示：通算 × 指標=獲得 × 降順
-    const sortSelect = selects[1];
-    const orderRadioDesc = section.querySelector('input[name="order"][value="desc"]');
-    if (orderRadioDesc) orderRadioDesc.checked = true;
-    sortSelect.value = "獲得";
-
-    renderTotal(ALL, "獲得", "desc");
+  matchModeRadios.forEach(r => {
+    r.addEventListener("change", () => {
+      updateUIVisibility();
+    });
   });
+
+  displayButton.addEventListener("click", () => {
+    handleDisplay();
+  });
+
+  // ===== 初期化：10CSVを読み込む =====
+  const CSV_FILES = [
+    "ryuou.csv",
+    "meijin.csv",
+    "eiou.csv",
+    "oui.csv",
+    "ouza.csv",
+    "kisei.csv",
+    "kiou.csv",
+    "ousho.csv",
+    "kudan.csv",
+    "judan.csv"
+  ];
+
+  Promise.all(CSV_FILES.map(path => loadCSV(path)))
+    .then(arrays => {
+      // 全棋戦分をマージ
+      ALL_MATCHES = arrays.flat();
+
+      // UI初期状態を整える
+      // ①番勝負一覧 / a 棋戦ごと / 竜王戦
+      const modeMatch = Array.from(modeRadios).find(r => r.value === "match");
+      if (modeMatch) modeMatch.checked = true;
+      const matchKisen = Array.from(matchModeRadios).find(r => r.value === "kisen");
+      if (matchKisen) matchKisen.checked = true;
+      if (kisenSelect) kisenSelect.value = "竜王戦";
+      if (rankingSelect) rankingSelect.value = "通算";
+
+      updateUIVisibility();
+
+      // 初期表示：①-a の「竜王戦の番勝負一覧」
+      renderMatchesByKisen("竜王戦");
+    })
+    .catch(err => {
+      console.error("CSV読み込み中にエラーが発生しました:", err);
+      clearTable();
+      thead.innerHTML = "<tr><th>エラー</th></tr>";
+      tbody.innerHTML = "<tr><td>データの読み込みに失敗しました。</td></tr>";
+    });
 });
 </script>
 </body>
 </html>
+
