@@ -499,10 +499,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <th>順位</th>
         <th>回数</th>
-        <th>棋士A</th>
-        <th>Aの勝利数</th>
-        <th>Bの勝利数</th>
-        <th>棋士B</th>
+        <th>棋士名</th>
+        <th>勝</th>
+        <th>敗</th>
+        <th>棋士名</th>
       </tr>
     `;
 
