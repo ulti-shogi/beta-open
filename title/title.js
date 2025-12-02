@@ -353,18 +353,25 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 順位を付ける（並べ替え基準に応じて同順位判定）
+    // 順位を付ける（主軸となる数値のみを基準に同順位判定）
     function isSameRank(a, b) {
       switch (sortKey) {
         case "登場":
-          return a.登場 === b.登場 && a.獲得 === b.獲得;
+          // 登場数が同じなら同順位
+          return a.登場 === b.登場;
+
         case "敗退":
-          return a.敗退 === b.敗退 && a.登場 === b.登場;
+          // 敗退数が同じなら同順位
+          return a.敗退 === b.敗退;
+
         case "勝率":
-          return a.勝率 === b.勝率 && a.登場 === b.登場;
+          // 勝率が同じなら同順位
+          return a.勝率 === b.勝率;
+
         case "獲得":
         default:
-          return a.獲得 === b.獲得 && a.登場 === b.登場;
+          // 獲得数が同じなら同順位
+          return a.獲得 === b.獲得;
       }
     }
 
