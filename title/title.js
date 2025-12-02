@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const matchModeFirstLabel = matchModeRadios[0].parentElement;
   const matchModeLabelP     = matchModeFirstLabel.previousElementSibling;
 
-  // 通常の棋戦順（今は年度セレクトなどで使う想定）
+  // 棋戦の標準順
   const KISEN_ORDER = [
     "竜王戦","名人戦","叡王戦","王位戦",
     "王座戦","棋聖戦","棋王戦","王将戦",
@@ -165,7 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return checked ? checked.value : "kisen";
   }
 
-  // ランキング並べ替え基準の取得
   function getRankingSort() {
     const checked = Array.from(rankingSortRadios).find(r => r.checked);
     return checked ? checked.value : "獲得";
@@ -177,12 +176,24 @@ document.addEventListener("DOMContentLoaded", () => {
     tbody.innerHTML = "";
   }
 
+  // ===== タイトル戦として扱うかどうか =====
+  function isTitleMatch(row) {
+    const kisen = row["棋戦"];
+    const ki    = row["期"];
+
+    // 王座戦: 第30期まではタイトル戦扱いではない
+    if (kisen === "王座戦" && ki <= 30) return false;
+    // 叡王戦: 第2期まではタイトル戦扱いではない
+    if (kisen === "叡王戦" && ki <= 2)  return false;
+
+    return true;
+  }
+
   // ===== ①-a 棋戦ごとの番勝負一覧 =====
   // 列：年度・期・優勝者・勝・敗・相手
   function renderMatchesByKisen(kisenName) {
     clearTable();
 
-    // 指定棋戦の番勝負だけを抽出
     const rows = ALL_MATCHES.filter(r => r["棋戦"] === kisenName);
 
     // 期の降順でソート
@@ -223,10 +234,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // 指定年度の番勝負だけを抽出
     const rows = ALL_MATCHES.filter(r => r["年度"] === targetYear);
 
-    // 棋戦の指定順 → 同じ棋戦内では期の降順
+    // 棋戦指定順 → 同じ棋戦内では期の降順
     rows.sort((a, b) => {
       const ai = YEAR_VIEW_ORDER.indexOf(a["棋戦"]);
       const bi = YEAR_VIEW_ORDER.indexOf(b["棋戦"]);
@@ -260,12 +270,11 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join("");
   }
 
-  // ===== ② タイトル獲得ランキング（通算 or 棋戦別） =====
+  // ===== ②-1 棋士別タイトル獲得ランキング（通算 or 棋戦別） =====
   function renderRanking(targetKisen) {
     clearTable();
 
-    // 対象となる番勝負（通算なら全棋戦、それ以外ならその棋戦だけ）
-    // ただし「タイトル戦扱いになる前」の王座戦・叡王戦はランキングから除外する
+    // 対象となる番勝負
     let baseMatches;
     if (!targetKisen || targetKisen === "通算") {
       baseMatches = ALL_MATCHES;
@@ -274,20 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // タイトル戦ではない期を除外
-    const matches = baseMatches.filter(r => {
-      const kisen = r["棋戦"];
-      const ki    = r["期"];   // loadCSVで数値化済み
-
-      // 王座戦: 第30期まではタイトル戦扱いではない
-      if (kisen === "王座戦" && ki <= 30) {
-        return false;
-      }
-      // 叡王戦: 第2期まではタイトル戦扱いではない
-      if (kisen === "叡王戦" && ki <= 2) {
-        return false;
-      }
-      return true;
-    });
+    const matches = baseMatches.filter(isTitleMatch);
 
     // 棋士ごとの集計
     const statsMap = new Map(); // key: 棋士名, value: {棋士名, 登場, 獲得, 敗退}
@@ -315,16 +311,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 配列に変換して勝率を計算
     let list = Array.from(statsMap.values());
     list.forEach(p => {
       p.勝率 = p.登場 > 0 ? p.獲得 / p.登場 : 0;
     });
 
-    // 並べ替え基準を取得
     const sortKey = getRankingSort();
 
-    // ソート
+    // 並び順
     list.sort((a, b) => {
       switch (sortKey) {
         case "登場":
@@ -341,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         case "勝率":
           if (b.勝率 !== a.勝率) return b.勝率 - a.勝率;
-          if (b.登場 !== a.登場) return b.登場 - a.登場;  // 母数が多いほう優先
+          if (b.登場 !== a.登場) return b.登場 - a.登場;
           if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
           return a.棋士名.localeCompare(b.棋士名, "ja");
 
@@ -353,24 +347,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 順位を付ける（主軸となる数値のみを基準に同順位判定）
+    // 順位を付ける（主軸だけで同順位判定）
     function isSameRank(a, b) {
       switch (sortKey) {
         case "登場":
-          // 登場数が同じなら同順位
           return a.登場 === b.登場;
-
         case "敗退":
-          // 敗退数が同じなら同順位
           return a.敗退 === b.敗退;
-
         case "勝率":
-          // 勝率が同じなら同順位
           return a.勝率 === b.勝率;
-
         case "獲得":
         default:
-          // 獲得数が同じなら同順位
           return a.獲得 === b.獲得;
       }
     }
@@ -408,6 +395,129 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join("");
   }
 
+  // ===== ②-2 対戦カード別タイトル戦回数ランキング =====
+  // 列：順位,回数,棋士A,Aの勝利数,Bの勝利数,棋士B
+  function renderPairRanking() {
+    clearTable();
+
+    // タイトル戦扱いの番勝負のみ
+    const matches = ALL_MATCHES.filter(isTitleMatch)
+      .filter(r => r["優勝者"] && r["相手"]);
+
+    const pairMap = new Map();
+    // key: "名前1|名前2"（名前1 < 名前2 の順）
+    matches.forEach(row => {
+      const winner = row["優勝者"];
+      const loser  = row["相手"];
+
+      if (!winner || !loser) return;
+
+      // 名前順で並べてペアキーを作成
+      const a = winner.localeCompare(loser, "ja") <= 0 ? winner : loser;
+      const b = winner.localeCompare(loser, "ja") <= 0 ? loser : winner;
+      const key = `${a}|${b}`;
+
+      if (!pairMap.has(key)) {
+        pairMap.set(key, {
+          name1: a,
+          name2: b,
+          wins1: 0,
+          wins2: 0,
+          count: 0
+        });
+      }
+      const info = pairMap.get(key);
+      info.count++;
+
+      // 勝った側に加算
+      if (winner === a) {
+        info.wins1++;
+      } else {
+        info.wins2++;
+      }
+    });
+
+    const list = [];
+    pairMap.forEach(info => {
+      let A, B, Awin, Bwin;
+
+      if (info.wins1 > info.wins2) {
+        A    = info.name1;
+        B    = info.name2;
+        Awin = info.wins1;
+        Bwin = info.wins2;
+      } else if (info.wins2 > info.wins1) {
+        A    = info.name2;
+        B    = info.name1;
+        Awin = info.wins2;
+        Bwin = info.wins1;
+      } else {
+        // 勝利数が同じ場合は名前順で A/B 決定
+        if (info.name1.localeCompare(info.name2, "ja") <= 0) {
+          A    = info.name1;
+          B    = info.name2;
+          Awin = info.wins1;
+          Bwin = info.wins2;
+        } else {
+          A    = info.name2;
+          B    = info.name1;
+          Awin = info.wins2;
+          Bwin = info.wins1;
+        }
+      }
+
+      list.push({
+        回数: info.count,
+        棋士A: A,
+        A勝: Awin,
+        B勝: Bwin,
+        棋士B: B
+      });
+    });
+
+    // 並び順：回数 → Aの勝利数 → 名前
+    list.sort((a, b) => {
+      if (b.回数 !== a.回数) return b.回数 - a.回数;
+      if (b.A勝 !== a.A勝)   return b.A勝   - a.A勝;
+      const n1 = a.棋士A.localeCompare(b.棋士A, "ja");
+      if (n1 !== 0) return n1;
+      return a.棋士B.localeCompare(b.棋士B, "ja");
+    });
+
+    // 順位（回数のみで同順位判定）
+    let rank = 0;
+    let prev = null;
+    list.forEach((p, idx) => {
+      if (!prev || p.回数 !== prev.回数) {
+        rank = idx + 1;
+      }
+      p._rank = rank;
+      prev = p;
+    });
+
+    thead.innerHTML = `
+      <tr>
+        <th>順位</th>
+        <th>回数</th>
+        <th>棋士A</th>
+        <th>Aの勝利数</th>
+        <th>Bの勝利数</th>
+        <th>棋士B</th>
+      </tr>
+    `;
+
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td>${p._rank}</td>
+        <td>${p.回数}</td>
+        <td>${p.棋士A}</td>
+        <td>${p.A勝}</td>
+        <td>${p.B勝}</td>
+        <td>${p.棋士B}</td>
+      </tr>
+    `).join("");
+  }
+
   // ===== 表示ボタンを押したときの動作 =====
   function handleDisplay() {
     const mode = getMainMode();
@@ -421,7 +531,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // 年度ごと：セレクトで選んだ年度の結果を表示
         let yearValue = yearSelect ? yearSelect.value : "";
         if (!yearValue) {
-          // セレクトに値が入っていない場合は、ALL_MATCHES から最新年度を推定
           const years = ALL_MATCHES
             .map(r => r["年度"])
             .filter(y => typeof y === "number" && y > 0);
@@ -434,9 +543,15 @@ document.addEventListener("DOMContentLoaded", () => {
         renderMatchesByYear(yearValue);
       }
     } else {
-      // ランキング：対象セレクトから取得（初期は通算）
+      // ランキング
       const target = rankingSelect.value || "通算";
-      renderRanking(target);
+      if (target === "pair") {
+        // 対戦カードランキング
+        renderPairRanking();
+      } else {
+        // 棋士別ランキング
+        renderRanking(target);
+      }
     }
   }
 
@@ -473,14 +588,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   Promise.all(CSV_FILES.map(path => loadCSV(path)))
     .then(arrays => {
-
       ALL_MATCHES = arrays.flat();
 
       // 年度セレクトの選択肢を作成
       initYearOptions();
 
-      // UI初期状態を整える
-      // ①番勝負一覧 / a 棋戦ごと / 竜王戦
+      // UI初期状態を整える（①番勝負一覧 / 棋戦ごと / 竜王戦）
       const modeMatch = Array.from(modeRadios).find(r => r.value === "match");
       if (modeMatch) modeMatch.checked = true;
       const matchKisen = Array.from(matchModeRadios).find(r => r.value === "kisen");
