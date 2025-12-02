@@ -5,17 +5,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const tbody   = table.querySelector("tbody");
 
   // --- section 内のUIたち ---
-  const modeRadios      = section.querySelectorAll('input[name="mode"]');
-  const matchModeRadios = section.querySelectorAll('input[name="matchMode"]');
-  const kisenSelect     = section.querySelector('select[name="kisen"]');
-  const yearSelect      = section.querySelector('select[name="year"]');
-  const rankingSelect   = section.querySelector('select[name="rankingTarget"]');
-  const displayButton   = section.querySelector("button");
+  const modeRadios        = section.querySelectorAll('input[name="mode"]');
+  const matchModeRadios   = section.querySelectorAll('input[name="matchMode"]');
+  const kisenSelect       = section.querySelector('select[name="kisen"]');
+  const yearSelect        = section.querySelector('select[name="year"]');
+  const rankingSelect     = section.querySelector('select[name="rankingTarget"]');
+  const rankingSortRadios = section.querySelectorAll('input[name="rankingSort"]');
+  const displayButton     = section.querySelector("button");
 
   // 説明文の <p> たち（前の兄弟要素を使って取得）
   const kisenLabelP   = kisenSelect.previousElementSibling;   // 「棋戦を選択してください。（棋戦ごと）」
   const yearLabelP    = yearSelect.previousElementSibling;    // 「年度を選択してください。（年度ごと）」
   const rankingLabelP = rankingSelect.previousElementSibling; // 「ランキングの対象を選択してください。」
+
+  // 並べ替え基準（rankingSort）の説明文 <p>
+  let rankingSortLabelP = null;
+  if (rankingSortRadios.length > 0) {
+    const rankingSortFirstLabel = rankingSortRadios[0].parentElement;
+    rankingSortLabelP = rankingSortFirstLabel
+      ? rankingSortFirstLabel.previousElementSibling
+      : null;
+  }
 
   // 「番勝負一覧の表示方法を選択してください。」の <p>
   const matchModeFirstLabel = matchModeRadios[0].parentElement;
@@ -120,6 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // ランキング用UIは隠す
       setVisible(rankingLabelP, false);
       setVisible(rankingSelect, false);
+      if (rankingSortLabelP) setVisible(rankingSortLabelP, false);
+      rankingSortRadios.forEach(r => setVisible(r.parentElement, false));
     } else {
       // ランキングモード：ranking 用UIを表示、match 用UIを全部隠す
       setVisible(matchModeLabelP, false);
@@ -132,6 +144,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       setVisible(rankingLabelP, true);
       setVisible(rankingSelect, true);
+      if (rankingSortLabelP) setVisible(rankingSortLabelP, true);
+      rankingSortRadios.forEach(r => setVisible(r.parentElement, true));
     }
   }
 
@@ -149,6 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function getMatchMode() {
     const checked = Array.from(matchModeRadios).find(r => r.checked);
     return checked ? checked.value : "kisen";
+  }
+
+  // ランキング並べ替え基準の取得
+  function getRankingSort() {
+    const checked = Array.from(rankingSortRadios).find(r => r.checked);
+    return checked ? checked.value : "獲得";
   }
 
   // ===== テーブルクリア =====
@@ -301,21 +321,57 @@ document.addEventListener("DOMContentLoaded", () => {
       p.勝率 = p.登場 > 0 ? p.獲得 / p.登場 : 0;
     });
 
-    // ソート：
-    // 1) 獲得の多い順
-    // 2) 同率なら登場の多い順
-    // 3) さらに同じなら棋士名の五十音順
+    // 並べ替え基準を取得
+    const sortKey = getRankingSort();
+
+    // ソート
     list.sort((a, b) => {
-      if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
-      if (b.登場 !== a.登場) return b.登場 - a.登場;
-      return a.棋士名.localeCompare(b.棋士名, "ja");
+      switch (sortKey) {
+        case "登場":
+          if (b.登場 !== a.登場) return b.登場 - a.登場;
+          if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
+          if (b.敗退 !== a.敗退) return b.敗退 - a.敗退;
+          return a.棋士名.localeCompare(b.棋士名, "ja");
+
+        case "敗退":
+          if (b.敗退 !== a.敗退) return b.敗退 - a.敗退;
+          if (b.登場 !== a.登場) return b.登場 - a.登場;
+          if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
+          return a.棋士名.localeCompare(b.棋士名, "ja");
+
+        case "勝率":
+          if (b.勝率 !== a.勝率) return b.勝率 - a.勝率;
+          if (b.登場 !== a.登場) return b.登場 - a.登場;  // 母数が多いほう優先
+          if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
+          return a.棋士名.localeCompare(b.棋士名, "ja");
+
+        case "獲得":
+        default:
+          if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
+          if (b.登場 !== a.登場) return b.登場 - a.登場;
+          return a.棋士名.localeCompare(b.棋士名, "ja");
+      }
     });
 
-    // 順位を付ける（同じ獲得・登場なら同順位）
+    // 順位を付ける（並べ替え基準に応じて同順位判定）
+    function isSameRank(a, b) {
+      switch (sortKey) {
+        case "登場":
+          return a.登場 === b.登場 && a.獲得 === b.獲得;
+        case "敗退":
+          return a.敗退 === b.敗退 && a.登場 === b.登場;
+        case "勝率":
+          return a.勝率 === b.勝率 && a.登場 === b.登場;
+        case "獲得":
+        default:
+          return a.獲得 === b.獲得 && a.登場 === b.登場;
+      }
+    }
+
     let rank = 0;
     let prev = null;
     list.forEach((p, idx) => {
-      if (!prev || p.獲得 !== prev.獲得 || p.登場 !== prev.登場) {
+      if (!prev || !isSameRank(p, prev)) {
         rank = idx + 1;
       }
       p._rank = rank;
@@ -411,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Promise.all(CSV_FILES.map(path => loadCSV(path)))
     .then(arrays => {
 
-        ALL_MATCHES = arrays.flat();
+      ALL_MATCHES = arrays.flat();
 
       // 年度セレクトの選択肢を作成
       initYearOptions();
