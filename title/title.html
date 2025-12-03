@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- title-4 -->
+<!-- title-5 -->
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -64,10 +64,15 @@
 
     <!-- ③ その他モードの設定 -->
   <p>その他の集計を選択してください。</p>
-  <select name="otherTarget">
-    <option value="pair">同一カード回数ランキング</option>
-    <!-- 今後増やすときはここに option を足す -->
-  </select>
+<select name="otherTarget">
+  <option value="pair">同一カード回数ランキング</option>
+  <option value="player">棋士別タイトル戦対戦回数ランキング</option>
+</select>
+
+    <p>棋士を選択してください。</p>
+<select name="otherPlayer">
+  <!-- JS で棋士名リストを自動で埋めます -->
+</select>
   
   <!-- ランキングの並べ替え基準 -->
   <p>並べ替えの基準を選択してください。</p>
@@ -96,7 +101,7 @@
   </main>
   <footer>フッター</footer>
 
-  <script src="title.js?v=20251203-1" defer></script>
+  <script src="title.js?v=20251203-2" defer></script>
 </body>
 </html>
 

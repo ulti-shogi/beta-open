@@ -1,3 +1,5 @@
+// title-5
+
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
   const table   = document.querySelector("table");
@@ -11,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const yearSelect        = section.querySelector('select[name="year"]');
   const rankingSelect     = section.querySelector('select[name="rankingTarget"]');
   const otherSelect       = section.querySelector('select[name="otherTarget"]');
+  const otherPlayerSelect = section.querySelector('select[name="otherPlayer"]');
   const rankingSortRadios = section.querySelectorAll('input[name="rankingSort"]');
   const displayButton     = section.querySelector("button");
 
@@ -21,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // その他モードの説明 <p>
   const otherLabelP = otherSelect ? otherSelect.previousElementSibling : null;
+  const otherPlayerLabelP = otherPlayerSelect ? otherPlayerSelect.previousElementSibling : null;
 
   // 並べ替え基準（rankingSort）の説明文 <p>
   let rankingSortLabelP = null;
@@ -106,6 +110,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ===== 棋士名セレクト（otherPlayer）の選択肢を初期化 =====
+  function initPlayerOptions() {
+    if (!otherPlayerSelect) return;
+
+    const nameSet = new Set();
+    ALL_MATCHES.forEach(r => {
+      if (!isTitleMatch(r)) return;
+      const w = r["優勝者"];
+      const l = r["相手"];
+      if (w) nameSet.add(w);
+      if (l) nameSet.add(l);
+    });
+
+    const names = Array.from(nameSet).sort((a, b) => a.localeCompare(b, "ja"));
+
+    otherPlayerSelect.innerHTML = "";
+    names.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      otherPlayerSelect.appendChild(opt);
+    });
+  }
+
   // ===== UI の表示・非表示を切り替える =====
   function updateUIVisibility() {
     const mode = getMainMode();
@@ -139,6 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // その他用UIも隠す
       if (otherLabelP) setVisible(otherLabelP, false);
       if (otherSelect) setVisible(otherSelect, false);
+      if (otherPlayerLabelP) setVisible(otherPlayerLabelP, false);
+      if (otherPlayerSelect) setVisible(otherPlayerSelect, false);
 
     } else if (mode === "ranking") {
       // ② 獲得等ランキングモード
@@ -158,6 +188,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // その他用UIは隠す
       if (otherLabelP) setVisible(otherLabelP, false);
       if (otherSelect) setVisible(otherSelect, false);
+      if (otherPlayerLabelP) setVisible(otherPlayerLabelP, false);
+      if (otherPlayerSelect) setVisible(otherPlayerSelect, false);
 
     } else {
       // ③ その他モード
@@ -176,6 +208,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (otherLabelP) setVisible(otherLabelP, true);
       if (otherSelect) setVisible(otherSelect, true);
+
+      // otherTarget が player のときだけ棋士名セレクトを表示
+      const otherMode = otherSelect ? otherSelect.value : "";
+      const showPlayer = otherMode === "player";
+      if (otherPlayerLabelP) setVisible(otherPlayerLabelP, showPlayer);
+      if (otherPlayerSelect) setVisible(otherPlayerSelect, showPlayer);
     }
   }
 
@@ -516,10 +554,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <th>順位</th>
         <th>回数</th>
-        <th>棋士A</th>
-        <th>Aの勝利数</th>
-        <th>Bの勝利数</th>
-        <th>棋士B</th>
+        <th>棋士名</th>
+        <th>勝</th>
+        <th>敗</th>
+        <th>棋士名</th>
       </tr>
     `;
 
@@ -531,6 +569,104 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${p.A勝}</td>
         <td>${p.B勝}</td>
         <td>${p.棋士B}</td>
+      </tr>
+    `).join("");
+  }
+
+  // ===== ②-3 棋士別タイトル戦対戦回数ランキング =====
+  // 列：順位,回数,相手,勝,敗,勝率
+  function renderPlayerPairRanking(playerName) {
+    clearTable();
+
+    if (!playerName) {
+      thead.innerHTML = "<tr><th>未選択</th></tr>";
+      tbody.innerHTML = "<tr><td>棋士が選択されていません。</td></tr>";
+      return;
+    }
+
+    const matches = ALL_MATCHES.filter(isTitleMatch)
+      .filter(r => r["優勝者"] && r["相手"] &&
+                   (r["優勝者"] === playerName || r["相手"] === playerName));
+
+    const oppMap = new Map(); // key: 相手名
+
+    matches.forEach(row => {
+      const winner = row["優勝者"];
+      const loser  = row["相手"];
+
+      if (!winner || !loser) return;
+
+      let opponent;
+      let winForPlayer;
+
+      if (winner === playerName) {
+        opponent = loser;
+        winForPlayer = true;
+      } else if (loser === playerName) {
+        opponent = winner;
+        winForPlayer = false;
+      } else {
+        return;
+      }
+
+      if (!oppMap.has(opponent)) {
+        oppMap.set(opponent, { 相手: opponent, 回数: 0, 勝: 0, 敗: 0 });
+      }
+      const info = oppMap.get(opponent);
+      info.回数++;
+      if (winForPlayer) {
+        info.勝++;
+      } else {
+        info.敗++;
+      }
+    });
+
+    const list = Array.from(oppMap.values());
+    list.forEach(p => {
+      p.勝率 = p.回数 > 0 ? p.勝 / p.回数 : 0;
+    });
+
+    // 並び順：回数 → 勝 → 相手名
+    list.sort((a, b) => {
+      if (b.回数 !== a.回数) return b.回数 - a.回数;
+      if (b.勝 !== a.勝)     return b.勝   - a.勝;
+      return a.相手.localeCompare(b.相手, "ja");
+    });
+
+    // 順位（回数だけで同順位判定）
+    let rank = 0;
+    let prev = null;
+    list.forEach((p, idx) => {
+      if (!prev || p.回数 !== prev.回数) {
+        rank = idx + 1;
+      }
+      p._rank = rank;
+      prev = p;
+    });
+
+    thead.innerHTML = `
+      <tr>
+        <th>棋士</th>
+        <th colspan="5">${playerName}</th>
+      </tr>
+      <tr>
+        <th>順位</th>
+        <th>回数</th>
+        <th>相手</th>
+        <th>勝</th>
+        <th>敗</th>
+        <th>勝率</th>
+      </tr>
+    `;
+
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td>${p._rank}</td>
+        <td>${p.回数}</td>
+        <td>${p.相手}</td>
+        <td>${p.勝}</td>
+        <td>${p.敗}</td>
+        <td>${p.回数 > 0 ? p.勝率.toFixed(4) : ""}</td>
       </tr>
     `).join("");
   }
@@ -566,6 +702,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const target = otherSelect ? otherSelect.value : "";
       if (target === "pair") {
         renderPairRanking();
+      } else if (target === "player") {
+        const playerName = otherPlayerSelect ? otherPlayerSelect.value : "";
+        renderPlayerPairRanking(playerName);
       } else {
         clearTable();
         thead.innerHTML = "<tr><th>未対応</th></tr>";
@@ -586,6 +725,12 @@ document.addEventListener("DOMContentLoaded", () => {
       updateUIVisibility();
     });
   });
+
+  if (otherSelect) {
+    otherSelect.addEventListener("change", () => {
+      updateUIVisibility();
+    });
+  }
 
   displayButton.addEventListener("click", () => {
     handleDisplay();
@@ -610,6 +755,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ALL_MATCHES = arrays.flat();
 
       initYearOptions();
+      initPlayerOptions();
 
       const modeMatch = Array.from(modeRadios).find(r => r.value === "match");
       if (modeMatch) modeMatch.checked = true;
