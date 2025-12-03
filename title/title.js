@@ -1,4 +1,4 @@
-// title-6
+// title-7
 
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
@@ -541,19 +541,50 @@ document.addEventListener("DOMContentLoaded", () => {
         Awin = info.wins2;
         Bwin = info.wins1;
       } else {
-        // 勝利数が同じ場合は名前順で A/B 決定
-        if (info.name1.localeCompare(info.name2, "ja") <= 0) {
-          A    = info.name1;
-          B    = info.name2;
-          Awin = info.wins1;
-          Bwin = info.wins2;
-        } else {
-          A    = info.name2;
-          B    = info.name1;
-          Awin = info.wins2;
-          Bwin = info.wins1;
-        }
+  // 勝利数が同じ場合：
+  // 1. タイトル戦通算登場回数が多い方を左
+  // 2. それでも同じなら名前順
+
+  // タイトル戦通算登場回数を数える
+  const countAppearances = (name) => {
+    let count = 0;
+    ALL_MATCHES.forEach(r => {
+      if (!isTitleMatch(r)) return;
+      if (r["優勝者"] === name || r["相手"] === name) {
+        count++;
       }
+    });
+    return count;
+  };
+
+  const appear1 = countAppearances(info.name1);
+  const appear2 = countAppearances(info.name2);
+
+  if (appear1 > appear2) {
+    A    = info.name1;
+    B    = info.name2;
+    Awin = info.wins1;
+    Bwin = info.wins2;
+  } else if (appear2 > appear1) {
+    A    = info.name2;
+    B    = info.name1;
+    Awin = info.wins2;
+    Bwin = info.wins1;
+  } else {
+    // 登場回数も同じなら名前順
+    if (info.name1.localeCompare(info.name2, "ja") <= 0) {
+      A    = info.name1;
+      B    = info.name2;
+      Awin = info.wins1;
+      Bwin = info.wins2;
+    } else {
+      A    = info.name2;
+      B    = info.name1;
+      Awin = info.wins2;
+      Bwin = info.wins1;
+    }
+  }
+}
 
       list.push({
         回数: info.count,
