@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- title-3 -->
+<!-- title-4 -->
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -15,10 +15,10 @@
       <section>
   <h2>タイトル検索ページ</h2>
 
-  <!-- ①番勝負一覧／②ランキング の切り替え -->
-  <p>表示する内容を選択してください。</p>
+ <p>表示する内容を選択してください。</p>
   <label><input type="radio" name="mode" value="match" checked>番勝負一覧</label>
   <label><input type="radio" name="mode" value="ranking">獲得等ランキング</label>
+  <label><input type="radio" name="mode" value="other">その他</label>
 
   <!-- ① 番勝負一覧モードの設定 -->
   <p>番勝負一覧の表示方法を選択してください。</p>
@@ -50,7 +50,6 @@
   <p>ランキングの対象を選択してください。</p>
   <select name="rankingTarget">
     <option value="通算">通算</option>
-    <option value="pair">同一カード回数ランキング</option>
     <option value="竜王戦">竜王戦</option>
     <option value="名人戦">名人戦</option>
     <option value="叡王戦">叡王戦</option>
@@ -61,6 +60,13 @@
     <option value="王将戦">王将戦</option>
     <option value="十段戦">十段戦</option>
     <option value="九段戦">九段戦</option>
+  </select>
+
+    <!-- ③ その他モードの設定 -->
+  <p>その他の集計を選択してください。</p>
+  <select name="otherTarget">
+    <option value="pair">同一カード回数ランキング</option>
+    <!-- 今後増やすときはここに option を足す -->
   </select>
   
   <!-- ランキングの並べ替え基準 -->
@@ -90,7 +96,7 @@
   </main>
   <footer>フッター</footer>
 
-  <script src="title.js?v=20251202-3" defer></script>
+  <script src="title.js?v=20251203-1" defer></script>
 </body>
 </html>
 

@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const kisenSelect       = section.querySelector('select[name="kisen"]');
   const yearSelect        = section.querySelector('select[name="year"]');
   const rankingSelect     = section.querySelector('select[name="rankingTarget"]');
+  const otherSelect       = section.querySelector('select[name="otherTarget"]');
   const rankingSortRadios = section.querySelectorAll('input[name="rankingSort"]');
   const displayButton     = section.querySelector("button");
 
@@ -17,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const kisenLabelP   = kisenSelect.previousElementSibling;   // 「棋戦を選択してください。（棋戦ごと）」
   const yearLabelP    = yearSelect.previousElementSibling;    // 「年度を選択してください。（年度ごと）」
   const rankingLabelP = rankingSelect.previousElementSibling; // 「ランキングの対象を選択してください。」
+
+  // その他モードの説明 <p>
+  const otherLabelP = otherSelect ? otherSelect.previousElementSibling : null;
 
   // 並べ替え基準（rankingSort）の説明文 <p>
   let rankingSortLabelP = null;
@@ -108,11 +112,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const matchMode = getMatchMode();
 
     if (mode === "match") {
-      // 番勝負モード：match 用UIを表示、ranking 用UIを隠す
+      // ① 番勝負一覧モード
       setVisible(matchModeLabelP, true);
       matchModeRadios.forEach(r => setVisible(r.parentElement, true));
 
-      // matchMode によって、棋戦/年度のUIを制御
       if (matchMode === "kisen") {
         // 棋戦ごと：棋戦セレクトを表示、年度セレクトは隠す
         setVisible(kisenLabelP, true);
@@ -132,8 +135,13 @@ document.addEventListener("DOMContentLoaded", () => {
       setVisible(rankingSelect, false);
       if (rankingSortLabelP) setVisible(rankingSortLabelP, false);
       rankingSortRadios.forEach(r => setVisible(r.parentElement, false));
-    } else {
-      // ランキングモード：ranking 用UIを表示、match 用UIを全部隠す
+
+      // その他用UIも隠す
+      if (otherLabelP) setVisible(otherLabelP, false);
+      if (otherSelect) setVisible(otherSelect, false);
+
+    } else if (mode === "ranking") {
+      // ② 獲得等ランキングモード
       setVisible(matchModeLabelP, false);
       matchModeRadios.forEach(r => setVisible(r.parentElement, false));
 
@@ -146,6 +154,28 @@ document.addEventListener("DOMContentLoaded", () => {
       setVisible(rankingSelect, true);
       if (rankingSortLabelP) setVisible(rankingSortLabelP, true);
       rankingSortRadios.forEach(r => setVisible(r.parentElement, true));
+
+      // その他用UIは隠す
+      if (otherLabelP) setVisible(otherLabelP, false);
+      if (otherSelect) setVisible(otherSelect, false);
+
+    } else {
+      // ③ その他モード
+      setVisible(matchModeLabelP, false);
+      matchModeRadios.forEach(r => setVisible(r.parentElement, false));
+
+      setVisible(kisenLabelP, false);
+      setVisible(kisenSelect, false);
+      setVisible(yearLabelP, false);
+      setVisible(yearSelect, false);
+
+      setVisible(rankingLabelP, false);
+      setVisible(rankingSelect, false);
+      if (rankingSortLabelP) setVisible(rankingSortLabelP, false);
+      rankingSortRadios.forEach(r => setVisible(r.parentElement, false));
+
+      if (otherLabelP) setVisible(otherLabelP, true);
+      if (otherSelect) setVisible(otherSelect, true);
     }
   }
 
@@ -190,13 +220,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== ①-a 棋戦ごとの番勝負一覧 =====
-  // 列：年度・期・優勝者・勝・敗・相手
   function renderMatchesByKisen(kisenName) {
     clearTable();
 
     const rows = ALL_MATCHES.filter(r => r["棋戦"] === kisenName);
 
-    // 期の降順でソート
     rows.sort((a, b) => b["期"] - a["期"]);
 
     thead.innerHTML = `
@@ -223,7 +251,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== ①-b 年度ごとの番勝負一覧 =====
-  // 列：棋戦・期・優勝者・勝・敗・相手
   function renderMatchesByYear(year) {
     clearTable();
 
@@ -236,7 +263,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const rows = ALL_MATCHES.filter(r => r["年度"] === targetYear);
 
-    // 棋戦指定順 → 同じ棋戦内では期の降順
     rows.sort((a, b) => {
       const ai = YEAR_VIEW_ORDER.indexOf(a["棋戦"]);
       const bi = YEAR_VIEW_ORDER.indexOf(b["棋戦"]);
@@ -274,7 +300,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderRanking(targetKisen) {
     clearTable();
 
-    // 対象となる番勝負
     let baseMatches;
     if (!targetKisen || targetKisen === "通算") {
       baseMatches = ALL_MATCHES;
@@ -282,10 +307,8 @@ document.addEventListener("DOMContentLoaded", () => {
       baseMatches = ALL_MATCHES.filter(r => r["棋戦"] === targetKisen);
     }
 
-    // タイトル戦ではない期を除外
     const matches = baseMatches.filter(isTitleMatch);
 
-    // 棋士ごとの集計
     const statsMap = new Map(); // key: 棋士名, value: {棋士名, 登場, 獲得, 敗退}
 
     function ensure(name) {
@@ -318,7 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const sortKey = getRankingSort();
 
-    // 並び順
     list.sort((a, b) => {
       switch (sortKey) {
         case "登場":
@@ -347,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 順位を付ける（主軸だけで同順位判定）
+    // 主軸だけで同順位判定
     function isSameRank(a, b) {
       switch (sortKey) {
         case "登場":
@@ -400,19 +422,17 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderPairRanking() {
     clearTable();
 
-    // タイトル戦扱いの番勝負のみ
     const matches = ALL_MATCHES.filter(isTitleMatch)
       .filter(r => r["優勝者"] && r["相手"]);
 
     const pairMap = new Map();
-    // key: "名前1|名前2"（名前1 < 名前2 の順）
+
     matches.forEach(row => {
       const winner = row["優勝者"];
       const loser  = row["相手"];
 
       if (!winner || !loser) return;
 
-      // 名前順で並べてペアキーを作成
       const a = winner.localeCompare(loser, "ja") <= 0 ? winner : loser;
       const b = winner.localeCompare(loser, "ja") <= 0 ? loser : winner;
       const key = `${a}|${b}`;
@@ -429,7 +449,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const info = pairMap.get(key);
       info.count++;
 
-      // 勝った側に加算
       if (winner === a) {
         info.wins1++;
       } else {
@@ -475,7 +494,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // 並び順：回数 → Aの勝利数 → 名前
     list.sort((a, b) => {
       if (b.回数 !== a.回数) return b.回数 - a.回数;
       if (b.A勝 !== a.A勝)   return b.A勝   - a.A勝;
@@ -484,7 +502,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return a.棋士B.localeCompare(b.棋士B, "ja");
     });
 
-    // 順位（回数のみで同順位判定）
     let rank = 0;
     let prev = null;
     list.forEach((p, idx) => {
@@ -499,10 +516,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <th>順位</th>
         <th>回数</th>
-        <th>棋士名</th>
-        <th>勝</th>
-        <th>敗</th>
-        <th>棋士名</th>
+        <th>棋士A</th>
+        <th>Aの勝利数</th>
+        <th>Bの勝利数</th>
+        <th>棋士B</th>
       </tr>
     `;
 
@@ -528,7 +545,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const kisenName = kisenSelect.value || "竜王戦";
         renderMatchesByKisen(kisenName);
       } else {
-        // 年度ごと：セレクトで選んだ年度の結果を表示
         let yearValue = yearSelect ? yearSelect.value : "";
         if (!yearValue) {
           const years = ALL_MATCHES
@@ -542,15 +558,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         renderMatchesByYear(yearValue);
       }
-    } else {
-      // ランキング
+    } else if (mode === "ranking") {
       const target = rankingSelect.value || "通算";
+      renderRanking(target);
+    } else {
+      // その他モード
+      const target = otherSelect ? otherSelect.value : "";
       if (target === "pair") {
-        // 対戦カードランキング
         renderPairRanking();
       } else {
-        // 棋士別ランキング
-        renderRanking(target);
+        clearTable();
+        thead.innerHTML = "<tr><th>未対応</th></tr>";
+        tbody.innerHTML = "<tr><td>この条件の表示はまだ実装されていません。</td></tr>";
       }
     }
   }
@@ -590,10 +609,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(arrays => {
       ALL_MATCHES = arrays.flat();
 
-      // 年度セレクトの選択肢を作成
       initYearOptions();
 
-      // UI初期状態を整える（①番勝負一覧 / 棋戦ごと / 竜王戦）
       const modeMatch = Array.from(modeRadios).find(r => r.value === "match");
       if (modeMatch) modeMatch.checked = true;
       const matchKisen = Array.from(matchModeRadios).find(r => r.value === "kisen");
@@ -603,7 +620,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       updateUIVisibility();
 
-      // 初期表示：①-a の「竜王戦の番勝負一覧」
       renderMatchesByKisen("竜王戦");
     })
     .catch(err => {
