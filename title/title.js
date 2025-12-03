@@ -1,4 +1,4 @@
-// title-5
+// title-6
 
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
@@ -111,25 +111,57 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== 棋士名セレクト（otherPlayer）の選択肢を初期化 =====
+  // 並び順：タイトル戦通算登場回数が多い順
+  //         同率なら通算獲得数が多い方
+  //         それでも同率なら名前順
   function initPlayerOptions() {
     if (!otherPlayerSelect) return;
 
-    const nameSet = new Set();
+    // タイトル戦のみを対象に、棋士ごとの登場・獲得を集計
+    const statsMap = new Map(); // key: 棋士名, value: {棋士名, 登場, 獲得}
+
+    function ensure(name) {
+      if (!statsMap.has(name)) {
+        statsMap.set(name, { 棋士名: name, 登場: 0, 獲得: 0 });
+      }
+      return statsMap.get(name);
+    }
+
     ALL_MATCHES.forEach(r => {
       if (!isTitleMatch(r)) return;
-      const w = r["優勝者"];
-      const l = r["相手"];
-      if (w) nameSet.add(w);
-      if (l) nameSet.add(l);
+
+      const winner = r["優勝者"];
+      const loser  = r["相手"];
+
+      if (winner) {
+        const w = ensure(winner);
+        w.登場++;
+        w.獲得++;
+      }
+      if (loser) {
+        const l = ensure(loser);
+        l.登場++;
+        // 敗退はここでは使わないのでカウントしない
+      }
     });
 
-    const names = Array.from(nameSet).sort((a, b) => a.localeCompare(b, "ja"));
+    // 配列にして、指定のルールでソート
+    const players = Array.from(statsMap.values());
+    players.sort((a, b) => {
+      // 1. 登場回数の多い順
+      if (b.登場 !== a.登場) return b.登場 - a.登場;
+      // 2. 登場が同じなら獲得数の多い順
+      if (b.獲得 !== a.獲得) return b.獲得 - a.獲得;
+      // 3. それでも同じなら名前順
+      return a.棋士名.localeCompare(b.棋士名, "ja");
+    });
 
+    // セレクトを埋める（表示は棋士名のみ）
     otherPlayerSelect.innerHTML = "";
-    names.forEach(name => {
+    players.forEach(p => {
       const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
+      opt.value = p.棋士名;
+      opt.textContent = p.棋士名;
       otherPlayerSelect.appendChild(opt);
     });
   }
