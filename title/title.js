@@ -1,4 +1,4 @@
-// title-kisen-1
+// title-9（一般棋戦・勝敗列＆回/期ヘッダ調整）
 
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
@@ -502,12 +502,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return a["優勝者"].localeCompare(b["優勝者"], "ja");
     });
 
-    const hasScore = (kisenName === "新人王戦" || kisenName === "青流戦");
+    // この棋戦が「期」表記かどうか
+    const isKi =
+      kisenName === "銀河戦" ||
+      kisenName === "新人王戦" ||
+      kisenName === "青流戦";
+    const kaikiHeader = isKi ? "期" : "回";
 
     thead.innerHTML = `
       <tr>
         <th>棋戦</th>
-        <th>回</th>
+        <th>${kaikiHeader}</th>
         <th>年度</th>
         <th>優勝者</th>
         <th>勝</th>
@@ -522,8 +527,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${r["回"]}</td>
         <td>${r["年度"]}</td>
         <td>${r["優勝者"]}</td>
-        <td>${hasScore ? r["勝"] : ""}</td>
-        <td>${hasScore ? r["敗"] : ""}</td>
+        <td>${r["勝"]}</td>
+        <td>${r["敗"]}</td>
         <td>${r["準優勝"]}</td>
       </tr>
     `).join("");
@@ -556,7 +561,7 @@ document.addEventListener("DOMContentLoaded", () => {
     thead.innerHTML = `
       <tr>
         <th>棋戦</th>
-        <th>回</th>
+        <th>回/期</th>
         <th>年度</th>
         <th>優勝者</th>
         <th>勝</th>
@@ -565,21 +570,17 @@ document.addEventListener("DOMContentLoaded", () => {
       </tr>
     `;
 
-    tbody.innerHTML = rows.map(r => {
-      const kisenName = r["棋戦"];
-      const hasScore = (kisenName === "新人王戦" || kisenName === "青流戦");
-      return `
-        <tr>
-          <td>${r["棋戦"]}</td>
-          <td>${r["回"]}</td>
-          <td>${r["年度"]}</td>
-          <td>${r["優勝者"]}</td>
-          <td>${hasScore ? r["勝"] : ""}</td>
-          <td>${hasScore ? r["敗"] : ""}</td>
-          <td>${r["準優勝"]}</td>
-        </tr>
-      `;
-    }).join("");
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r["棋戦"]}</td>
+        <td>${r["回"]}</td>
+        <td>${r["年度"]}</td>
+        <td>${r["優勝者"]}</td>
+        <td>${r["勝"]}</td>
+        <td>${r["敗"]}</td>
+        <td>${r["準優勝"]}</td>
+      </tr>
+    `).join("");
   }
 
   // ===== ②-1 棋士別タイトル獲得ランキング（通算 or 棋戦別） =====
