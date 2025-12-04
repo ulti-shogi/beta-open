@@ -1,4 +1,4 @@
-// title-9（一般棋戦・勝敗列＆回/期ヘッダ調整）
+// title-10
 
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
@@ -412,6 +412,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
+ // ===== 一般棋戦の「回」または「期」の値を取得 =====
+  function getGeneralKaiki(row) {
+    // 数値にして扱う
+    const ki  = ("期" in row) ? Number(row["期"] || 0) : 0;
+    const kai = ("回" in row) ? Number(row["回"] || 0) : 0;
+
+    // 期があれば期を優先、なければ回
+    if (ki > 0) return ki;
+    return kai;
+  }
+
   // ===== ①-a 棋戦ごとの番勝負一覧（タイトル戦） =====
   function renderMatchesByKisen(kisenName) {
     clearTable();
@@ -497,7 +508,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 回（期）の降順で並べる
     rows.sort((a, b) => {
-      if (b["回"] !== a["回"]) return b["回"] - a["回"];
+      const kb = getGeneralKaiki(b);
+      const ka = getGeneralKaiki(a);
+      if (kb !== ka) return kb - ka;
       if (b["年度"] !== a["年度"]) return b["年度"] - a["年度"];
       return a["優勝者"].localeCompare(b["優勝者"], "ja");
     });
@@ -524,7 +537,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tbody.innerHTML = rows.map(r => `
       <tr>
         <td>${r["棋戦"]}</td>
-        <td>${r["回"]}</td>
+        <td>${getGeneralKaiki(r)}</td>
         <td>${r["年度"]}</td>
         <td>${r["優勝者"]}</td>
         <td>${r["勝"]}</td>
@@ -554,10 +567,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const bIdx = bi === -1 ? 999 : bi;
 
       if (aIdx !== bIdx) return aIdx - bIdx;
-      if (b["回"] !== a["回"]) return b["回"] - a["回"];
+
+      const kb = getGeneralKaiki(b);
+      const ka = getGeneralKaiki(a);
+      if (kb !== ka) return kb - ka;
+
       return a["優勝者"].localeCompare(b["優勝者"], "ja");
     });
-
     thead.innerHTML = `
       <tr>
         <th>棋戦</th>
@@ -573,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tbody.innerHTML = rows.map(r => `
       <tr>
         <td>${r["棋戦"]}</td>
-        <td>${r["回"]}</td>
+        <td>${getGeneralKaiki(r)}</td>
         <td>${r["年度"]}</td>
         <td>${r["優勝者"]}</td>
         <td>${r["勝"]}</td>
