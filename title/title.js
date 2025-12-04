@@ -1,4 +1,4 @@
-// title-8（一般棋戦対応）
+// title-kisen-1
 
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
