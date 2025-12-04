@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- title-7 -->
+<!-- title-8 -->
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -12,20 +12,18 @@
 <p><a href="https://ulti-shogi.github.io/beta-open/index.html">TOPページに戻る</a></>
 </header>
   <main>
-      <section>
-  <h2>タイトル検索ページ</h2>
-
- <p>表示する内容を選択してください。</p>
+<section>
+<h2>タイトル・一般棋戦検索</h2>
+  <p>表示する内容を選択してください。</p>
   <label><input type="radio" name="mode" value="match" checked>番勝負一覧</label>
-  <label><input type="radio" name="mode" value="ranking">獲得ランキング</label>
+  <label><input type="radio" name="mode" value="ranking">獲得等ランキング</label>
   <label><input type="radio" name="mode" value="other">その他</label>
+  <label><input type="radio" name="mode" value="general">一般棋戦一覧</label>
 
-  <!-- ① 番勝負一覧モードの設定 -->
   <p>番勝負一覧の表示方法を選択してください。</p>
   <label><input type="radio" name="matchMode" value="kisen" checked>棋戦ごと</label>
   <label><input type="radio" name="matchMode" value="year">年度ごと</label>
 
-  <!-- 棋戦ごとのときに使うセレクト（初期は竜王戦） -->
   <p>棋戦を選択してください。（棋戦ごと）</p>
   <select name="kisen">
     <option value="竜王戦">竜王戦</option>
@@ -40,13 +38,11 @@
     <option value="九段戦">九段戦</option>
   </select>
 
-  <!-- 年度ごとのときに使うセレクト（中身はscriptで埋める想定） -->
   <p>年度を選択してください。（年度ごと）</p>
   <select name="year">
-    <!-- JavaScriptで番勝負データから年度一覧を埋め込む -->
+    <!-- JSで動的に埋められます -->
   </select>
 
-  <!-- ② タイトル獲得ランキングモードの設定 -->
   <p>ランキングの対象を選択してください。</p>
   <select name="rankingTarget">
     <option value="通算">通算</option>
@@ -62,29 +58,45 @@
     <option value="九段戦">九段戦</option>
   </select>
 
-    <!-- ③ その他モードの設定 -->
-  <p>その他の集計を選択してください。</p>
-<select name="otherTarget">
-  <option value="pair">同一カード対戦回数ランキング</option>
-  <option value="player">棋士別タイトル戦対戦回数ランキング</option>
-</select>
-
-    <p>棋士を選択してください。</p>
-<select name="otherPlayer">
-  <!-- JS で棋士名リストを自動で埋めます -->
-</select>
-  
-  <!-- ランキングの並べ替え基準 -->
-  <p>並べ替えの基準を選択してください。</p>
-  <label><input type="radio" name="rankingSort" value="登場">登場</label>
+  <p>並べ替え基準を選択してください。</p>
   <label><input type="radio" name="rankingSort" value="獲得" checked>獲得</label>
+  <label><input type="radio" name="rankingSort" value="登場">登場</label>
   <label><input type="radio" name="rankingSort" value="敗退">敗退</label>
   <label><input type="radio" name="rankingSort" value="勝率">勝率</label>
-  
-  <!-- 表示実行ボタン -->
-  <p>
-    <button>この条件を表示する</button>
-  </p>
+
+  <p>その他の集計を選択してください。</p>
+  <select name="otherTarget">
+    <option value="pair">同一カード回数ランキング</option>
+    <option value="player">棋士別タイトル戦対戦回数ランキング</option>
+  </select>
+
+  <p>棋士を選択してください。</p>
+  <select name="otherPlayer">
+    <!-- JSで動的に埋められます -->
+  </select>
+
+  <p>一般棋戦の表示方法を選択してください。</p>
+  <label><input type="radio" name="generalMode" value="kisen" checked>棋戦ごと</label>
+  <label><input type="radio" name="generalMode" value="year">年度ごと</label>
+
+  <p>一般棋戦を選択してください。（棋戦ごと）</p>
+  <select name="generalKisen">
+    <option value="朝日杯">朝日杯</option>
+    <option value="銀河戦">銀河戦</option>
+    <option value="NHK杯">NHK杯</option>
+    <option value="JT杯">JT杯</option>
+    <option value="達人戦">達人戦</option>
+    <option value="新人王戦">新人王戦</option>
+    <option value="青流戦">青流戦</option>
+  </select>
+
+  <p>年度を選択してください。（一般棋戦・年度ごと）</p>
+  <select name="generalYear">
+    <!-- JSで動的に埋められます -->
+  </select>
+
+  <button type="button">表示する</button>
+
 </section>
   
 
@@ -101,7 +113,7 @@
   </main>
   <footer>フッター</footer>
 
-  <script src="title.js?v=20251203-4" defer></script>
+  <script src="title.js?v=20251204-1" defer></script>
 </body>
 </html>
 
