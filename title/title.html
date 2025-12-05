@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>将棋の殿堂</title>
     <link rel="stylesheet" href="../style.css?v=20251201-a">
+    <style>
+  /* モード選択ラジオ（番勝負一覧・獲得等・一般棋戦・その他）を縦並びにする */
+  p:has(input[name="mode"]) label {
+    display: block;
+    margin-bottom: 4px;
+  }
+    </style>
 </head>
 <body>
 <header>
@@ -15,9 +22,9 @@
 <h2>タイトル・一般棋戦検索</h2>
 <section>
   <p>表示する内容を選択してください。</p>
-  <label><input type="radio" name="mode" value="match" checked>番勝負一覧</label>
-  <label><input type="radio" name="mode" value="ranking">獲得等ランキング</label>
-  <label><input type="radio" name="mode" value="general">一般棋戦一覧</label>
+  <label><input type="radio" name="mode" value="match" checked>歴代タイトル戦結果一覧</label>
+  <label><input type="radio" name="mode" value="ranking">タイトル獲得ランキング</label>
+  <label><input type="radio" name="mode" value="general">歴代一般棋戦結果一覧</label>
   <label><input type="radio" name="mode" value="other">その他</label>
 
   <p>番勝負一覧の表示方法を選択してください。</p>
