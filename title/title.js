@@ -524,9 +524,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     thead.innerHTML = `
       <tr>
-        <th>棋戦</th>
-        <th>${kaikiHeader}</th>
         <th>年度</th>
+        <th>${kaikiHeader}</th>
         <th>優勝者</th>
         <th>勝</th>
         <th>敗</th>
@@ -536,9 +535,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r["棋戦"]}</td>
-        <td>${getGeneralKaiki(r)}</td>
         <td>${r["年度"]}</td>
+        <td>${getGeneralKaiki(r)}</td>
         <td>${r["優勝者"]}</td>
         <td>${r["勝"]}</td>
         <td>${r["敗"]}</td>
@@ -578,7 +576,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <th>棋戦</th>
         <th>回/期</th>
-        <th>年度</th>
         <th>優勝者</th>
         <th>勝</th>
         <th>敗</th>
@@ -590,7 +587,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <td>${r["棋戦"]}</td>
         <td>${getGeneralKaiki(r)}</td>
-        <td>${r["年度"]}</td>
         <td>${r["優勝者"]}</td>
         <td>${r["勝"]}</td>
         <td>${r["敗"]}</td>
@@ -850,10 +846,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr>
         <th>順位</th>
         <th>回数</th>
-        <th>棋士A</th>
-        <th>Aの勝利数</th>
-        <th>Bの勝利数</th>
-        <th>棋士B</th>
+        <th>棋士名</th>
+        <th>勝</th>
+        <th>敗</th>
+        <th>棋士名</th>
       </tr>
     `;
 
