@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../style.css?v=20251201-a">
     <style>
   /* モード選択ラジオ（番勝負一覧・獲得等・一般棋戦・その他）を縦並びにする */
-  p:has(input[name="mode"]) label {
+  label:has(> input[name="mode"]) {
     display: block;
     margin-bottom: 4px;
   }
@@ -114,7 +114,7 @@
 
 <div class="free">
   <h3>出典</h3>
-  <p>日本将棋連盟：棋戦一覧</p>
+  <p>日本将棋連盟：<a href="https://www.shogi.or.jp/match/">日本将棋連盟主催棋戦一覧</a></p>
       </div>
 
   </main>
