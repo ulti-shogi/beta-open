@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- title-10 -->
+<!-- 表示ボタンを中央にするCSSを追加した。まだGitHubにはアップロードしていない段階。 -->
+
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -11,6 +12,14 @@
   label:has(> input[name="mode"]) {
     display: block;
     margin-bottom: 4px;
+  }
+    
+  /* 表示ボタンをセレクトの下に配置して中央寄せする */
+  button[type="button"] {
+    display: block;        /* 横並びを解除して縦に置く */
+    margin: 10px auto;     /* 上下10px・左右auto → 中央寄せ */
+    padding: 6px 16px;     /* 押しやすいサイズに調整（任意） */
+    font-size: 16px;       /* 文字も少し大きめ（任意） */
   }
     </style>
 </head>
