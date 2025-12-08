@@ -512,21 +512,50 @@ document.addEventListener("DOMContentLoaded", () => {
   displayButton.addEventListener("click", handleDisplay);
 
   // ---- CSV 読み込み & 初期化 ----
-  Promise.all([
-    loadTitleCSV("title-eiou.csv"),
-    loadTourCSV("tour-tatsujin.csv")
-  ]).then(([titleRows, tourRows]) => {
-    TITLE_MATCHES = titleRows;
-    TOUR_MATCHES  = tourRows;
+Promise.all([
+  loadTitleCSV("title-ryuou.csv"),
+  loadTitleCSV("title-meijin.csv"),
+  loadTitleCSV("title-oui.csv"),
+  loadTitleCSV("title-ouza.csv"),
+  loadTitleCSV("title-kisei.csv"),
+  loadTitleCSV("title-kiou.csv"),
+  loadTitleCSV("title-ousho.csv"),
+  loadTitleCSV("title-eiou.csv"),
+  loadTourCSV("tour-tatsujin.csv")
+]).then(([
+  ryuouRows,
+  meijinRows,
+  ouiRows,
+  ouzaRows,
+  kiseiRows,
+  kiouRows,
+  oushoRows,
+  eiouRows,
+  tourRows
+]) => {
+  // タイトル戦は8棋戦ぶんをまとめて結合
+  TITLE_MATCHES = [
+    ...ryuouRows,
+    ...meijinRows,
+    ...ouiRows,
+    ...ouzaRows,
+    ...kiseiRows,
+    ...kiouRows,
+    ...oushoRows,
+    ...eiouRows
+  ];
 
-    initTitleYearOptions();
-    initTourYearOptions();
-    updateUIVisibility();
-    handleDisplay(); // 初期表示
-  }).catch(err => {
-    console.error("CSV 読み込みエラー:", err);
-    clearTable();
-    thead.innerHTML = "<tr><th>エラー</th></tr>";
-    tbody.innerHTML = "<tr><td>データの読み込みに失敗しました。</td></tr>";
-  });
+  // 一般棋戦（今は達人戦だけ）
+  TOUR_MATCHES = tourRows;
+
+  // セレクトボックス類の初期化と表示
+  initTitleYearOptions();
+  initTourYearOptions();
+  updateUIVisibility();
+  handleDisplay(); // 初期表示
+}).catch(err => {
+  console.error("CSV 読み込みエラー:", err);
+  clearTable();
+  thead.innerHTML = "<tr><th>エラー</th></tr>";
+  tbody.innerHTML = "<tr><td>データの読み込みに失敗しました。</td></tr>";
 });
