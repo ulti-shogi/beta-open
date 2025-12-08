@@ -251,38 +251,37 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- ① 番勝負一覧（タイトル戦）棋戦ごと ----
-  function renderTitleByKisen(kisenName) {
-    clearTable();
-    if (!thead || !tbody) return;
+function renderTitleByKisen(kisenName) {
+  clearTable();
+  if (!thead || !tbody) return;
 
-    const rows = TITLE_MATCHES
-      .filter(r => r.match === kisenName)
-      .sort((a, b) => b.year - a.year || b.period - a.period);
+  const rows = TITLE_MATCHES
+    .filter(r => r.match === kisenName)
+    .sort((a, b) => b.year - a.year || b.period - a.period);
 
-    thead.innerHTML = `
-      <tr>
-        <th>年度</th>
-        <th>期</th>
-        <th>保持者</th>
-        <th>挑戦者</th>
-        <th>保持者勝</th>
-        <th>挑戦者勝</th>
-        <th>持将棋</th>
-      </tr>
-    `;
+  // ★ draw（持将棋）は非表示、period は「期」として表示
+  thead.innerHTML = `
+    <tr>
+      <th>年度</th>
+      <th>期</th>
+      <th>保持者</th>
+      <th>勝</th>
+      <th>敗</th>
+      <th>挑戦者</th>
+    </tr>
+  `;
 
-    tbody.innerHTML = rows.map(r => `
-      <tr>
-        <td>${r.year}</td>
-        <td>${r.period}</td>
-        <td>${r.holder}</td>
-        <td>${r.challenger}</td>
-        <td>${r.holderWin}</td>
-        <td>${r.challengerWin}</td>
-        <td>${r.draw}</td>
-      </tr>
-    `).join("");
-  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.year}</td>
+      <td>${r.period}</td>
+      <td>${r.holder}</td>
+      <td>${r.holderWin}</td>
+      <td>${r.challengerWin}</td>
+      <td>${r.challenger}</td>
+    </tr>
+  `).join("");
+}
 
   // ---- ① 番勝負一覧（タイトル戦）年度ごと ----
   function renderTitleByYear(yearValue) {
