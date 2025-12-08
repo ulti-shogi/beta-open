@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!-- victory-basic-1 -->
+
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>将棋の殿堂</title>
+    <link rel="stylesheet" href="../style.css?v=20251201-a">
+    <style>
+  /* モード選択ラジオ（番勝負一覧・獲得等・一般棋戦・その他）を縦並びにする */
+  label:has(> input[name="mode"]) {
+    display: block;
+    margin-bottom: 4px;
+  }
+    
+  /* 表示ボタンをセレクトの下に配置して中央寄せする */
+  button[type="button"] {
+    display: block;        /* 横並びを解除して縦に置く */
+    margin: 10px auto;     /* 上下10px・左右auto → 中央寄せ */
+    padding: 6px 16px;     /* 押しやすいサイズに調整（任意） */
+    font-size: 16px;       /* 文字も少し大きめ（任意） */
+  }
+    </style>
+</head>
+<body>
+<header>
+<p><a href="https://ulti-shogi.github.io/beta-open/index.html">TOPページに戻る</a></>
+</header>
+  <main>
+<h2>タイトル・一般棋戦検索</h2>
+<section>
+  <p>表示する内容を選択してください。</p>
+  <label><input type="radio" name="mode" value="match" checked>歴代タイトル戦結果一覧</label>
+  <label><input type="radio" name="mode" value="ranking">タイトル獲得ランキング</label>
+  <label><input type="radio" name="mode" value="general">歴代一般棋戦結果一覧</label>
+  <label><input type="radio" name="mode" value="other">その他</label>
+
+  <p>番勝負一覧の表示方法を選択してください。</p>
+  <label><input type="radio" name="matchMode" value="kisen" checked>棋戦ごと</label>
+  <label><input type="radio" name="matchMode" value="year">年度ごと</label>
+
+  <p>棋戦を選択してください。（棋戦ごと）</p>
+  <select name="kisen">
+    <option value="竜王戦">竜王戦</option>
+    <option value="名人戦">名人戦</option>
+    <option value="叡王戦">叡王戦</option>
+    <option value="王位戦">王位戦</option>
+    <option value="王座戦">王座戦</option>
+    <option value="棋聖戦">棋聖戦</option>
+    <option value="棋王戦">棋王戦</option>
+    <option value="王将戦">王将戦</option>
+    <option value="十段戦">十段戦</option>
+    <option value="九段戦">九段戦</option>
+  </select>
+
+  <p>年度を選択してください。（年度ごと）</p>
+  <select name="year">
+    <!-- JSで動的に埋められます -->
+  </select>
+
+  <p>ランキングの対象を選択してください。</p>
+  <select name="rankingTarget">
+    <option value="通算">通算</option>
+    <option value="竜王戦">竜王戦</option>
+    <option value="名人戦">名人戦</option>
+    <option value="叡王戦">叡王戦</option>
+    <option value="王位戦">王位戦</option>
+    <option value="王座戦">王座戦</option>
+    <option value="棋聖戦">棋聖戦</option>
+    <option value="棋王戦">棋王戦</option>
+    <option value="王将戦">王将戦</option>
+    <option value="十段戦">十段戦</option>
+    <option value="九段戦">九段戦</option>
+  </select>
+
+  <p>並べ替え基準を選択してください。</p>
+  <label><input type="radio" name="rankingSort" value="登場">登場</label>
+  <label><input type="radio" name="rankingSort" value="獲得" checked>獲得</label>
+  <label><input type="radio" name="rankingSort" value="敗退">敗退</label>
+  <label><input type="radio" name="rankingSort" value="勝率">勝率</label>
+
+  <p>その他の集計を選択してください。</p>
+  <select name="otherTarget">
+    <option value="pair">同一カード回数ランキング</option>
+    <option value="player">棋士別タイトル戦対戦回数ランキング</option>
+  </select>
+
+  <p>棋士を選択してください。</p>
+  <select name="otherPlayer">
+    <!-- JSで動的に埋められます -->
+  </select>
+
+  <p>一般棋戦の表示方法を選択してください。</p>
+  <label><input type="radio" name="generalMode" value="kisen" checked>棋戦ごと</label>
+  <label><input type="radio" name="generalMode" value="year">年度ごと</label>
+
+  <p>一般棋戦を選択してください。（棋戦ごと）</p>
+  <select name="generalKisen">
+    <option value="朝日杯">朝日杯将棋オープン戦</option>
+    <option value="銀河戦">銀河戦</option>
+    <option value="NHK杯">NHK杯将棋トーナメント</option>
+    <option value="JT杯">将棋日本シリーズ JTプロ公式戦</option>
+    <option value="達人戦">達人戦立川立飛杯</option>
+    <option value="新人王戦">新人王戦</option>
+    <option value="青流戦">加古川青流戦</option>
+  </select>
+
+  <p>年度を選択してください。（一般棋戦・年度ごと）</p>
+  <select name="generalYear">
+    <!-- JSで動的に埋められます -->
+  </select>
+
+  <button type="button">表示する</button>
+
+</section>
+  
+
+<table>
+  <thead></thead>
+    <tbody></tbody>
+</table>
+
+<div class="free">
+  <h3>出典</h3>
+  <p>日本将棋連盟：<a href="https://www.shogi.or.jp/match/">日本将棋連盟主催棋戦一覧</a></p>
+      </div>
+
+  </main>
+  <footer>フッター</footer>
+
+  <script src="victory.js?v=20251208-1" defer></script>
+</body>
+</html>
+
