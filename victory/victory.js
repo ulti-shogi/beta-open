@@ -1,42 +1,43 @@
-// victory.js
-// victory.html 専用のシンプル版。
-// 今のところ、叡王戦(title-eiou.csv) と 達人戦(tour-tatsujin.csv) だけ対応。
-// UI の表示/非表示と「表示する」ボタンの動作までを一通り整える。
+// victory-basic-2
+// victory.html 専用・安全版
+// タイトル戦: title-ryuou/meijin/…/eiou.csv をまとめて使用
+// 一般棋戦 : tour-tatsujin.csv（今のところ達人戦のみ）
 
 document.addEventListener("DOMContentLoaded", () => {
   const section = document.querySelector("section");
   const table   = document.querySelector("table");
-  const thead   = table.querySelector("thead");
-  const tbody   = table.querySelector("tbody");
+  const thead   = table ? table.querySelector("thead") : null;
+  const tbody   = table ? table.querySelector("tbody") : null;
 
   // ---- section 内 UI ----
-  const modeRadios       = section.querySelectorAll('input[name="mode"]');
-  const matchModeRadios  = section.querySelectorAll('input[name="matchMode"]');
-  const kisenSelect      = section.querySelector('select[name="kisen"]');
-  const yearSelect       = section.querySelector('select[name="year"]');
-  const rankingSelect    = section.querySelector('select[name="rankingTarget"]');
-  const rankingSortRadios= section.querySelectorAll('input[name="rankingSort"]');
-  const otherTargetSelect= section.querySelector('select[name="otherTarget"]');
-  const otherPlayerSelect= section.querySelector('select[name="otherPlayer"]');
-  const generalModeRadios= section.querySelectorAll('input[name="generalMode"]');
-  const generalKisenSelect = section.querySelector('select[name="generalKisen"]');
-  const generalYearSelect  = section.querySelector('select[name="generalYear"]');
-  const displayButton    = section.querySelector('button[type="button"]');
+  const modeRadios          = section ? section.querySelectorAll('input[name="mode"]') : [];
+  const matchModeRadios     = section ? section.querySelectorAll('input[name="matchMode"]') : [];
+  const kisenSelect         = section ? section.querySelector('select[name="kisen"]') : null;
+  const yearSelect          = section ? section.querySelector('select[name="year"]') : null;
+  const rankingSelect       = section ? section.querySelector('select[name="rankingTarget"]') : null;
+  const rankingSortRadios   = section ? section.querySelectorAll('input[name="rankingSort"]') : [];
+  const otherTargetSelect   = section ? section.querySelector('select[name="otherTarget"]') : null;
+  const otherPlayerSelect   = section ? section.querySelector('select[name="otherPlayer"]') : null;
+  const generalModeRadios   = section ? section.querySelectorAll('input[name="generalMode"]') : [];
+  const generalKisenSelect  = section ? section.querySelector('select[name="generalKisen"]') : null;
+  const generalYearSelect   = section ? section.querySelector('select[name="generalYear"]') : null;
+  const displayButton       = section ? section.querySelector('button[type="button"]') : null;
 
-  // ---- 説明文 <p> たち ----
-  const matchModeLabelP   = matchModeRadios[0].parentElement.previousElementSibling;
-  const kisenLabelP       = kisenSelect.previousElementSibling;
-  const yearLabelP        = yearSelect.previousElementSibling;
-  const rankingLabelP     = rankingSelect.previousElementSibling;
-  const rankingSortLabelP = rankingSortRadios[0].parentElement.previousElementSibling;
-  const otherTargetLabelP = otherTargetSelect.previousElementSibling;
-  const otherPlayerLabelP = otherPlayerSelect.previousElementSibling;
-  const generalModeLabelP = generalModeRadios[0].parentElement.previousElementSibling;
-  const generalKisenLabelP= generalKisenSelect.previousElementSibling;
-  const generalYearLabelP = generalYearSelect.previousElementSibling;
+  // ---- 説明文 <p> たち（null 安全版）----
+  const matchModeLabelP    = (matchModeRadios[0] && matchModeRadios[0].parentElement.previousElementSibling) || null;
+  const kisenLabelP        = kisenSelect ? kisenSelect.previousElementSibling : null;
+  const yearLabelP         = yearSelect ? yearSelect.previousElementSibling : null;
+  const rankingLabelP      = rankingSelect ? rankingSelect.previousElementSibling : null;
+  const rankingSortLabelP  = (rankingSortRadios[0] && rankingSortRadios[0].parentElement.previousElementSibling) || null;
+  const otherTargetLabelP  = otherTargetSelect ? otherTargetSelect.previousElementSibling : null;
+  const otherPlayerLabelP  = otherPlayerSelect ? otherPlayerSelect.previousElementSibling : null;
+  const generalModeLabelP  = (generalModeRadios[0] && generalModeRadios[0].parentElement.previousElementSibling) || null;
+  const generalKisenLabelP = generalKisenSelect ? generalKisenSelect.previousElementSibling : null;
+  const generalYearLabelP  = generalYearSelect ? generalYearSelect.previousElementSibling : null;
 
-  // ラベルグループをまとめて表示/非表示するヘルパー
+  // ラベルグループをまとめて表示/非表示するヘルパー（安全版）
   function setLabelGroupVisible(firstLabel, visible) {
+    if (!firstLabel) return;
     let node = firstLabel;
     while (node && node.tagName === "LABEL") {
       node.style.display = visible ? "" : "none";
@@ -51,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /** 一般棋戦: {type:"tour", match, year, period, winner, loser, win, lose} */
   let TOUR_MATCHES  = [];
 
-  // ---- CSV 読み込み（タイトル戦: title-eiou.csv）----
+  // ---- CSV 読み込み（タイトル戦）----
   function loadTitleCSV(path) {
     return fetch(path)
       .then(res => res.text())
@@ -90,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
             win    = challengerScore;
             lose   = holderScore;
           } else {
-            // 引き分けだけの特殊ケースはとりあえず保持者を winner 扱い
+            // 引き分けのみなど → とりあえず保持者を winner 扱い
             winner = holder;
             loser  = challenger;
             win    = holderScore;
@@ -117,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // ---- CSV 読み込み（一般棋戦: tour-tatsujin.csv）----
+  // ---- CSV 読み込み（一般棋戦）----
   function loadTourCSV(path) {
     return fetch(path)
       .then(res => res.text())
@@ -204,9 +205,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return r ? r.value : "獲得";
   }
 
-  // ---- UI の表示・非表示 ----
+  // ---- UI の表示・非表示（null ガード付き）----
   function updateUIVisibility() {
-    const mode = getMainMode();
+    const mode        = getMainMode();
     const matchMode   = getMatchMode();
     const generalMode = getGeneralMode();
 
@@ -216,43 +217,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const isOther   = mode === "other";
 
     // 番勝負用
-    matchModeLabelP.style.display = isMatch ? "" : "none";
-    setLabelGroupVisible(matchModeRadios[0].parentElement, isMatch);
-    kisenLabelP.style.display = isMatch && matchMode === "kisen" ? "" : "none";
-    kisenSelect.style.display  = isMatch && matchMode === "kisen" ? "" : "none";
-    yearLabelP.style.display   = isMatch && matchMode === "year" ? "" : "none";
-    yearSelect.style.display   = isMatch && matchMode === "year" ? "" : "none";
+    if (matchModeLabelP) matchModeLabelP.style.display = isMatch ? "" : "none";
+    if (matchModeRadios[0]) setLabelGroupVisible(matchModeRadios[0].parentElement, isMatch);
+    if (kisenLabelP)   kisenLabelP.style.display = isMatch && matchMode === "kisen" ? "" : "none";
+    if (kisenSelect)   kisenSelect.style.display  = isMatch && matchMode === "kisen" ? "" : "none";
+    if (yearLabelP)    yearLabelP.style.display   = isMatch && matchMode === "year" ? "" : "none";
+    if (yearSelect)    yearSelect.style.display   = isMatch && matchMode === "year" ? "" : "none";
 
     // ランキング用
-    rankingLabelP.style.display = isRank ? "" : "none";
-    rankingSelect.style.display = isRank ? "" : "none";
-    rankingSortLabelP.style.display = isRank ? "" : "none";
-    setLabelGroupVisible(rankingSortRadios[0].parentElement, isRank);
+    if (rankingLabelP)     rankingLabelP.style.display = isRank ? "" : "none";
+    if (rankingSelect)     rankingSelect.style.display = isRank ? "" : "none";
+    if (rankingSortLabelP) rankingSortLabelP.style.display = isRank ? "" : "none";
+    if (rankingSortRadios[0]) setLabelGroupVisible(rankingSortRadios[0].parentElement, isRank);
 
     // その他用
-    otherTargetLabelP.style.display = isOther ? "" : "none";
-    otherTargetSelect.style.display = isOther ? "" : "none";
-    otherPlayerLabelP.style.display = isOther && otherTargetSelect.value === "player" ? "" : "none";
-    otherPlayerSelect.style.display = isOther && otherTargetSelect.value === "player" ? "" : "none";
+    const otherIsPlayer = isOther && otherTargetSelect && otherTargetSelect.value === "player";
+    if (otherTargetLabelP) otherTargetLabelP.style.display = isOther ? "" : "none";
+    if (otherTargetSelect) otherTargetSelect.style.display = isOther ? "" : "none";
+    if (otherPlayerLabelP) otherPlayerLabelP.style.display = otherIsPlayer ? "" : "none";
+    if (otherPlayerSelect) otherPlayerSelect.style.display = otherIsPlayer ? "" : "none";
 
     // 一般棋戦用
-    generalModeLabelP.style.display = isGeneral ? "" : "none";
-    setLabelGroupVisible(generalModeRadios[0].parentElement, isGeneral);
-    generalKisenLabelP.style.display = isGeneral && generalMode === "kisen" ? "" : "none";
-    generalKisenSelect.style.display = isGeneral && generalMode === "kisen" ? "" : "none";
-    generalYearLabelP.style.display  = isGeneral && generalMode === "year" ? "" : "none";
-    generalYearSelect.style.display  = isGeneral && generalMode === "year" ? "" : "none";
+    if (generalModeLabelP) generalModeLabelP.style.display = isGeneral ? "" : "none";
+    if (generalModeRadios[0]) setLabelGroupVisible(generalModeRadios[0].parentElement, isGeneral);
+    if (generalKisenLabelP)   generalKisenLabelP.style.display = isGeneral && generalMode === "kisen" ? "" : "none";
+    if (generalKisenSelect)   generalKisenSelect.style.display = isGeneral && generalMode === "kisen" ? "" : "none";
+    if (generalYearLabelP)    generalYearLabelP.style.display  = isGeneral && generalMode === "year" ? "" : "none";
+    if (generalYearSelect)    generalYearSelect.style.display  = isGeneral && generalMode === "year" ? "" : "none";
   }
 
   // ---- 表のクリア ----
   function clearTable() {
-    thead.innerHTML = "";
-    tbody.innerHTML = "";
+    if (thead) thead.innerHTML = "";
+    if (tbody) tbody.innerHTML = "";
   }
 
   // ---- ① 番勝負一覧（タイトル戦）棋戦ごと ----
   function renderTitleByKisen(kisenName) {
     clearTable();
+    if (!thead || !tbody) return;
+
     const rows = TITLE_MATCHES
       .filter(r => r.match === kisenName)
       .sort((a, b) => b.year - a.year || b.period - a.period);
@@ -285,7 +289,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---- ① 番勝負一覧（タイトル戦）年度ごと ----
   function renderTitleByYear(yearValue) {
     clearTable();
+    if (!thead || !tbody) return;
     const y = Number(yearValue);
+
     const rows = TITLE_MATCHES
       .filter(r => r.year === y)
       .sort((a, b) => b.period - a.period);
@@ -315,13 +321,21 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join("");
   }
 
-  // ---- ② タイトル獲得ランキング（今は叡王戦のみ）----
+  // ---- ② タイトル獲得ランキング ----
   function renderTitleRanking() {
     clearTable();
+    if (!thead || !tbody) return;
+
+    const target = rankingSelect ? rankingSelect.value : "通算";
+
+    let source = TITLE_MATCHES;
+    if (target && target !== "通算") {
+      source = TITLE_MATCHES.filter(r => r.match === target);
+    }
 
     const stats = new Map(); // name -> {name, appear, win, lose}
 
-    TITLE_MATCHES.forEach(r => {
+    source.forEach(r => {
       if (r.winner) {
         if (!stats.has(r.winner)) stats.set(r.winner, { name: r.winner, appear: 0, win: 0, lose: 0 });
         stats.get(r.winner).appear++;
@@ -396,9 +410,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
   }
 
-  // ---- ③ 一般棋戦一覧（達人戦のみ）棋戦ごと ----
+  // ---- ③ 一般棋戦一覧（棋戦ごと）----
   function renderTourByKisen(kisenValue) {
     clearTable();
+    if (!thead || !tbody) return;
+
     const rows = TOUR_MATCHES
       .filter(r => r.match === kisenValue)
       .sort((a, b) => b.year - a.year || b.period - a.period);
@@ -426,10 +442,12 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join("");
   }
 
-  // ---- ③ 一般棋戦一覧 年度ごと ----
+  // ---- ③ 一般棋戦一覧（年度ごと）----
   function renderTourByYear(yearValue) {
     clearTable();
+    if (!thead || !tbody) return;
     const y = Number(yearValue);
+
     const rows = TOUR_MATCHES
       .filter(r => r.year === y)
       .sort((a, b) => a.match.localeCompare(b.match, "ja") || b.period - a.period);
@@ -457,11 +475,12 @@ document.addEventListener("DOMContentLoaded", () => {
     `).join("");
   }
 
-  // ---- その他モード（ひとまずプレースホルダー）----
+  // ---- その他モード（仮）----
   function renderOther() {
     clearTable();
+    if (!thead || !tbody) return;
     thead.innerHTML = "<tr><th>メッセージ</th></tr>";
-    tbody.innerHTML = "<tr><td>「その他」の集計はまだ victory.js では未実装です。</td></tr>";
+    tbody.innerHTML = "<tr><td>「その他」の集計は victory.js ではまだ未実装です。</td></tr>";
   }
 
   // ---- 表示ボタン押下 ----
@@ -471,10 +490,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (mode === "match") {
       const mm = getMatchMode();
       if (mm === "kisen") {
-        const kisenName = kisenSelect.value || "叡王戦";
+        const kisenName = (kisenSelect && kisenSelect.value) || "竜王戦";
         renderTitleByKisen(kisenName);
       } else {
-        const yearVal = yearSelect.value || (TITLE_MATCHES[0] ? TITLE_MATCHES[0].year : "");
+        const defaultYear = TITLE_MATCHES[0] ? TITLE_MATCHES[0].year : "";
+        const yearVal = (yearSelect && yearSelect.value) || defaultYear;
         renderTitleByYear(yearVal);
       }
     } else if (mode === "ranking") {
@@ -482,10 +502,11 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (mode === "general") {
       const gm = getGeneralMode();
       if (gm === "kisen") {
-        const kisenName = generalKisenSelect.value || "達人戦";
+        const kisenName = (generalKisenSelect && generalKisenSelect.value) || (TOUR_MATCHES[0] ? TOUR_MATCHES[0].match : "");
         renderTourByKisen(kisenName);
       } else {
-        const yearVal = generalYearSelect.value || (TOUR_MATCHES[0] ? TOUR_MATCHES[0].year : "");
+        const defaultYear = TOUR_MATCHES[0] ? TOUR_MATCHES[0].year : "";
+        const yearVal = (generalYearSelect && generalYearSelect.value) || defaultYear;
         renderTourByYear(yearVal);
       }
     } else {
@@ -493,7 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---- イベント登録 ----
+  // ---- イベント登録（存在チェック付き）----
   modeRadios.forEach(r => r.addEventListener("change", () => {
     updateUIVisibility();
     clearTable();
@@ -506,56 +527,66 @@ document.addEventListener("DOMContentLoaded", () => {
     updateUIVisibility();
     clearTable();
   }));
-  otherTargetSelect.addEventListener("change", () => {
-    updateUIVisibility();
-  });
-  displayButton.addEventListener("click", handleDisplay);
+  if (otherTargetSelect) {
+    otherTargetSelect.addEventListener("change", () => {
+      updateUIVisibility();
+    });
+  }
+  if (displayButton) {
+    displayButton.addEventListener("click", handleDisplay);
+  }
+
+  // 最初の状態で一度 UI を整えておく
+  updateUIVisibility();
 
   // ---- CSV 読み込み & 初期化 ----
-Promise.all([
-  loadTitleCSV("title-ryuou.csv"),
-  loadTitleCSV("title-meijin.csv"),
-  loadTitleCSV("title-oui.csv"),
-  loadTitleCSV("title-ouza.csv"),
-  loadTitleCSV("title-kisei.csv"),
-  loadTitleCSV("title-kiou.csv"),
-  loadTitleCSV("title-ousho.csv"),
-  loadTitleCSV("title-eiou.csv"),
-  loadTourCSV("tour-tatsujin.csv")
-]).then(([
-  ryuouRows,
-  meijinRows,
-  ouiRows,
-  ouzaRows,
-  kiseiRows,
-  kiouRows,
-  oushoRows,
-  eiouRows,
-  tourRows
-]) => {
-  // タイトル戦は8棋戦ぶんをまとめて結合
-  TITLE_MATCHES = [
-    ...ryuouRows,
-    ...meijinRows,
-    ...ouiRows,
-    ...ouzaRows,
-    ...kiseiRows,
-    ...kiouRows,
-    ...oushoRows,
-    ...eiouRows
-  ];
+  Promise.all([
+    loadTitleCSV("title-ryuou.csv"),
+    loadTitleCSV("title-meijin.csv"),
+    loadTitleCSV("title-oui.csv"),
+    loadTitleCSV("title-ouza.csv"),
+    loadTitleCSV("title-kisei.csv"),
+    loadTitleCSV("title-kiou.csv"),
+    loadTitleCSV("title-ousho.csv"),
+    loadTitleCSV("title-eiou.csv"),
+    loadTourCSV("tour-tatsujin.csv")
+  ]).then(([
+    ryuouRows,
+    meijinRows,
+    ouiRows,
+    ouzaRows,
+    kiseiRows,
+    kiouRows,
+    oushoRows,
+    eiouRows,
+    tourRows
+  ]) => {
+    // タイトル戦8棋戦ぶんをまとめる
+    TITLE_MATCHES = [
+      ...ryuouRows,
+      ...meijinRows,
+      ...ouiRows,
+      ...ouzaRows,
+      ...kiseiRows,
+      ...kiouRows,
+      ...oushoRows,
+      ...eiouRows
+    ];
 
-  // 一般棋戦（今は達人戦だけ）
-  TOUR_MATCHES = tourRows;
+    // 一般棋戦（今は達人戦のみ）
+    TOUR_MATCHES = tourRows;
 
-  // セレクトボックス類の初期化と表示
-  initTitleYearOptions();
-  initTourYearOptions();
-  updateUIVisibility();
-  handleDisplay(); // 初期表示
-}).catch(err => {
-  console.error("CSV 読み込みエラー:", err);
-  clearTable();
-  thead.innerHTML = "<tr><th>エラー</th></tr>";
-  tbody.innerHTML = "<tr><td>データの読み込みに失敗しました。</td></tr>";
+    // セレクトボックス類の初期化と表示
+    initTitleYearOptions();
+    initTourYearOptions();
+    updateUIVisibility();
+    handleDisplay(); // 初期表示
+  }).catch(err => {
+    console.error("CSV 読み込みエラー:", err);
+    clearTable();
+    if (thead && tbody) {
+      thead.innerHTML = "<tr><th>エラー</th></tr>";
+      tbody.innerHTML = "<tr><td>データの読み込みに失敗しました。</td></tr>";
+    }
+  });
 });
