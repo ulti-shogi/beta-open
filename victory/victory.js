@@ -1,4 +1,4 @@
-// victory-20251210-c
+// victory-20251210-d
 // タイトル・一般棋戦検索（victory.html 専用）
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -406,36 +406,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==== ③ 一般棋戦一覧・棋戦ごと ====
-  function renderTourByKisen(kisenValue) {
-    clearTable();
-    if (!thead || !tbody) return;
+function renderTourByKisen(kisenValue) {
+  clearTable();
+  if (!thead || !tbody) return;
 
-    const rows = TOUR_MATCHES
-      .filter(r => r.match === kisenValue)
-      .sort((a, b) => b.year - a.year || b.period - a.period);
+  const rows = TOUR_MATCHES
+    .filter(r => r.match === kisenValue)
+    .sort((a, b) => b.year - a.year || b.period - a.period);
 
-    thead.innerHTML = `
-      <tr>
-        <th>年度</th>
-        <th>回/期</th>
-        <th>優勝者</th>
-        <th>勝</th>
-        <th>敗</th>
-        <th>準優勝</th>
-      </tr>
-    `;
+  // 銀河戦・新人王戦・青流戦だけ「期」、それ以外は「回」
+  const kiList = ["銀河戦", "新人王戦", "青流戦"];
+  const periodHeader = kiList.includes(kisenValue) ? "期" : "回";
 
-    tbody.innerHTML = rows.map(r => `
-      <tr>
-        <td>${r.year}</td>
-        <td>${r.period}</td>
-        <td>${r.winner}</td>
-        <td>${r.win}</td>
-        <td>${r.lose}</td>
-        <td>${r.loser}</td>
-      </tr>
-    `).join("");
-  }
+  thead.innerHTML = `
+    <tr>
+      <th>年度</th>
+      <th>${periodHeader}</th>
+      <th>優勝者</th>
+      <th>勝</th>
+      <th>敗</th>
+      <th>準優勝</th>
+    </tr>
+  `;
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.year}</td>
+      <td>${r.period}</td>
+      <td>${r.winner}</td>
+      <td>${r.win}</td>
+      <td>${r.lose}</td>
+      <td>${r.loser}</td>
+    </tr>
+  `).join("");
+}
 
   // ==== ③ 一般棋戦一覧・年度ごと ====
   function renderTourByYear(yearValue) {
