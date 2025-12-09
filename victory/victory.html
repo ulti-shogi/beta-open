@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- victory-20251210-d -->
+<!-- victory-20251210-e -->
 
 <html lang="ja">
 <head>
@@ -31,10 +31,13 @@
 <h2>優勝回数検索</h2>
 <section>
   <p>表示する内容を選択してください。</p>
-  <label><input type="radio" name="mode" value="match" checked>歴代タイトル戦結果一覧</label>
-  <label><input type="radio" name="mode" value="ranking">タイトル獲得ランキング</label>
-  <label><input type="radio" name="mode" value="general">歴代一般棋戦結果一覧</label>
-  <label><input type="radio" name="mode" value="other">その他</label>
+
+<select name="mode" id="modeSelect">
+  <option value="title">歴代タイトル戦結果一覧</option>
+  <option value="ranking">タイトル獲得ランキング</option>
+  <option value="general">歴代一般棋戦結果一覧</option>
+  <option value="other">その他</option>
+</select>
 
   <p>番勝負一覧の表示方法を選択してください。</p>
   <label><input type="radio" name="matchMode" value="kisen" checked>棋戦ごと</label>
@@ -129,7 +132,7 @@
   </main>
   <footer>フッター</footer>
 
-  <script src="victory.js?v=20251210-3" defer></script>
+  <script src="victory.js?v=20251210-4" defer></script>
 </body>
 </html>
 

@@ -1,4 +1,4 @@
-// victory-20251210-d
+// victory-20251210-e
 // タイトル・一般棋戦検索（victory.html 専用）
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tbody   = table ? table.querySelector("tbody") : null;
 
   // ==== UI 要素 ====
-  const modeRadios          = section ? section.querySelectorAll('input[name="mode"]') : [];
+  const modeSelect          = section ? section.querySelector('select[name="mode"]') : null;
   const matchModeRadios     = section ? section.querySelectorAll('input[name="matchMode"]') : [];
   const kisenSelect         = section ? section.querySelector('select[name="kisen"]') : null;
   const yearSelect          = section ? section.querySelector('select[name="year"]') : null;
@@ -183,8 +183,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ==== モード取得 ====
   function getMainMode() {
-    const r = Array.from(modeRadios).find(r => r.checked);
-    return r ? r.value : "match";
+    if (modeSelect && modeSelect.value) {
+      return modeSelect.value;
+    }
+    return "match"; // デフォルト
   }
   function getMatchMode() {
     const r = Array.from(matchModeRadios).find(r => r.checked);
@@ -406,40 +408,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==== ③ 一般棋戦一覧・棋戦ごと ====
-function renderTourByKisen(kisenValue) {
-  clearTable();
-  if (!thead || !tbody) return;
+  function renderTourByKisen(kisenValue) {
+    clearTable();
+    if (!thead || !tbody) return;
 
-  const rows = TOUR_MATCHES
-    .filter(r => r.match === kisenValue)
-    .sort((a, b) => b.year - a.year || b.period - a.period);
+    const rows = TOUR_MATCHES
+      .filter(r => r.match === kisenValue)
+      .sort((a, b) => b.year - a.year || b.period - a.period);
 
-  // 銀河戦・新人王戦・青流戦だけ「期」、それ以外は「回」
-  const kiList = ["銀河戦", "新人王戦", "青流戦"];
-  const periodHeader = kiList.includes(kisenValue) ? "期" : "回";
+    // 銀河戦・新人王戦・青流戦だけ「期」、それ以外は「回」
+    const kiList = ["銀河戦", "新人王戦", "青流戦"];
+    const periodHeader = kiList.includes(kisenValue) ? "期" : "回";
 
-  thead.innerHTML = `
-    <tr>
-      <th>年度</th>
-      <th>${periodHeader}</th>
-      <th>優勝者</th>
-      <th>勝</th>
-      <th>敗</th>
-      <th>準優勝</th>
-    </tr>
-  `;
+    thead.innerHTML = `
+      <tr>
+        <th>年度</th>
+        <th>${periodHeader}</th>
+        <th>優勝者</th>
+        <th>勝</th>
+        <th>敗</th>
+        <th>準優勝</th>
+      </tr>
+    `;
 
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.year}</td>
-      <td>${r.period}</td>
-      <td>${r.winner}</td>
-      <td>${r.win}</td>
-      <td>${r.lose}</td>
-      <td>${r.loser}</td>
-    </tr>
-  `).join("");
-}
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.year}</td>
+        <td>${r.period}</td>
+        <td>${r.winner}</td>
+        <td>${r.win}</td>
+        <td>${r.lose}</td>
+        <td>${r.loser}</td>
+      </tr>
+    `).join("");
+  }
 
   // ==== ③ 一般棋戦一覧・年度ごと ====
   function renderTourByYear(yearValue) {
@@ -516,10 +518,12 @@ function renderTourByKisen(kisenValue) {
   }
 
   // ==== イベント登録 ====
-  modeRadios.forEach(r => r.addEventListener("change", () => {
-    updateUIVisibility();
-    clearTable();
-  }));
+  if (modeSelect) {
+    modeSelect.addEventListener("change", () => {
+      updateUIVisibility();
+      clearTable();
+    });
+  }
   matchModeRadios.forEach(r => r.addEventListener("change", () => {
     updateUIVisibility();
     clearTable();
@@ -538,6 +542,9 @@ function renderTourByKisen(kisenValue) {
   }
 
   // 初期状態で UI を整える
+  if (modeSelect && !modeSelect.value) {
+    modeSelect.value = "match"; // 念のためデフォルト
+  }
   updateUIVisibility();
 
   // ==== CSV 読み込み & 初期化 ====
