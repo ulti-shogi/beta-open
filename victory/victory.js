@@ -1,4 +1,4 @@
-// victory.js
+// victory-20251210-b
 // victory.html 専用・安全版
 // タイトル戦: 竜王〜叡王 + 十段戦 + 九段戦
 // 一般棋戦 : 達人戦（tour-tatsujin.csv）
@@ -536,59 +536,94 @@ function renderTitleByKisen(kisenName) {
   // 最初の状態で一度 UI を整えておく
   updateUIVisibility();
 
-  // ---- CSV 読み込み & 初期化 ----
-  Promise.all([
-    loadTitleCSV("title-ryuou.csv"),
-    loadTitleCSV("title-meijin.csv"),
-    loadTitleCSV("title-oui.csv"),
-    loadTitleCSV("title-ouza.csv"),
-    loadTitleCSV("title-kisei.csv"),
-    loadTitleCSV("title-kiou.csv"),
-    loadTitleCSV("title-ousho.csv"),
-    loadTitleCSV("title-eiou.csv"),
-    loadTitleCSV("title-10dan.csv"),
-    loadTitleCSV("title-9dan.csv"),
-    loadTourCSV("tour-tatsujin.csv")
-  ])
-    .then(([
-      ryuouRows,
-      meijinRows,
-      ouiRows,
-      ouzaRows,
-      kiseiRows,
-      kiouRows,
-      oushoRows,
-      eiouRows,
-      judanRows,
-      kudanRows,
-      tourRows
-    ]) => {
-      TITLE_MATCHES = [
-        ...ryuouRows,
-        ...meijinRows,
-        ...ouiRows,
-        ...ouzaRows,
-        ...kiseiRows,
-        ...kiouRows,
-        ...oushoRows,
-        ...eiouRows,
-        ...judanRows,
-        ...kudanRows
-      ];
+ // ---- CSV 読み込み & 初期化 ----
+Promise.all([
+  // --- タイトル戦 10棋戦 ---
+  loadTitleCSV("title-ryuou.csv"),
+  loadTitleCSV("title-meijin.csv"),
+  loadTitleCSV("title-oui.csv"),
+  loadTitleCSV("title-ouza.csv"),
+  loadTitleCSV("title-kisei.csv"),
+  loadTitleCSV("title-kiou.csv"),
+  loadTitleCSV("title-ousho.csv"),
+  loadTitleCSV("title-eiou.csv"),
+  loadTitleCSV("title-10dan.csv"),
+  loadTitleCSV("title-9dan.csv"),
 
-      TOUR_MATCHES = tourRows;
+  // --- 一般棋戦 7棋戦 ---
+  loadTourCSV("tour-asahi.csv"),
+  loadTourCSV("tour-ginga.csv"),
+  loadTourCSV("tour-nhk.csv"),
+  loadTourCSV("tour-jtcup.csv"),
+  loadTourCSV("tour-tatsujin.csv"),
+  loadTourCSV("tour-sinjin.csv"),
+  loadTourCSV("tour-seiryu.csv")
+])
+.then(([
+  // タイトル戦
+  ryuouRows,
+  meijinRows,
+  ouiRows,
+  ouzaRows,
+  kiseiRows,
+  kiouRows,
+  oushoRows,
+  eiouRows,
+  judanRows,
+  kudanRows,
 
-      initTitleYearOptions();
-      initTourYearOptions();
-      updateUIVisibility();
-      handleDisplay(); // 初期表示
-    })
-    .catch(err => {
-      console.error("CSV 読み込みエラー:", err);
-      clearTable();
-      if (thead && tbody) {
-        thead.innerHTML = "<tr><th>エラー</th></tr>";
-        tbody.innerHTML = "<tr><td>データの読み込みに失敗しました。</td></tr>";
-      }
-    });
+  // 一般棋戦 7棋戦
+  asahiRows,
+  gingaRows,
+  nhkRows,
+  jtRows,
+  tatsujinRows,
+  sinjinRows,
+  seiryuRows
+]) => {
+
+  // ---------------------------
+  // タイトル戦データ統合
+  // ---------------------------
+  TITLE_MATCHES = [
+    ...ryuouRows,
+    ...meijinRows,
+    ...ouiRows,
+    ...ouzaRows,
+    ...kiseiRows,
+    ...kiouRows,
+    ...oushoRows,
+    ...eiouRows,
+    ...judanRows,
+    ...kudanRows
+  ];
+
+  // ---------------------------
+  // 一般棋戦データ統合
+  // ---------------------------
+  TOUR_MATCHES = [
+    ...asahiRows,
+    ...gingaRows,
+    ...nhkRows,
+    ...jtRows,
+    ...tatsujinRows,
+    ...sinjinRows,
+    ...seiryuRows
+  ];
+
+  // ---------------------------
+  // 初期化（従来どおり）
+  // ---------------------------
+  initTitleYearOptions();
+  initTourYearOptions();
+  updateUIVisibility();
+  handleDisplay();  // 初期表示
+})
+.catch(err => {
+  console.error("CSV 読み込みエラー:", err);
+  clearTable();
+  if (thead && tbody) {
+    thead.innerHTML = "<tr><th>エラー</th></tr>";
+    tbody.innerHTML = "<tr><td>データの読み込みに失敗しました。</td></tr>";
+  }
 });
