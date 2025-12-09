@@ -1,4 +1,4 @@
-// victory-20251210-e
+// victory-20251210-f
 // タイトル・一般棋戦検索（victory.html 専用）
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const generalYearSelect   = section ? section.querySelector('select[name="generalYear"]') : null;
   const displayButton       = section ? section.querySelector('button[type="button"]') : null;
 
-  // 説明文 <p>（前に動いていたロジックと同じ取り方）
+  // 説明文 <p>
   const matchModeLabelP    = (matchModeRadios[0] && matchModeRadios[0].parentElement.previousElementSibling) || null;
   const kisenLabelP        = kisenSelect ? kisenSelect.previousElementSibling : null;
   const yearLabelP         = yearSelect ? yearSelect.previousElementSibling : null;
@@ -86,7 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
             win    = challengerScore;
             lose   = holderScore;
           } else {
-            // 完全タイなど → とりあえず保持者を winner 扱い
             winner = holder;
             loser  = challenger;
             win    = holderScore;
@@ -182,11 +181,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==== モード取得 ====
+  // セレクトの value は  "title" / "ranking" / "general" / "other"
   function getMainMode() {
     if (modeSelect && modeSelect.value) {
       return modeSelect.value;
     }
-    return "match"; // デフォルト
+    return "title"; // デフォルトはタイトル戦
   }
   function getMatchMode() {
     const r = Array.from(matchModeRadios).find(r => r.checked);
@@ -207,18 +207,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const matchMode   = getMatchMode();
     const generalMode = getGeneralMode();
 
-    const isMatch   = mode === "match";
+    const isTitle   = mode === "title";
     const isRank    = mode === "ranking";
     const isGeneral = mode === "general";
     const isOther   = mode === "other";
 
-    // 番勝負一覧
-    if (matchModeLabelP) matchModeLabelP.style.display = isMatch ? "" : "none";
-    if (matchModeRadios[0]) setLabelGroupVisible(matchModeRadios[0].parentElement, isMatch);
-    if (kisenLabelP) kisenLabelP.style.display = isMatch && matchMode === "kisen" ? "" : "none";
-    if (kisenSelect) kisenSelect.style.display  = isMatch && matchMode === "kisen" ? "" : "none";
-    if (yearLabelP)  yearLabelP.style.display   = isMatch && matchMode === "year"  ? "" : "none";
-    if (yearSelect)  yearSelect.style.display   = isMatch && matchMode === "year"  ? "" : "none";
+    // 番勝負一覧（タイトル戦）
+    if (matchModeLabelP) matchModeLabelP.style.display = isTitle ? "" : "none";
+    if (matchModeRadios[0]) setLabelGroupVisible(matchModeRadios[0].parentElement, isTitle);
+    if (kisenLabelP) kisenLabelP.style.display = isTitle && matchMode === "kisen" ? "" : "none";
+    if (kisenSelect) kisenSelect.style.display  = isTitle && matchMode === "kisen" ? "" : "none";
+    if (yearLabelP)  yearLabelP.style.display   = isTitle && matchMode === "year"  ? "" : "none";
+    if (yearSelect)  yearSelect.style.display   = isTitle && matchMode === "year"  ? "" : "none";
 
     // タイトル獲得ランキング
     if (rankingLabelP)     rankingLabelP.style.display = isRank ? "" : "none";
@@ -257,7 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .filter(r => r.match === kisenName)
       .sort((a, b) => b.year - a.year || b.period - a.period);
 
-    // draw は表示しない
     thead.innerHTML = `
       <tr>
         <th>年度</th>
@@ -416,7 +415,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .filter(r => r.match === kisenValue)
       .sort((a, b) => b.year - a.year || b.period - a.period);
 
-    // 銀河戦・新人王戦・青流戦だけ「期」、それ以外は「回」
     const kiList = ["銀河戦", "新人王戦", "青流戦"];
     const periodHeader = kiList.includes(kisenValue) ? "期" : "回";
 
@@ -488,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleDisplay() {
     const mode = getMainMode();
 
-    if (mode === "match") {
+    if (mode === "title") {
       const mm = getMatchMode();
       if (mm === "kisen") {
         const kisenName = (kisenSelect && kisenSelect.value) || "竜王戦";
@@ -512,7 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const yearVal = (generalYearSelect && generalYearSelect.value) || defaultYear;
         renderTourByYear(yearVal);
       }
-    } else {
+    } else { // other
       renderOther();
     }
   }
@@ -543,7 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 初期状態で UI を整える
   if (modeSelect && !modeSelect.value) {
-    modeSelect.value = "match"; // 念のためデフォルト
+    modeSelect.value = "title"; // 念のため
   }
   updateUIVisibility();
 
