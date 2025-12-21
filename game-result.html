@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2025年度 対局結果（棋士名検索）</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#15171c;
+      --text:#e8ecf1;
+      --muted:#9aa4b2;
+      --line:#232733;
+      --accent:#4cc9f0;
+      --danger:#ffb3b3;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Helvetica,Arial,sans-serif;}
+    .wrap{max-width:480px;margin:0 auto;padding:14px;}
+    header{display:flex;align-items:center;gap:10px;margin:4px 0 12px;}
+    header .logo{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#a0e9ff);}
+    header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:.02em;}
+    .card{background:var(--card);border:1px solid #1f232b;border-radius:14px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.25);margin-bottom:12px;}
+    .help{color:var(--muted);font-size:12px;line-height:1.5;margin:6px 0 0;}
+    .row{display:flex;gap:10px;align-items:center;}
+    input[type="text"]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid #2b3140;
+      background:#0f1117;
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    button{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid #2b3140;
+      background:#0f1117;
+      color:var(--text);
+      font-weight:700;
+      font-size:14px;
+      white-space:nowrap;
+    }
+    button:active{transform:translateY(1px);}
+    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+    .kpi > div{flex:1 1 120px;background:#0f1117;border:1px solid #2b3140;border-radius:12px;padding:10px;}
+    .kpi .label{color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px;}
+    .kpi .value{font-size:18px;font-weight:800;font-family:var(--mono);}
+    .kpi .sub{color:var(--muted);font-size:11px;margin-top:2px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;}
+    th{color:var(--muted);font-weight:800;font-size:12px;}
+    td.num{font-family:var(--mono);text-align:right;}
+    td.badge{font-family:var(--mono);font-weight:800;}
+    .muted{color:var(--muted);}
+    .err{color:var(--danger);padding:10px;border:1px solid #3a1f26;background:#1a0f12;border-radius:12px;margin-bottom:12px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo" aria-hidden="true"></div>
+      <h1>2025年度 対局結果（棋士名検索）</h1>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <input type="text" name="player" placeholder="棋士名を入力（例：藤井聡太）" autocomplete="off" />
+        <button type="button" name="doSearch">検索</button>
+      </div>
+      <p class="help">このページは <span class="muted">2025-game-result.csv</span> を読み込み、棋士名に一致する対局を抽出して勝敗（○□=勝 / ●■=負）を集計します。</p>
+    </section>
+
+    <section class="card" data-role="summary" hidden>
+      <div class="muted" data-role="headline" style="font-weight:800;"></div>
+      <div class="kpi">
+        <div>
+          <div class="label">勝</div>
+          <div class="value" data-role="wins">0</div>
+          <div class="sub">○ / □</div>
+        </div>
+        <div>
+          <div class="label">負</div>
+          <div class="value" data-role="losses">0</div>
+          <div class="sub">● / ■</div>
+        </div>
+        <div>
+          <div class="label">対局</div>
+          <div class="value" data-role="games">0</div>
+          <div class="sub">勝＋負</div>
+        </div>
+        <div>
+          <div class="label">勝率</div>
+          <div class="value" data-role="rate">0.000</div>
+          <div class="sub">勝/対局</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" data-role="list" hidden>
+      <div class="muted" style="font-weight:800;margin-bottom:8px;">
+        対局一覧（<span data-role="count">0</span>件）
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>棋戦</th>
+            <th>相手</th>
+            <th class="num">勝敗</th>
+          </tr>
+        </thead>
+        <tbody data-role="tbody"></tbody>
+      </table>
+      <p class="help">※「勝敗」は検索した棋士の視点です。</p>
+    </section>
+  </div>
+
+  <script>
+    const CSV_URL = '2025-game-result.csv';
+
+    const WIN = new Set(['○','□']);
+    const LOSE = new Set(['●','■']);
+
+    function parseCSV(text) {
+      const rows = [];
+      let cur = '', row = [], inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === '"') {
+          if (inQuotes && text[i+1] === '"') { cur += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (ch === ',' && !inQuotes) {
+          row.push(cur); cur = '';
+        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
+          if (ch === '\r' && text[i+1] === '\n') i++;
+          cur = ''; row = [];
+        } else {
+          cur += ch;
+        }
+      }
+      if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
+      return rows;
+    }
+
+    function norm(s){ return String(s ?? '').trim(); }
+
+    function byHeaderIndex(headers, name){
+      const i = headers.indexOf(name);
+      if (i >= 0) return i;
+      return -1;
+    }
+
+    function showError(msg){
+      const box = document.createElement('div');
+      box.className = 'err';
+      box.textContent = `エラー: ${msg}`;
+      const wrap = document.querySelector('.wrap');
+      const old = wrap.querySelector('.err');
+      if (old) old.remove();
+      wrap.prepend(box);
+    }
+
+    let DATA = null; // { headers, rows, idx... }
+
+    async function loadCSV(){
+      const res = await fetch(CSV_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error('CSV を取得できませんでした（GitHubにアップロード済みか確認してください）');
+      const text = await res.text();
+      const rows = parseCSV(text).filter(r => r.some(c => String(c).trim() !== ''));
+      if (!rows.length) throw new Error('CSV が空です');
+
+      const headers = rows[0].map(h => norm(h));
+      const body = rows.slice(1);
+
+      const idxDate = byHeaderIndex(headers, 'game-date');
+      const idxMatch = byHeaderIndex(headers, 'match');
+      const idxNotes = byHeaderIndex(headers, 'notes');
+      const idxR1 = byHeaderIndex(headers, 'result-1');
+      const idxP1 = byHeaderIndex(headers, 'first-player');
+      const idxP2 = byHeaderIndex(headers, 'second-player');
+      const idxR2 = byHeaderIndex(headers, 'result-2');
+      const idxSO = byHeaderIndex(headers, 'start-over'); // 今回は除外不要だが保持
+
+      const required = [
+        ['game-date', idxDate],
+        ['match', idxMatch],
+        ['result-1', idxR1],
+        ['first-player', idxP1],
+        ['second-player', idxP2],
+        ['result-2', idxR2],
+      ];
+      const missing = required.filter(([,i]) => i < 0).map(([n]) => n);
+      if (missing.length) {
+        throw new Error(`必要な列が見つかりません: ${missing.join(', ')}`);
+      }
+
+      DATA = {
+        headers, body,
+        idxDate, idxMatch, idxNotes, idxR1, idxP1, idxP2, idxR2, idxSO
+      };
+    }
+
+    function judge(symbol){
+      const s = norm(symbol);
+      if (WIN.has(s)) return 'W';
+      if (LOSE.has(s)) return 'L';
+      return '';
+    }
+
+    function searchPlayer(inputName){
+      const q = norm(inputName);
+      if (!q) return { mode:'none', name:'', matches:[], wins:0, losses:0 };
+
+      const { body, idxDate, idxMatch, idxNotes, idxR1, idxP1, idxP2, idxR2 } = DATA;
+
+      // まず完全一致を優先。0件なら部分一致で拾う。
+      const exact = body.filter(r => norm(r[idxP1]) === q || norm(r[idxP2]) === q);
+      const use = exact.length ? exact : body.filter(r => norm(r[idxP1]).includes(q) || norm(r[idxP2]).includes(q));
+      const usedName = q;
+
+      let wins = 0, losses = 0;
+      const matches = [];
+
+      for (const r of use) {
+        const p1 = norm(r[idxP1]);
+        const p2 = norm(r[idxP2]);
+        const d  = norm(r[idxDate]);
+        const m  = norm(r[idxMatch]);
+        const n  = norm(r[idxNotes]);
+
+        let self = '';
+        let opp = '';
+        let wl = '';
+
+        if (p1 === usedName || (!exact.length && p1.includes(usedName))) {
+          self = p1;
+          opp = p2;
+          wl = judge(r[idxR1]);
+        } else if (p2 === usedName || (!exact.length && p2.includes(usedName))) {
+          self = p2;
+          opp = p1;
+          wl = judge(r[idxR2]);
+        } else {
+          continue;
+        }
+
+        if (wl === 'W') wins++;
+        else if (wl === 'L') losses++;
+
+        matches.push({
+          date: d,
+          match: m,
+          notes: n,
+          opp,
+          wl
+        });
+      }
+
+      return { mode: exact.length ? 'exact' : 'partial', name: usedName, matches, wins, losses };
+    }
+
+    function render(result){
+      const summary = document.querySelector('[data-role="summary"]');
+      const list = document.querySelector('[data-role="list"]');
+      const tbody = document.querySelector('[data-role="tbody"]');
+      const headline = document.querySelector('[data-role="headline"]');
+
+      if (!result.name) {
+        summary.hidden = true;
+        list.hidden = true;
+        tbody.innerHTML = '';
+        return;
+      }
+
+      const games = result.wins + result.losses;
+      const rate = games ? (result.wins / games) : 0;
+
+      headline.textContent = `${result.name}（${result.mode === 'exact' ? '一致' : '部分一致'}）`;
+
+      document.querySelector('[data-role="wins"]').textContent = String(result.wins);
+      document.querySelector('[data-role="losses"]').textContent = String(result.losses);
+      document.querySelector('[data-role="games"]').textContent = String(games);
+      document.querySelector('[data-role="rate"]').textContent = rate.toFixed(3);
+
+      document.querySelector('[data-role="count"]').textContent = String(result.matches.length);
+
+      // 表示用：日付→棋戦（notesがあれば併記）→相手→勝敗
+      tbody.innerHTML = result.matches.map(x => {
+        const title = x.notes ? `${x.match}（${x.notes}）` : x.match;
+        const badge = x.wl === 'W' ? '○' : (x.wl === 'L' ? '●' : '—');
+        return `<tr>
+          <td>${escapeHtml(x.date)}</td>
+          <td>${escapeHtml(title)}</td>
+          <td>${escapeHtml(x.opp)}</td>
+          <td class="num badge">${badge}</td>
+        </tr>`;
+      }).join('');
+
+      summary.hidden = false;
+      list.hidden = false;
+    }
+
+    function escapeHtml(s){
+      return String(s ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
+
+    function wire(){
+      const input = document.querySelector('input[name="player"]');
+      const btn = document.querySelector('button[name="doSearch"]');
+
+      const run = () => {
+        if (!DATA) return;
+        const r = searchPlayer(input.value);
+        render(r);
+      };
+
+      let t = null;
+      input.addEventListener('input', () => {
+        clearTimeout(t);
+        t = setTimeout(run, 200);
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') run();
+      });
+      btn.addEventListener('click', run);
+    }
+
+    (async function main(){
+      try{
+        await loadCSV();
+        wire();
+      }catch(err){
+        showError(err.message || String(err));
+      }
+    })();
+  </script>
+</body>
+</html>
