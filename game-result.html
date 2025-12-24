@@ -3,66 +3,106 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>2025年度対局結果（銀河戦NHK杯除く）</title>
+  <title>2025年度対局結果（銀河戦除く）</title>
   <style>
     :root{
-      --bg:#0b0c10;
-      --card:#15171c;
-      --text:#e8ecf1;
-      --muted:#9aa4b2;
-      --line:#232733;
-      --accent:#4cc9f0;
-      --danger:#ffb3b3;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    }
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Helvetica,Arial,sans-serif;}
-    .wrap{max-width:480px;margin:0 auto;padding:14px;}
-    header{display:flex;align-items:center;gap:10px;margin:4px 0 12px;}
-    header .logo{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#a0e9ff);}
-    header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:.02em;}
-    .card{background:var(--card);border:1px solid #1f232b;border-radius:14px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.25);margin-bottom:12px;}
-    .help{color:var(--muted);font-size:12px;line-height:1.5;margin:6px 0 0;}
-    .row{display:flex;gap:10px;align-items:center;}
-    input[type="text"]{
-      width:100%;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid #2b3140;
-      background:#0f1117;
-      color:var(--text);
-      outline:none;
-      font-size:14px;
-    }
-    button{
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid #2b3140;
-      background:#0f1117;
-      color:var(--text);
-      font-weight:700;
-      font-size:14px;
-      white-space:nowrap;
-    }
-    button:active{transform:translateY(1px);}
-    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
-    .kpi > div{flex:1 1 120px;background:#0f1117;border:1px solid #2b3140;border-radius:12px;padding:10px;}
-    .kpi .label{color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px;}
-    .kpi .value{font-size:18px;font-weight:800;font-family:var(--mono);}
-    .kpi .sub{color:var(--muted);font-size:11px;margin-top:2px;}
-    table{width:100%;border-collapse:collapse;font-size:13px;}
-    th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;}
-    th{color:var(--muted);font-weight:800;font-size:12px;}
-    td.num{font-family:var(--mono);text-align:right;}
-    td.badge{font-family:var(--mono);font-weight:800;}
-    .muted{color:var(--muted);}
-    .err{color:var(--danger);padding:10px;border:1px solid #3a1f26;background:#1a0f12;border-radius:12px;margin-bottom:12px;}
+  --bg:#ffffff;
+  --card:#ffffff;
+  --text:#111827;   /* 黒寄り */
+  --muted:#6b7280;  /* グレー */
+  --line:#e5e7eb;   /* 罫線 */
+  --accent:#2563eb; /* 青 */
+  --danger:#b91c1c; /* 赤 */
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Helvetica,Arial,sans-serif;
+}
+
+.wrap{max-width:480px;margin:0 auto;padding:14px;}
+
+header{display:flex;align-items:center;gap:10px;margin:4px 0 12px;}
+header .logo{
+  width:26px;height:26px;border-radius:6px;
+  background:linear-gradient(135deg,var(--accent),#93c5fd);
+}
+header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:.02em;}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 6px 16px rgba(0,0,0,.08);
+  margin-bottom:12px;
+}
+
+.help{color:var(--muted);font-size:12px;line-height:1.5;margin:6px 0 0;}
+.row{display:flex;gap:10px;align-items:center;}
+
+input[type="text"]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#ffffff;
+  color:var(--text);
+  outline:none;
+  font-size:14px;
+}
+input[type="text"]::placeholder{color:#9ca3af;}
+
+button{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#f3f4f6;
+  color:var(--text);
+  font-weight:700;
+  font-size:14px;
+  white-space:nowrap;
+}
+button:active{transform:translateY(1px);}
+
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.kpi > div{
+  flex:1 1 120px;
+  background:#f9fafb;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+}
+.kpi .label{color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px;}
+.kpi .value{font-size:18px;font-weight:800;font-family:var(--mono);}
+.kpi .sub{color:var(--muted);font-size:11px;margin-top:2px;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;}
+th{color:var(--muted);font-weight:800;font-size:12px;}
+td.num{font-family:var(--mono);text-align:right;}
+td.badge{font-family:var(--mono);font-weight:800;}
+.muted{color:var(--muted);}
+
+.err{
+  color:var(--danger);
+  padding:10px;
+  border:1px solid #fecaca;
+  background:#fef2f2;
+  border-radius:12px;
+  margin-bottom:12px;
+}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="logo" aria-hidden="true"></div>
-      <h1>2025年度 対局結果（棋士名検索）</h1>
+      <h1>2025年度対局結果（銀河戦除く）</h1>
     </header>
 
     <section class="card">
