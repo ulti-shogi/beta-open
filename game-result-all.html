@@ -216,12 +216,12 @@ function render(){
     const g = o.wins + o.losses;
     const r = rateOf(o);
     return `<tr>
-      <td>${escapeHtml(o.name)}</td>
-      <td class="num">${o.wins}</td>
-      <td class="num">${o.losses}</td>
-      <td class="num">${g}</td>
-      <td class="num">${r.toFixed(3)}</td>
-    </tr>`;
+  <td>${escapeHtml(o.name)}</td>
+  <td class="num">${g}</td>
+  <td class="num">${o.wins}</td>
+  <td class="num">${o.losses}</td>
+  <td class="num">${r.toFixed(4)}</td>
+</tr>`;
   }).join('');
 }
 
