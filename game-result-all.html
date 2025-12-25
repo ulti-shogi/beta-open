@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2025年度 棋士別成績一覧</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#f6f7f9;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --accent:#2563eb;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Helvetica,Arial,sans-serif;}
+    .wrap{max-width:480px;margin:0 auto;padding:14px;}
+    header{display:flex;align-items:center;gap:10px;margin:4px 0 12px;}
+    header .logo{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--accent),#93c5fd);}
+    header h1{font-size:18px;font-weight:800;margin:0;letter-spacing:.02em;}
+
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .row > *{flex:1 1 140px;}
+    label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px;}
+    input[type="text"], select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    .meta{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.5;}
+    .err{border:1px solid #fecaca;background:#fff1f2;color:#991b1b;padding:10px;border-radius:12px;margin-bottom:12px;}
+
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;}
+    th{color:var(--muted);font-weight:800;font-size:12px;}
+    td.num, th.num{text-align:right;font-family:var(--mono);}
+    .sticky{
+      position:sticky; top:0; background:var(--card);
+      z-index:1;
+    }
+    .small{font-size:12px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo" aria-hidden="true"></div>
+      <h1>2025年度 棋士別成績一覧</h1>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <div>
+          <label>絞り込み（棋士名）</label>
+          <input type="text" name="q" placeholder="例：藤井聡太" autocomplete="off" />
+        </div>
+        <div>
+          <label>並べ替え</label>
+          <select name="sort">
+            <option value="games_desc">対局数（多い順）</option>
+            <option value="wins_desc">勝数（多い順）</option>
+            <option value="rate_desc">勝率（高い順）</option>
+            <option value="name_asc">棋士名（あいうえお順）</option>
+          </select>
+        </div>
+      </div>
+      <div class="meta">
+        読み込み元：<span style="font-family:var(--mono);">2025-game-result.csv</span><br>
+        勝＝○/□、負＝●/■。対局＝勝＋負。勝率＝勝/対局。<br>
+        ※「対局数が極端に少ない棋士」は勝率が跳ねやすいので、照合時は対局数も見てください。
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="small">表示：<span data-role="shown">0</span> 名 / 全 <span data-role="total">0</span> 名</div>
+      <table>
+        <thead>
+          <tr class="sticky">
+            <th>棋士名</th>
+            <th class="num">勝</th>
+            <th class="num">負</th>
+            <th class="num">対局</th>
+            <th class="num">勝率</th>
+          </tr>
+        </thead>
+        <tbody data-role="tbody"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const CSV_URL = '2025-game-result.csv';
+
+    const WIN = new Set(['○','□','◯']); // 念のため◯も勝扱い
+    const LOSE = new Set(['●','■']);
+
+    function parseCSV(text) {
+      const rows = [];
+      let cur = '', row = [], inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === '"') {
+          if (inQuotes && text[i+1] === '"') { cur += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (ch === ',' && !inQuotes) {
+          row.push(cur); cur = '';
+        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
+          if (ch === '\r' && text[i+1] === '\n') i++;
+          cur = ''; row = [];
+        } else {
+          cur += ch;
+        }
+      }
+      if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
+      return rows;
+    }
+
+    const norm = v => String(v ?? '').trim();
+
+    function showError(msg){
+      const box = document.createElement('div');
+      box.className = 'err';
+      box.textContent = `エラー: ${msg}`;
+      const wrap = document.querySelector('.wrap');
+      const old = wrap.querySelector('.err');
+      if (old) old.remove();
+      wrap.prepend(box);
+    }
+
+    function idx(headers, name){
+      const i = headers.indexOf(name);
+      return i;
+    }
+
+    function judge(sym){
+      const s = norm(sym);
+      if (WIN.has(s)) return 'W';
+      if (LOSE.has(s)) return 'L';
+      return '';
+    }
+
+    function addStat(map, name, wl){
+      if (!name) return;
+      if (!map.has(name)) map.set(name, { name, wins:0, losses:0 });
+      const o = map.get(name);
+      if (wl === 'W') o.wins++;
+      else if (wl === 'L') o.losses++;
+    }
+
+    function rateOf(o){
+      const g = o.wins + o.losses;
+      return g ? (o.wins / g) : 0;
+    }
+
+    function escapeHtml(s){
+      return String(s ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
+
+    let ALL = []; // {name,wins,losses}
+
+    function render(){
+      const q = norm(document.querySelector('input[name="q"]').value);
+      const sort = document.querySelector('select[name="sort"]').value;
+
+      let list = ALL;
+
+      if (q) {
+        list = list.filter(o => o.name.includes(q));
+      }
+
+      const cmp = {
+        games_desc: (a,b) => (b.wins+b.losses) - (a.wins+a.losses) || b.wins - a.wins || a.name.localeCompare(b.name,'ja'),
+        wins_desc:  (a,b) => b.wins - a.wins || (b.wins+b.losses) - (a.wins+a.losses) || a.name.localeCompare(b.name,'ja'),
+        rate_desc:  (a,b) => rateOf(b) - rateOf(a) || (b.wins+b.losses) - (a.wins+a.losses) || a.name.localeCompare(b.name,'ja'),
+        name_asc:   (a,b) => a.name.localeCompare(b.name,'ja'),
+      }[sort] || ((a,b)=>0);
+
+      list = [...list].sort(cmp);
+
+      document.querySelector('[data-role="shown"]').textContent = String(list.length);
+      document.querySelector('[data-role="total"]').textContent = String(ALL.length);
+
+      const tbody = document.querySelector('[data-role="tbody"]');
+      tbody.innerHTML = list.map(o => {
+        const g = o.wins + o.losses;
+        const r = rateOf(o);
+        return `<tr>
+          <td>${escapeHtml(o.name)}</td>
+          <td class="num">${o.wins}</td>
+          <td class="num">${o.losses}</td>
+          <td class="num">${g}</td>
+          <td class="num">${r.toFixed(3)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function main(){
+      const res = await fetch(CSV_URL, { cache:'no-store' });
+      if (!res.ok) throw new Error('CSV を取得できませんでした（ファイル名・場所を確認してください）');
+      const text = await res.text();
+      const rows = parseCSV(text).filter(r => r.some(c => norm(c) !== ''));
+      if (!rows.length) throw new Error('CSV が空です');
+
+      const headers = rows[0].map(norm);
+      const body = rows.slice(1);
+
+      // 列名はあなたの仕様に固定
+      const iR1 = idx(headers, 'result-1');
+      const iP1 = idx(headers, 'first-player');
+      const iP2 = idx(headers, 'second-player');
+      const iR2 = idx(headers, 'result-2');
+
+      const missing = [];
+      if (iR1 < 0) missing.push('result-1');
+      if (iP1 < 0) missing.push('first-player');
+      if (iP2 < 0) missing.push('second-player');
+      if (iR2 < 0) missing.push('result-2');
+      if (missing.length) throw new Error('必要な列が見つかりません: ' + missing.join(', '));
+
+      const map = new Map();
+
+      for (const r of body) {
+        const p1 = norm(r[iP1]);
+        const p2 = norm(r[iP2]);
+        const w1 = judge(r[iR1]);
+        const w2 = judge(r[iR2]);
+
+        // 今は「全て勝敗が入っている」前提。ただし保険で空欄は無視
+        addStat(map, p1, w1);
+        addStat(map, p2, w2);
+      }
+
+      ALL = Array.from(map.values());
+      render();
+
+      document.querySelector('input[name="q"]').addEventListener('input', () => render());
+      document.querySelector('select[name="sort"]').addEventListener('change', () => render());
+    }
+
+    main().catch(err => showError(err.message || String(err)));
+  </script>
+</body>
+</html>
