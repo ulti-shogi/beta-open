@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>2025年度 棋士別成績一覧</title>
+  <title>2025年度 全棋士成績一覧</title>
   <style>
     :root{
       --bg:#ffffff;
@@ -52,7 +52,7 @@
   <div class="wrap">
     <header>
       <div class="logo" aria-hidden="true"></div>
-      <h1>2025年度 棋士別成績一覧</h1>
+      <h1>2025年度 全棋士成績一覧</h1>
     </header>
 
     <section class="card">
@@ -64,6 +64,7 @@
         <div>
           <label>並べ替え</label>
           <select name="sort">
+            <option value="seat_desc">席次（高い順）</option>
             <option value="games_desc">対局数（多い順）</option>
             <option value="wins_desc">勝数（多い順）</option>
             <option value="rate_desc">勝率（高い順）</option>
@@ -84,9 +85,9 @@
         <thead>
           <tr class="sticky">
             <th>棋士名</th>
+            <th class="num">対局</th>
             <th class="num">勝</th>
             <th class="num">負</th>
-            <th class="num">対局</th>
             <th class="num">勝率</th>
           </tr>
         </thead>
@@ -97,160 +98,223 @@
 
   <script>
     const CSV_URL = '2025-game-result.csv';
+const KISHI_URL = 'kishi.csv';
 
-    const WIN = new Set(['○','□','◯']); // 念のため◯も勝扱い
-    const LOSE = new Set(['●','■']);
+const WIN = new Set(['○','□','◯']); // 念のため◯も勝扱い
+const LOSE = new Set(['●','■']);
 
-    function parseCSV(text) {
-      const rows = [];
-      let cur = '', row = [], inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        if (ch === '"') {
-          if (inQuotes && text[i+1] === '"') { cur += '"'; i++; }
-          else { inQuotes = !inQuotes; }
-        } else if (ch === ',' && !inQuotes) {
-          row.push(cur); cur = '';
-        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-          if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
-          if (ch === '\r' && text[i+1] === '\n') i++;
-          cur = ''; row = [];
-        } else {
-          cur += ch;
-        }
-      }
+function parseCSV(text) {
+  const rows = [];
+  let cur = '', row = [], inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (inQuotes && text[i+1] === '"') { cur += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      row.push(cur); cur = '';
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
       if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
-      return rows;
+      if (ch === '\r' && text[i+1] === '\n') i++;
+      cur = ''; row = [];
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+const norm = v => String(v ?? '').trim();
+
+function showError(msg){
+  const box = document.createElement('div');
+  box.className = 'err';
+  box.textContent = `エラー: ${msg}`;
+  const wrap = document.querySelector('.wrap');
+  const old = wrap.querySelector('.err');
+  if (old) old.remove();
+  wrap.prepend(box);
+}
+
+function idx(headers, name){
+  return headers.indexOf(name);
+}
+
+function judge(sym){
+  const s = norm(sym);
+  if (WIN.has(s)) return 'W';
+  if (LOSE.has(s)) return 'L';
+  return '';
+}
+
+function addStat(map, name, wl){
+  if (!name) return;
+  if (!map.has(name)) map.set(name, { name, wins:0, losses:0, seat: null });
+  const o = map.get(name);
+  if (wl === 'W') o.wins++;
+  else if (wl === 'L') o.losses++;
+}
+
+function rateOf(o){
+  const g = o.wins + o.losses;
+  return g ? (o.wins / g) : 0;
+}
+
+function escapeHtml(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+
+function toInt(v){
+  const n = Number(String(v ?? '').replace(/[^\d\-]/g, ''));
+  return Number.isFinite(n) ? n : NaN;
+}
+
+let ALL = [];              // {name,wins,losses,seat}
+let SEAT = new Map();      // name -> seatNumber
+
+function seatOf(name){
+  const s = SEAT.get(name);
+  // kishi.csvに無い人は最後へ
+  return Number.isFinite(s) ? s : Infinity;
+}
+
+function render(){
+  const q = norm(document.querySelector('input[name="q"]').value);
+  const sort = document.querySelector('select[name="sort"]').value;
+
+  let list = ALL;
+
+  if (q) list = list.filter(o => o.name.includes(q));
+
+  const cmp = {
+    // ★追加：席次（高い順）＝席次が小さい順。kishi.csvに無い人は下へ
+    seat_desc: (a,b) =>
+      (seatOf(a.name) - seatOf(b.name)) ||
+      ((b.wins+b.losses) - (a.wins+a.losses)) ||
+      (b.wins - a.wins) ||
+      a.name.localeCompare(b.name,'ja'),
+
+    games_desc: (a,b) => (b.wins+b.losses) - (a.wins+a.losses) || b.wins - a.wins || a.name.localeCompare(b.name,'ja'),
+    wins_desc:  (a,b) => b.wins - a.wins || (b.wins+b.losses) - (a.wins+a.losses) || a.name.localeCompare(b.name,'ja'),
+    rate_desc:  (a,b) => rateOf(b) - rateOf(a) || (b.wins+b.losses) - (a.wins+a.losses) || a.name.localeCompare(b.name,'ja'),
+    name_asc:   (a,b) => a.name.localeCompare(b.name,'ja'),
+  }[sort] || ((a,b)=>0);
+
+  list = [...list].sort(cmp);
+
+  document.querySelector('[data-role="shown"]').textContent = String(list.length);
+  document.querySelector('[data-role="total"]').textContent = String(ALL.length);
+
+  const tbody = document.querySelector('[data-role="tbody"]');
+  tbody.innerHTML = list.map(o => {
+    const g = o.wins + o.losses;
+    const r = rateOf(o);
+    return `<tr>
+      <td>${escapeHtml(o.name)}</td>
+      <td class="num">${o.wins}</td>
+      <td class="num">${o.losses}</td>
+      <td class="num">${g}</td>
+      <td class="num">${r.toFixed(3)}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadSeatMap(){
+  // kishi.csv が無い/読めない環境でもページが動くように、失敗しても続行します
+  try{
+    const res = await fetch(KISHI_URL, { cache:'no-store' });
+    if (!res.ok) return;
+
+    const text = await res.text();
+    const rows = parseCSV(text).filter(r => r.some(c => norm(c) !== ''));
+    if (!rows.length) return;
+
+    const headers = rows[0].map(norm);
+    const body = rows.slice(1);
+
+    // 列名は「席次」を必須、名前列は複数候補で探します
+    const iSeat = idx(headers, '席次');
+    const nameCandidates = ['棋士名','名前','氏名','name'];
+    let iName = -1;
+    for (const c of nameCandidates) {
+      const j = idx(headers, c);
+      if (j >= 0) { iName = j; break; }
     }
 
-    const norm = v => String(v ?? '').trim();
+    if (iSeat < 0 || iName < 0) return;
 
-    function showError(msg){
-      const box = document.createElement('div');
-      box.className = 'err';
-      box.textContent = `エラー: ${msg}`;
-      const wrap = document.querySelector('.wrap');
-      const old = wrap.querySelector('.err');
-      if (old) old.remove();
-      wrap.prepend(box);
+    const map = new Map();
+    for (const r of body) {
+      const name = norm(r[iName]);
+      const seat = toInt(r[iSeat]);
+      if (!name) continue;
+      if (!Number.isFinite(seat)) continue;
+      map.set(name, seat);
     }
+    SEAT = map;
+  }catch(_e){
+    // 無視（kishi.csvが無い等）
+  }
+}
 
-    function idx(headers, name){
-      const i = headers.indexOf(name);
-      return i;
-    }
+async function main(){
+  await loadSeatMap(); // 先に席次対応表を用意
 
-    function judge(sym){
-      const s = norm(sym);
-      if (WIN.has(s)) return 'W';
-      if (LOSE.has(s)) return 'L';
-      return '';
-    }
+  const res = await fetch(CSV_URL, { cache:'no-store' });
+  if (!res.ok) throw new Error('CSV を取得できませんでした（ファイル名・場所を確認してください）');
+  const text = await res.text();
+  const rows = parseCSV(text).filter(r => r.some(c => norm(c) !== ''));
+  if (!rows.length) throw new Error('CSV が空です');
 
-    function addStat(map, name, wl){
-      if (!name) return;
-      if (!map.has(name)) map.set(name, { name, wins:0, losses:0 });
-      const o = map.get(name);
-      if (wl === 'W') o.wins++;
-      else if (wl === 'L') o.losses++;
-    }
+  const headers = rows[0].map(norm);
+  const body = rows.slice(1);
 
-    function rateOf(o){
-      const g = o.wins + o.losses;
-      return g ? (o.wins / g) : 0;
-    }
+  // 列名はあなたの仕様に固定
+  const iR1 = idx(headers, 'result-1');
+  const iP1 = idx(headers, 'first-player');
+  const iP2 = idx(headers, 'second-player');
+  const iR2 = idx(headers, 'result-2');
 
-    function escapeHtml(s){
-      return String(s ?? '')
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#39;");
-    }
+  const missing = [];
+  if (iR1 < 0) missing.push('result-1');
+  if (iP1 < 0) missing.push('first-player');
+  if (iP2 < 0) missing.push('second-player');
+  if (iR2 < 0) missing.push('result-2');
+  if (missing.length) throw new Error('必要な列が見つかりません: ' + missing.join(', '));
 
-    let ALL = []; // {name,wins,losses}
+  const map = new Map();
 
-    function render(){
-      const q = norm(document.querySelector('input[name="q"]').value);
-      const sort = document.querySelector('select[name="sort"]').value;
+  for (const r of body) {
+    const p1 = norm(r[iP1]);
+    const p2 = norm(r[iP2]);
+    const w1 = judge(r[iR1]);
+    const w2 = judge(r[iR2]);
 
-      let list = ALL;
+    addStat(map, p1, w1);
+    addStat(map, p2, w2);
+  }
 
-      if (q) {
-        list = list.filter(o => o.name.includes(q));
-      }
+  ALL = Array.from(map.values());
 
-      const cmp = {
-        games_desc: (a,b) => (b.wins+b.losses) - (a.wins+a.losses) || b.wins - a.wins || a.name.localeCompare(b.name,'ja'),
-        wins_desc:  (a,b) => b.wins - a.wins || (b.wins+b.losses) - (a.wins+a.losses) || a.name.localeCompare(b.name,'ja'),
-        rate_desc:  (a,b) => rateOf(b) - rateOf(a) || (b.wins+b.losses) - (a.wins+a.losses) || a.name.localeCompare(b.name,'ja'),
-        name_asc:   (a,b) => a.name.localeCompare(b.name,'ja'),
-      }[sort] || ((a,b)=>0);
+  // 席次を付与（無い人は null のまま。並べ替えで最後へ）
+  for (const o of ALL) {
+    const s = SEAT.get(o.name);
+    o.seat = Number.isFinite(s) ? s : null;
+  }
 
-      list = [...list].sort(cmp);
+  render();
 
-      document.querySelector('[data-role="shown"]').textContent = String(list.length);
-      document.querySelector('[data-role="total"]').textContent = String(ALL.length);
+  document.querySelector('input[name="q"]').addEventListener('input', () => render());
+  document.querySelector('select[name="sort"]').addEventListener('change', () => render());
+}
 
-      const tbody = document.querySelector('[data-role="tbody"]');
-      tbody.innerHTML = list.map(o => {
-        const g = o.wins + o.losses;
-        const r = rateOf(o);
-        return `<tr>
-          <td>${escapeHtml(o.name)}</td>
-          <td class="num">${o.wins}</td>
-          <td class="num">${o.losses}</td>
-          <td class="num">${g}</td>
-          <td class="num">${r.toFixed(3)}</td>
-        </tr>`;
-      }).join('');
-    }
-
-    async function main(){
-      const res = await fetch(CSV_URL, { cache:'no-store' });
-      if (!res.ok) throw new Error('CSV を取得できませんでした（ファイル名・場所を確認してください）');
-      const text = await res.text();
-      const rows = parseCSV(text).filter(r => r.some(c => norm(c) !== ''));
-      if (!rows.length) throw new Error('CSV が空です');
-
-      const headers = rows[0].map(norm);
-      const body = rows.slice(1);
-
-      // 列名はあなたの仕様に固定
-      const iR1 = idx(headers, 'result-1');
-      const iP1 = idx(headers, 'first-player');
-      const iP2 = idx(headers, 'second-player');
-      const iR2 = idx(headers, 'result-2');
-
-      const missing = [];
-      if (iR1 < 0) missing.push('result-1');
-      if (iP1 < 0) missing.push('first-player');
-      if (iP2 < 0) missing.push('second-player');
-      if (iR2 < 0) missing.push('result-2');
-      if (missing.length) throw new Error('必要な列が見つかりません: ' + missing.join(', '));
-
-      const map = new Map();
-
-      for (const r of body) {
-        const p1 = norm(r[iP1]);
-        const p2 = norm(r[iP2]);
-        const w1 = judge(r[iR1]);
-        const w2 = judge(r[iR2]);
-
-        // 今は「全て勝敗が入っている」前提。ただし保険で空欄は無視
-        addStat(map, p1, w1);
-        addStat(map, p2, w2);
-      }
-
-      ALL = Array.from(map.values());
-      render();
-
-      document.querySelector('input[name="q"]').addEventListener('input', () => render());
-      document.querySelector('select[name="sort"]').addEventListener('change', () => render());
-    }
-
-    main().catch(err => showError(err.message || String(err)));
+main().catch(err => showError(err.message || String(err)));
   </script>
 </body>
 </html>
