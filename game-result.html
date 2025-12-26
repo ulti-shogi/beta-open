@@ -6,96 +6,111 @@
   <title>2025年度対局結果</title>
   <style>
     :root{
-  --bg:#ffffff;
-  --card:#ffffff;
-  --text:#111827;   /* 黒寄り */
-  --muted:#6b7280;  /* グレー */
-  --line:#e5e7eb;   /* 罫線 */
-  --accent:#2563eb; /* 青 */
-  --danger:#b91c1c; /* 赤 */
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
+      --bg:#ffffff;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --accent:#2563eb;
+      --danger:#b91c1c;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
 
-html,body{
-  margin:0;
-  padding:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Helvetica,Arial,sans-serif;
-}
+    html,body{
+      margin:0;
+      padding:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",Helvetica,Arial,sans-serif;
+    }
 
-.wrap{max-width:480px;margin:0 auto;padding:14px;}
+    .wrap{max-width:480px;margin:0 auto;padding:14px;}
 
-header{display:flex;align-items:center;gap:10px;margin:4px 0 12px;}
-header .logo{
-  width:26px;height:26px;border-radius:6px;
-  background:linear-gradient(135deg,var(--accent),#93c5fd);
-}
-header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:.02em;}
+    header{display:flex;align-items:center;gap:10px;margin:4px 0 12px;}
+    header .logo{
+      width:26px;height:26px;border-radius:6px;
+      background:linear-gradient(135deg,var(--accent),#93c5fd);
+    }
+    header h1{font-size:18px;font-weight:700;margin:0;letter-spacing:.02em;}
 
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:12px;
-  box-shadow:0 6px 16px rgba(0,0,0,.08);
-  margin-bottom:12px;
-}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      box-shadow:0 6px 16px rgba(0,0,0,.08);
+      margin-bottom:12px;
+    }
 
-.help{color:var(--muted);font-size:12px;line-height:1.5;margin:6px 0 0;}
-.row{display:flex;gap:10px;align-items:center;}
+    .help{color:var(--muted);font-size:12px;line-height:1.5;margin:6px 0 0;}
+    .row{display:flex;gap:10px;align-items:center;}
 
-input[type="text"]{
-  width:100%;
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:#ffffff;
-  color:var(--text);
-  outline:none;
-  font-size:14px;
-}
-input[type="text"]::placeholder{color:#9ca3af;}
+    input[type="text"]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#ffffff;
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    input[type="text"]::placeholder{color:#9ca3af;}
 
-button{
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:#f3f4f6;
-  color:var(--text);
-  font-weight:700;
-  font-size:14px;
-  white-space:nowrap;
-}
-button:active{transform:translateY(1px);}
+    button{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#f3f4f6;
+      color:var(--text);
+      font-weight:700;
+      font-size:14px;
+      white-space:nowrap;
+    }
+    button:active{transform:translateY(1px);}
 
-.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
-.kpi > div{
-  flex:1 1 120px;
-  background:#f9fafb;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:10px;
-}
-.kpi .label{color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px;}
-.kpi .value{font-size:18px;font-weight:800;font-family:var(--mono);}
-.kpi .sub{color:var(--muted);font-size:11px;margin-top:2px;}
+    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+    .kpi > div{
+      flex:1 1 120px;
+      background:#f9fafb;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+    }
+    .kpi .label{color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px;}
+    .kpi .value{font-size:18px;font-weight:800;font-family:var(--mono);}
+    .kpi .sub{color:var(--muted);font-size:11px;margin-top:2px;}
 
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;}
-th{color:var(--muted);font-weight:800;font-size:12px;}
-td.num{font-family:var(--mono);text-align:right;}
-td.badge{font-family:var(--mono);font-weight:800;}
-.muted{color:var(--muted);}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;}
+    th{color:var(--muted);font-weight:800;font-size:12px;}
+    td.num{font-family:var(--mono);text-align:right;}
+    td.badge{font-family:var(--mono);font-weight:800;}
+    .muted{color:var(--muted);}
 
-.err{
-  color:var(--danger);
-  padding:10px;
-  border:1px solid #fecaca;
-  background:#fef2f2;
-  border-radius:12px;
-  margin-bottom:12px;
-}
+    .err{
+      color:var(--danger);
+      padding:10px;
+      border:1px solid #fecaca;
+      background:#fef2f2;
+      border-radius:12px;
+      margin-bottom:12px;
+    }
+
+    /* --- 列表示（デフォルト＝スマホ） --- */
+    .col-phase, .col-so { display:none; }
+
+    /* タブレット：進行(notes)を表示（5列） */
+    @media (min-width: 600px){
+      .wrap{max-width:720px;}
+      .col-phase{ display:table-cell; }
+    }
+
+    /* PC：進行 + 千日手(start-over)を表示（6列） */
+    @media (min-width: 900px){
+      .wrap{max-width:980px;}
+      .col-so{ display:table-cell; }
+    }
   </style>
 </head>
 <body>
@@ -143,17 +158,21 @@ td.badge{font-family:var(--mono);font-weight:800;}
       <div class="muted" style="font-weight:800;margin-bottom:8px;">
         対局一覧（<span data-role="count">0</span>件）
       </div>
+
       <table>
         <thead>
           <tr>
             <th>日付</th>
             <th>棋戦</th>
+            <th class="col-phase">進行</th>
             <th>相手</th>
             <th class="num">勝敗</th>
+            <th class="col-so">千日手</th>
           </tr>
         </thead>
         <tbody data-role="tbody"></tbody>
       </table>
+
       <p class="help">※「勝敗」は検索した棋士の視点です。</p>
     </section>
   </div>
@@ -223,7 +242,7 @@ td.badge{font-family:var(--mono);font-weight:800;}
       const idxP1 = byHeaderIndex(headers, 'first-player');
       const idxP2 = byHeaderIndex(headers, 'second-player');
       const idxR2 = byHeaderIndex(headers, 'result-2');
-      const idxSO = byHeaderIndex(headers, 'start-over'); // 今回は除外不要だが保持
+      const idxSO = byHeaderIndex(headers, 'start-over');
 
       const required = [
         ['game-date', idxDate],
@@ -255,9 +274,8 @@ td.badge{font-family:var(--mono);font-weight:800;}
       const q = norm(inputName);
       if (!q) return { mode:'none', name:'', matches:[], wins:0, losses:0 };
 
-      const { body, idxDate, idxMatch, idxNotes, idxR1, idxP1, idxP2, idxR2 } = DATA;
+      const { body, idxDate, idxMatch, idxNotes, idxR1, idxP1, idxP2, idxR2, idxSO } = DATA;
 
-      // まず完全一致を優先。0件なら部分一致で拾う。
       const exact = body.filter(r => norm(r[idxP1]) === q || norm(r[idxP2]) === q);
       const use = exact.length ? exact : body.filter(r => norm(r[idxP1]).includes(q) || norm(r[idxP2]).includes(q));
       const usedName = q;
@@ -270,18 +288,16 @@ td.badge{font-family:var(--mono);font-weight:800;}
         const p2 = norm(r[idxP2]);
         const d  = norm(r[idxDate]);
         const m  = norm(r[idxMatch]);
-        const n  = norm(r[idxNotes]);
+        const n  = idxNotes >= 0 ? norm(r[idxNotes]) : '';
+        const so = idxSO >= 0 ? norm(r[idxSO]) : '';
 
-        let self = '';
         let opp = '';
         let wl = '';
 
         if (p1 === usedName || (!exact.length && p1.includes(usedName))) {
-          self = p1;
           opp = p2;
           wl = judge(r[idxR1]);
         } else if (p2 === usedName || (!exact.length && p2.includes(usedName))) {
-          self = p2;
           opp = p1;
           wl = judge(r[idxR2]);
         } else {
@@ -296,10 +312,11 @@ td.badge{font-family:var(--mono);font-weight:800;}
           match: m,
           notes: n,
           opp,
-          wl
+          wl,
+          startOver: so
         });
       }
-
+      // 識別番号→7632
       return { mode: exact.length ? 'exact' : 'partial', name: usedName, matches, wins, losses };
     }
 
@@ -328,15 +345,18 @@ td.badge{font-family:var(--mono);font-weight:800;}
 
       document.querySelector('[data-role="count"]').textContent = String(result.matches.length);
 
-      // 表示用：日付→棋戦（notesがあれば併記）→相手→勝敗
+      // ①スマホ：notesを棋戦に混ぜない（棋戦はmatchのみ）
+      // ②タブレット：進行列にnotes
+      // ③PC：千日手列にstart-over
       tbody.innerHTML = result.matches.map(x => {
-        const title = x.notes ? `${x.match}（${x.notes}）` : x.match;
         const badge = x.wl === 'W' ? '○' : (x.wl === 'L' ? '●' : '—');
         return `<tr>
           <td>${escapeHtml(x.date)}</td>
-          <td>${escapeHtml(title)}</td>
+          <td>${escapeHtml(x.match)}</td>
+          <td class="col-phase">${escapeHtml(x.notes)}</td>
           <td>${escapeHtml(x.opp)}</td>
           <td class="num badge">${badge}</td>
+          <td class="col-so">${escapeHtml(x.startOver)}</td>
         </tr>`;
       }).join('');
 
