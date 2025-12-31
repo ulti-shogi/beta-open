@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- no.8764 -->
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
@@ -83,8 +84,8 @@
 
     table{width:100%;border-collapse:collapse;font-size:13px;}
     th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;}
-    th{color:var(--muted);font-weight:800;font-size:12px;}
-    td.num{font-family:var(--mono);text-align:right;}
+    th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:center;vertical-align:top;}
+    td.num{font-family:var(--mono);text-align:center;}
     td.badge{font-family:var(--mono);font-weight:800;}
     .muted{color:var(--muted);}
 
@@ -177,231 +178,218 @@
     </section>
   </div>
 
-  <script>
-    const CSV_URL = '2025-game-result.csv';
+<script>
+const CSV_URL = '2025-game-result.csv';
 
-    const WIN = new Set(['○','□']);
-    const LOSE = new Set(['●','■']);
+const WIN = new Set(['○','□']);
+const LOSE = new Set(['●','■']);
 
-    function parseCSV(text) {
-      const rows = [];
-      let cur = '', row = [], inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        if (ch === '"') {
-          if (inQuotes && text[i+1] === '"') { cur += '"'; i++; }
-          else { inQuotes = !inQuotes; }
-        } else if (ch === ',' && !inQuotes) {
-          row.push(cur); cur = '';
-        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-          if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
-          if (ch === '\r' && text[i+1] === '\n') i++;
-          cur = ''; row = [];
-        } else {
-          cur += ch;
-        }
+function parseCSV(text){
+  const rows = [];
+  let cur = '', row = [], inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (inQuotes && text[i+1] === '"') { cur += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      row.push(cur); cur = '';
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (cur !== '' || row.length > 0) {
+        row.push(cur);
+        rows.push(row);
       }
-      if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row); }
-      return rows;
+      if (ch === '\r' && text[i+1] === '\n') i++;
+      cur = ''; row = [];
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur !== '' || row.length > 0) {
+    row.push(cur);
+    rows.push(row);
+  }
+  return rows;
+}
+
+function norm(v){
+  return String(v ?? '').trim();
+}
+
+function judge(sym){
+  const s = norm(sym);
+  if (WIN.has(s)) return 'W';
+  if (LOSE.has(s)) return 'L';
+  return '';
+}
+
+/* YYYY-MM-DD 専用（表記ゆれ対策なし） */
+function dateKey(s){
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
+function escapeHtml(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+
+let DATA = null;
+
+async function loadCSV(){
+  const res = await fetch(CSV_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error('CSVを取得できませんでした');
+
+  const text = await res.text();
+  const rows = parseCSV(text).filter(r => r.some(c => norm(c) !== ''));
+  if (!rows.length) throw new Error('CSVが空です');
+
+  const headers = rows[0].map(norm);
+  const body = rows.slice(1);
+
+  const idx = name => headers.indexOf(name);
+
+  const required = [
+    'game-date',
+    'match',
+    'result-1',
+    'first-player',
+    'second-player',
+    'result-2'
+  ];
+
+  for (const col of required) {
+    if (idx(col) < 0) {
+      throw new Error(`必要な列が見つかりません: ${col}`);
+    }
+  }
+
+  DATA = {
+    body,
+    idxDate: idx('game-date'),
+    idxMatch: idx('match'),
+    idxNotes: idx('notes'),
+    idxR1: idx('result-1'),
+    idxP1: idx('first-player'),
+    idxP2: idx('second-player'),
+    idxR2: idx('result-2'),
+    idxSO: idx('start-over')
+  };
+}
+
+function searchPlayer(name){
+  const q = norm(name);
+  if (!q) return null;
+
+  const {
+    body, idxDate, idxMatch, idxNotes,
+    idxR1, idxP1, idxP2, idxR2, idxSO
+  } = DATA;
+
+  const matches = [];
+  let wins = 0, losses = 0;
+
+  for (const r of body) {
+    const p1 = norm(r[idxP1]);
+    const p2 = norm(r[idxP2]);
+    if (p1 !== q && p2 !== q) continue;
+
+    let wl = '';
+    let opp = '';
+
+    if (p1 === q) {
+      wl = judge(r[idxR1]);
+      opp = p2;
+    } else {
+      wl = judge(r[idxR2]);
+      opp = p1;
     }
 
-    function norm(s){ return String(s ?? '').trim(); }
+    if (wl === 'W') wins++;
+    if (wl === 'L') losses++;
 
-    function byHeaderIndex(headers, name){
-      const i = headers.indexOf(name);
-      if (i >= 0) return i;
-      return -1;
-    }
+    matches.push({
+      date: norm(r[idxDate]),
+      match: norm(r[idxMatch]),
+      notes: idxNotes >= 0 ? norm(r[idxNotes]) : '',
+      startOver: idxSO >= 0 ? norm(r[idxSO]) : '',
+      opp,
+      wl
+    });
+  }
 
-    function showError(msg){
-      const box = document.createElement('div');
-      box.className = 'err';
-      box.textContent = `エラー: ${msg}`;
-      const wrap = document.querySelector('.wrap');
-      const old = wrap.querySelector('.err');
-      if (old) old.remove();
-      wrap.prepend(box);
-    }
+  /* 日付が浅い順（古い → 新しい） */
+  matches.sort((a, b) => dateKey(a.date) - dateKey(b.date));
 
-    let DATA = null; // { headers, rows, idx... }
+  return { name: q, matches, wins, losses };
+}
 
-    async function loadCSV(){
-      const res = await fetch(CSV_URL, { cache: 'no-store' });
-      if (!res.ok) throw new Error('CSV を取得できませんでした（GitHubにアップロード済みか確認してください）');
-      const text = await res.text();
-      const rows = parseCSV(text).filter(r => r.some(c => String(c).trim() !== ''));
-      if (!rows.length) throw new Error('CSV が空です');
+function render(result){
+  const summary = document.querySelector('[data-role="summary"]');
+  const list = document.querySelector('[data-role="list"]');
+  const tbody = document.querySelector('[data-role="tbody"]');
 
-      const headers = rows[0].map(h => norm(h));
-      const body = rows.slice(1);
+  if (!result) {
+    summary.hidden = true;
+    list.hidden = true;
+    tbody.innerHTML = '';
+    return;
+  }
 
-      const idxDate = byHeaderIndex(headers, 'game-date');
-      const idxMatch = byHeaderIndex(headers, 'match');
-      const idxNotes = byHeaderIndex(headers, 'notes');
-      const idxR1 = byHeaderIndex(headers, 'result-1');
-      const idxP1 = byHeaderIndex(headers, 'first-player');
-      const idxP2 = byHeaderIndex(headers, 'second-player');
-      const idxR2 = byHeaderIndex(headers, 'result-2');
-      const idxSO = byHeaderIndex(headers, 'start-over');
+  const games = result.wins + result.losses;
+  const rate = games ? (result.wins / games) : 0;
 
-      const required = [
-        ['game-date', idxDate],
-        ['match', idxMatch],
-        ['result-1', idxR1],
-        ['first-player', idxP1],
-        ['second-player', idxP2],
-        ['result-2', idxR2],
-      ];
-      const missing = required.filter(([,i]) => i < 0).map(([n]) => n);
-      if (missing.length) {
-        throw new Error(`必要な列が見つかりません: ${missing.join(', ')}`);
-      }
+  document.querySelector('[data-role="headline"]').textContent = result.name;
+  document.querySelector('[data-role="wins"]').textContent = result.wins;
+  document.querySelector('[data-role="losses"]').textContent = result.losses;
+  document.querySelector('[data-role="games"]').textContent = games;
+  document.querySelector('[data-role="rate"]').textContent = rate.toFixed(3);
+  document.querySelector('[data-role="count"]').textContent = result.matches.length;
 
-      DATA = {
-        headers, body,
-        idxDate, idxMatch, idxNotes, idxR1, idxP1, idxP2, idxR2, idxSO
-      };
-    }
+  tbody.innerHTML = result.matches.map(x => {
+    const badge = x.wl === 'W' ? '○' : (x.wl === 'L' ? '●' : '—');
+    return `<tr>
+      <td>${escapeHtml(x.date)}</td>
+      <td>${escapeHtml(x.match)}</td>
+      <td class="col-phase">${escapeHtml(x.notes)}</td>
+      <td>${escapeHtml(x.opp)}</td>
+      <td class="num">${badge}</td>
+      <td class="col-so">${escapeHtml(x.startOver)}</td>
+    </tr>`;
+  }).join('');
 
-    function judge(symbol){
-      const s = norm(symbol);
-      if (WIN.has(s)) return 'W';
-      if (LOSE.has(s)) return 'L';
-      return '';
-    }
+  summary.hidden = false;
+  list.hidden = false;
+}
 
-    function searchPlayer(inputName){
-      const q = norm(inputName);
-      if (!q) return { mode:'none', name:'', matches:[], wins:0, losses:0 };
+function wire(){
+  const input = document.querySelector('input[name="player"]');
+  const btn = document.querySelector('button[name="doSearch"]');
 
-      const { body, idxDate, idxMatch, idxNotes, idxR1, idxP1, idxP2, idxR2, idxSO } = DATA;
+  const run = () => {
+    if (!DATA) return;
+    render(searchPlayer(input.value));
+  };
 
-      const exact = body.filter(r => norm(r[idxP1]) === q || norm(r[idxP2]) === q);
-      const use = exact.length ? exact : body.filter(r => norm(r[idxP1]).includes(q) || norm(r[idxP2]).includes(q));
-      const usedName = q;
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') run();
+  });
+  btn.addEventListener('click', run);
+}
 
-      let wins = 0, losses = 0;
-      const matches = [];
-
-      for (const r of use) {
-        const p1 = norm(r[idxP1]);
-        const p2 = norm(r[idxP2]);
-        const d  = norm(r[idxDate]);
-        const m  = norm(r[idxMatch]);
-        const n  = idxNotes >= 0 ? norm(r[idxNotes]) : '';
-        const so = idxSO >= 0 ? norm(r[idxSO]) : '';
-
-        let opp = '';
-        let wl = '';
-
-        if (p1 === usedName || (!exact.length && p1.includes(usedName))) {
-          opp = p2;
-          wl = judge(r[idxR1]);
-        } else if (p2 === usedName || (!exact.length && p2.includes(usedName))) {
-          opp = p1;
-          wl = judge(r[idxR2]);
-        } else {
-          continue;
-        }
-
-        if (wl === 'W') wins++;
-        else if (wl === 'L') losses++;
-
-        matches.push({
-          date: d,
-          match: m,
-          notes: n,
-          opp,
-          wl,
-          startOver: so
-        });
-      }
-      // 識別番号→7632
-      return { mode: exact.length ? 'exact' : 'partial', name: usedName, matches, wins, losses };
-    }
-
-    function render(result){
-      const summary = document.querySelector('[data-role="summary"]');
-      const list = document.querySelector('[data-role="list"]');
-      const tbody = document.querySelector('[data-role="tbody"]');
-      const headline = document.querySelector('[data-role="headline"]');
-
-      if (!result.name) {
-        summary.hidden = true;
-        list.hidden = true;
-        tbody.innerHTML = '';
-        return;
-      }
-
-      const games = result.wins + result.losses;
-      const rate = games ? (result.wins / games) : 0;
-
-      headline.textContent = `${result.name}（${result.mode === 'exact' ? '一致' : '部分一致'}）`;
-
-      document.querySelector('[data-role="wins"]').textContent = String(result.wins);
-      document.querySelector('[data-role="losses"]').textContent = String(result.losses);
-      document.querySelector('[data-role="games"]').textContent = String(games);
-      document.querySelector('[data-role="rate"]').textContent = rate.toFixed(3);
-
-      document.querySelector('[data-role="count"]').textContent = String(result.matches.length);
-
-      // ①スマホ：notesを棋戦に混ぜない（棋戦はmatchのみ）
-      // ②タブレット：進行列にnotes
-      // ③PC：千日手列にstart-over
-      tbody.innerHTML = result.matches.map(x => {
-        const badge = x.wl === 'W' ? '○' : (x.wl === 'L' ? '●' : '—');
-        return `<tr>
-          <td>${escapeHtml(x.date)}</td>
-          <td>${escapeHtml(x.match)}</td>
-          <td class="col-phase">${escapeHtml(x.notes)}</td>
-          <td>${escapeHtml(x.opp)}</td>
-          <td class="num badge">${badge}</td>
-          <td class="col-so">${escapeHtml(x.startOver)}</td>
-        </tr>`;
-      }).join('');
-
-      summary.hidden = false;
-      list.hidden = false;
-    }
-
-    function escapeHtml(s){
-      return String(s ?? '')
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#39;");
-    }
-
-    function wire(){
-      const input = document.querySelector('input[name="player"]');
-      const btn = document.querySelector('button[name="doSearch"]');
-
-      const run = () => {
-        if (!DATA) return;
-        const r = searchPlayer(input.value);
-        render(r);
-      };
-
-      let t = null;
-      input.addEventListener('input', () => {
-        clearTimeout(t);
-        t = setTimeout(run, 200);
-      });
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') run();
-      });
-      btn.addEventListener('click', run);
-    }
-
-    (async function main(){
-      try{
-        await loadCSV();
-        wire();
-      }catch(err){
-        showError(err.message || String(err));
-      }
-    })();
-  </script>
+(async function(){
+  try{
+    await loadCSV();
+    wire();
+  }catch(err){
+    alert(err.message);
+  }
+})();
+</script>
 </body>
 </html>
