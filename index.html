@@ -24,8 +24,12 @@
       <div class="result-days" id="displayDays">0<span>日目</span></div>
       
       <!-- いまの成長目安表示カード -->
-      <div class="current-milestone-card" id="currentMilestoneCard">
-        <div class="milestone-label">📍 いまの成長の目安</div>
+      <div class="current-milestone-card card-current" id="currentMilestoneCard">
+        <div class="milestone-header">
+          <button class="nav-arrow" onclick="prevMilestone()" id="prevArrow">◀</button>
+          <div class="milestone-label" id="milestoneLabel">📍 いまの成長の目安</div>
+          <button class="nav-arrow" onclick="nextMilestone()" id="nextArrow">▶</button>
+        </div>
         <div class="milestone-period" id="currentPeriod"></div>
         <div class="milestone-title" id="currentTitle"></div>
         <div class="milestone-desc" id="currentDesc"></div>
@@ -40,7 +44,7 @@
       <h2>成長の目安一覧</h2>
       <p class="milestone-note">※成長のスピードには個人差があります。あくまで目安としてお楽しみください。</p>
       <div id="milestoneListContainer"></div>
-      <button class="back-btn" onclick="hideMilestoneList()">戻る</button>
+      <button class="back-btn" onclick="hideMilestoneList()">ホームに戻る</button>
     </div>
   </div>
 

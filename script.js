@@ -1,4 +1,3 @@
-// 成長マイルストーンのデータ (日数は目安として定義: 1ヶ月を約30日として計算)
 const milestones = [
   { min: 0, max: 30, period: "生後0〜1ヶ月", title: "手足をバタバタさせる", desc: "昼夜の区別がなく、短いサイクルで睡眠と授乳を繰り返します。" },
   { min: 31, max: 89, period: "生後1〜2ヶ月", title: "追視・あやすと笑う", desc: "動くものを目で追ったり、「あー」「うー」と声を出したりします。" },
@@ -10,28 +9,25 @@ const milestones = [
   { min: 366, max: 540, period: "1歳〜1歳半", title: "一人歩き・言葉が出始める", desc: "トコトコ歩き始め、「マンマ」「ワンワン」など意味のある言葉が出始めます。" }
 ];
 
-window.onload = function() {
-  loadData();
-};
+// カードの表示状態を管理する変数
+let actualIndex = -1;    // 実際の日数に該当するインデックス
+let displayedIndex = 0;  // 今画面に表示しているインデックス
+
+window.onload = function() { loadData(); };
 
 function calculateDays(birthDateString) {
   const birthDate = new Date(birthDateString);
   birthDate.setHours(0, 0, 0, 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const diffTime = today - birthDate;
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return Math.floor((today - birthDate) / (1000 * 60 * 60 * 24));
 }
 
 function saveData() {
   const name = document.getElementById('nameInput').value;
   const date = document.getElementById('dateInput').value;
-  if (!name || !date) {
-    alert("名前と生年月日を入力してください。");
-    return;
-  }
-  const babyData = { name: name, birthDate: date };
-  localStorage.setItem('babyData', JSON.stringify(babyData));
+  if (!name || !date) { alert("名前と生年月日を入力してください。"); return; }
+  localStorage.setItem('babyData', JSON.stringify({ name: name, birthDate: date }));
   loadData();
 }
 
@@ -44,45 +40,95 @@ function loadData() {
     document.getElementById('displayName').innerText = babyData.name;
     document.getElementById('displayDays').innerHTML = `${days}<span>日目</span>`;
 
-    // マイルストーンの表示を更新
-    displayCurrentMilestone(days);
+    setupMilestoneCard(days);
 
-    // 画面切り替え
     document.getElementById('form-area').style.display = 'none';
     document.getElementById('milestone-list-area').style.display = 'none';
     document.getElementById('result-area').style.display = 'block';
   }
 }
 
-// 現在の日数に該当するマイルストーンをホーム画面に表示
-function displayCurrentMilestone(days) {
-  // daysが min と max の間にあるデータを探す
-  const current = milestones.find(m => days >= m.min && days <= m.max);
-  const card = document.getElementById('currentMilestoneCard');
+// 実際の月齢に合わせて初期化する関数
+function setupMilestoneCard(days) {
+  actualIndex = milestones.findIndex(m => days >= m.min && days <= m.max);
   
-  if (current) {
-    document.getElementById('currentPeriod').innerText = current.period;
-    document.getElementById('currentTitle').innerText = current.title;
-    document.getElementById('currentDesc').innerText = current.desc;
-    card.style.display = 'block';
+  if (actualIndex === -1) {
+    // 範囲外（生まれる前 or 1歳半以降）の場合の処理
+    if (days < 0) {
+      actualIndex = -1;
+      displayedIndex = 0;
+    } else {
+      actualIndex = milestones.length; 
+      displayedIndex = milestones.length - 1;
+    }
   } else {
-    // 1歳半を超えた場合など、該当データがない場合は非表示
-    card.style.display = 'none';
+    displayedIndex = actualIndex;
+  }
+  
+  document.getElementById('currentMilestoneCard').style.display = 'block';
+  updateMilestoneUI();
+}
+
+// カードの見た目と内容を更新する関数
+function updateMilestoneUI() {
+  const m = milestones[displayedIndex];
+  document.getElementById('currentPeriod').innerText = m.period;
+  document.getElementById('currentTitle').innerText = m.title;
+  document.getElementById('currentDesc').innerText = m.desc;
+
+  const card = document.getElementById('currentMilestoneCard');
+  const label = document.getElementById('milestoneLabel');
+
+  // 一旦クラスをリセット
+  card.classList.remove('card-past', 'card-current', 'card-future');
+
+  // 表示しているデータが「過去」「現在」「未来」のどれかを判定して色やテキストを変える
+  if (displayedIndex === actualIndex) {
+    label.innerText = "📍 いまの成長の目安";
+    label.style.color = "#f57f17";
+    card.classList.add('card-current');
+  } else if (actualIndex !== -1 && displayedIndex < actualIndex || actualIndex === milestones.length) {
+    label.innerText = "✅ 過去の目安";
+    label.style.color = "#757575";
+    card.classList.add('card-past');
+  } else {
+    label.innerText = "🌟 これからの目安";
+    label.style.color = "#1976D2";
+    card.classList.add('card-future');
+  }
+
+  // 端っこまで行ったら矢印ボタンを押せなくする
+  document.getElementById('prevArrow').disabled = (displayedIndex === 0);
+  document.getElementById('nextArrow').disabled = (displayedIndex === milestones.length - 1);
+}
+
+// ◀ボタンを押したとき
+function prevMilestone() {
+  if (displayedIndex > 0) {
+    displayedIndex--;
+    updateMilestoneUI();
   }
 }
 
-// 成長の目安一覧画面を表示する
+// ▶ボタンを押したとき
+function nextMilestone() {
+  if (displayedIndex < milestones.length - 1) {
+    displayedIndex++;
+    updateMilestoneUI();
+  }
+}
+
+// --- 以下、一覧表示用の関数は前回から変更なし ---
 function showMilestoneList() {
   const savedData = localStorage.getItem('babyData');
   const days = savedData ? calculateDays(JSON.parse(savedData).birthDate) : -1;
   const container = document.getElementById('milestoneListContainer');
-  container.innerHTML = ''; // リストを一旦クリア
+  container.innerHTML = ''; 
 
   milestones.forEach(m => {
     const item = document.createElement('div');
     item.className = 'milestone-item';
     
-    // 日数に応じたステータス表示の追加
     if (days > m.max) {
       item.classList.add('past');
       item.innerHTML += `<div class="milestone-status" style="color: #888;">✅ 完了した目安</div>`;
@@ -99,18 +145,17 @@ function showMilestoneList() {
     container.appendChild(item);
   });
 
-  // 画面切り替え
   document.getElementById('result-area').style.display = 'none';
   document.getElementById('milestone-list-area').style.display = 'block';
-  
-  // スマホで一覧を見やすいように画面上部にスクロール
   window.scrollTo(0, 0); 
 }
 
-// ホーム画面に戻る
 function hideMilestoneList() {
   document.getElementById('milestone-list-area').style.display = 'none';
   document.getElementById('result-area').style.display = 'block';
+  // ホームに戻る際に、表示カードを「今の月齢」にリセットしておく
+  const days = calculateDays(JSON.parse(localStorage.getItem('babyData')).birthDate);
+  setupMilestoneCard(days); 
   window.scrollTo(0, 0);
 }
 
