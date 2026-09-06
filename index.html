@@ -20,7 +20,14 @@
     <!-- 結果表示エリア (ホーム画面) -->
     <div id="result-area">
       <div class="result-name" id="displayName"></div>
-      <div>が生まれてから今日で</div>
+      
+      <!-- 追加：生年月日と今日の日付を表示するエリア -->
+      <div class="date-info">
+        <p>🎂 生まれた日：<span id="displayBirthDate"></span></p>
+        <p>📅 今日の日付：<span id="displayTodayDate"></span></p>
+      </div>
+
+      <div class="days-prefix">が生まれてから今日で</div>
       <div class="result-days" id="displayDays">0<span>日目</span></div>
       
       <!-- いまの成長目安表示カード -->
@@ -39,7 +46,7 @@
       <button class="reset-btn" onclick="resetData()">登録情報をリセット</button>
     </div>
 
-    <!-- 成長の目安一覧エリア (最初は非表示) -->
+    <!-- 成長の目安一覧エリア -->
     <div id="milestone-list-area">
       <h2>成長の目安一覧</h2>
       <p class="milestone-note">※成長のスピードには個人差があります。あくまで目安としてお楽しみください。</p>
