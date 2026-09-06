@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>生まれてから何日目？</title>
-  <!-- CSSを読み込む -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,16 +17,33 @@
       <button onclick="saveData()">登録する</button>
     </div>
 
-    <!-- 結果表示エリア -->
+    <!-- 結果表示エリア (ホーム画面) -->
     <div id="result-area">
       <div class="result-name" id="displayName"></div>
-      <div>生まれてから今日で</div>
+      <div>が生まれてから今日で</div>
       <div class="result-days" id="displayDays">0<span>日目</span></div>
+      
+      <!-- いまの成長目安表示カード -->
+      <div class="current-milestone-card" id="currentMilestoneCard">
+        <div class="milestone-label">📍 いまの成長の目安</div>
+        <div class="milestone-period" id="currentPeriod"></div>
+        <div class="milestone-title" id="currentTitle"></div>
+        <div class="milestone-desc" id="currentDesc"></div>
+      </div>
+
+      <button class="list-btn" onclick="showMilestoneList()">成長の目安一覧を見る</button>
       <button class="reset-btn" onclick="resetData()">登録情報をリセット</button>
+    </div>
+
+    <!-- 成長の目安一覧エリア (最初は非表示) -->
+    <div id="milestone-list-area">
+      <h2>成長の目安一覧</h2>
+      <p class="milestone-note">※成長のスピードには個人差があります。あくまで目安としてお楽しみください。</p>
+      <div id="milestoneListContainer"></div>
+      <button class="back-btn" onclick="hideMilestoneList()">戻る</button>
     </div>
   </div>
 
-  <!-- JavaScriptを読み込む -->
   <script src="script.js"></script>
 </body>
 </html>
