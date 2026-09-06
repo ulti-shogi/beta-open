@@ -2,79 +2,172 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>将棋の殿堂</title>
-    <link rel="stylesheet" href="style.css?v=20251201-a">
-<style>
-  /* --- セクション全体のスタイル（index.html専用） --- */
-  body#index-page section, body#index-page .free {
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    margin: 16px 0;
-  }
-
-  /* --- 見出し（h2）スタイル（左ライン＋余白調整） --- */
-  body#index-page h2 {
-    border-left: 4px solid #333;
-    padding-left: 8px;
-    margin: 24px 0 12px;   /* 最終調整値を採用 */
-    line-height: 1.2;
-  }
-
-  /* --- 「このサイトについて」だけは上マージンを詰める --- */
-  body#index-page section:first-of-type h2 {
-    margin-top: 0;
-  }
-
-  /* --- リストの行間とマージン調整 --- */
-  body#index-page ul {
-    padding-left: 16px;
-    line-height: 1.6;
-  }
-
-  body#index-page h2 + p,
-  body#index-page h2 + ul {
-    margin-top: 4px;
-    margin-bottom: 20px;
-  }
-</style>
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生まれてから何日目？</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      background-color: #f7f9fc;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    h1 {
+      font-size: 20px;
+      margin-top: 0;
+      color: #555;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 14px;
+      width: 100%;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:active {
+      background-color: #45a049;
+    }
+    .reset-btn {
+      background-color: #e0e0e0;
+      color: #333;
+      margin-top: 20px;
+    }
+    /* 結果表示エリアのスタイル */
+    #result-area {
+      display: none; /* 初期状態は非表示 */
+    }
+    .result-name {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .result-days {
+      font-size: 40px;
+      color: #ff7043;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .result-days span {
+      font-size: 20px;
+      color: #333;
+    }
+  </style>
 </head>
-<body id="index-page">
-<header>
-<h1>将棋の殿堂</h1>
-</header>
-  <main>
-  <section>
-    <h2>このサイトについて</h2>
-    <p>
-      将棋棋士に関する汎ゆるデータを集め、ランキング・プロフィール検索・年齢比較などを掲載しています。
-    </p>
-  </section>
+<body>
 
-  <section>
-    <h2>成績・ランキング</h2>
-    <ul>
-      <li><a href="https://ulti-shogi.github.io/beta-open/title/title.html">新・title.html</a></li>
-      <li><a href="https://ulti-shogi.github.io/beta-open/victory/victory.html">新生title→victory</a></li>
-      <li><a href="https://ulti-shogi.github.io/beta-open/prize-ranking/prize-ranking.html">対局料・賞金ランキング一覧</a></li>
-      <li><a href="https://ulti-shogi.github.io/beta-open/rate/rate.html">歴代年度勝率8割以上達成者</a></li>
-      <li><a href="https://ulti-shogi.github.io/beta-open/game-result.html">各年度各棋士成績</a></li>
-      <li><a href="https://ulti-shogi.github.io/beta-open/game-result-all.html">各年度全棋士成績</a></li>
-    </ul>
-  </section>
+  <div class="container">
+    <div id="form-area">
+      <h1>情報を登録する</h1>
+      <input type="text" id="nameInput" placeholder="お名前">
+      <input type="date" id="dateInput">
+      <button onclick="saveData()">登録する</button>
+    </div>
 
-  <section>
-    <h2>プロフィール・年齢</h2>
-    <ul>
-      <li><a href="https://ulti-shogi.github.io/beta-open/age/age.html">四段昇段平均年齢・中央値</a></li>
-      <li><a href="https://ulti-shogi.github.io/beta-open/kishi/kishi.html">プロフィール検索（カード）</a></li>
-      <li><a href="https://ulti-shogi.github.io/beta-open/profile/profile.html">プロフィール検索（NEW）</a></li>
-    </ul>
-  </section>
-</main>
-  <footer>著作権情報</footer>
+    <div id="result-area">
+      <div class="result-name" id="displayName"></div>
+      <div>が生まれてから今日で</div>
+      <div class="result-days" id="displayDays">0<span>日目</span></div>
+      <button class="reset-btn" onclick="resetData()">登録情報をリセット</button>
+    </div>
+  </div>
+
+  <script>
+    // ページ読み込み時に保存されたデータをチェック
+    window.onload = function() {
+      loadData();
+    };
+
+    // 日数を計算する関数
+    function calculateDays(birthDateString) {
+      const birthDate = new Date(birthDateString);
+      birthDate.setHours(0, 0, 0, 0); // 時間をリセット
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // 時間をリセット
+
+      // ミリ秒の差分を計算し、日数に変換
+      const diffTime = today - birthDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      return diffDays;
+    }
+
+    // データを保存して表示を切り替える処理
+    function saveData() {
+      const name = document.getElementById('nameInput').value;
+      const date = document.getElementById('dateInput').value;
+
+      if (!name || !date) {
+        alert("名前と生年月日を入力してください。");
+        return;
+      }
+
+      const babyData = { name: name, birthDate: date };
+      // ブラウザのlocalStorageに保存
+      localStorage.setItem('babyData', JSON.stringify(babyData));
+      
+      loadData();
+    }
+
+    // データを読み込んで画面に表示する処理
+    function loadData() {
+      const savedData = localStorage.getItem('babyData');
+      
+      if (savedData) {
+        const babyData = JSON.parse(savedData);
+        const days = calculateDays(babyData.birthDate);
+
+        document.getElementById('displayName').innerText = babyData.name;
+        // 0日目（当日）ではなく「1日目」と数える場合は +1 してください
+        document.getElementById('displayDays').innerHTML = `${days}<span>日目</span>`;
+
+        // フォームを隠して結果を表示
+        document.getElementById('form-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+      }
+    }
+
+    // データを削除して入力フォームに戻る処理
+    function resetData() {
+      if (confirm("登録情報を削除して最初からやり直しますか？")) {
+        localStorage.removeItem('babyData');
+        
+        // 入力欄をクリア
+        document.getElementById('nameInput').value = '';
+        document.getElementById('dateInput').value = '';
+
+        // 結果を隠してフォームを表示
+        document.getElementById('form-area').style.display = 'block';
+        document.getElementById('result-area').style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>
-
