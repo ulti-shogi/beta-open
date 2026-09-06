@@ -1,96 +1,83 @@
-/* --- 共通設定 --- */
-*, *::before, *::after { box-sizing: border-box; }
-
 body {
-  margin: 0 auto;
-  padding: 8px;
+  font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  background-color: #f7f9fc;
+  color: #333;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* コンテナ構造（section / .free） */
-section, .free {
-  border: 2px solid #000;
+.container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 24px;
   width: 100%;
-  margin: 8px auto;
-  border-radius: 0;         /* 角丸は全ページで無しに統一 */
-  padding: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
-}
-
-/* テーブル共通 */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 8px auto;
-}
-
-/* --- テーブル枠線を全ページ共通で1pxに統一 --- */
-table, th, td {
-  border: 1px solid #000 !important;
+  max-width: 400px;
+  box-sizing: border-box;
   text-align: center;
-  padding: 8px 6px;
 }
 
-/* 見出しなどの余白調整 */
-section > *:first-child,
-.free > *:first-child { margin-top: 0; }
-
-section h1, section h2, section h3, section h4, section h5, section h6,
-.free h1, .free h2, .free h3, .free h4, .free h5, .free h6 {
-  margin-bottom: 0.5em;
-}
-
-/* --- モバイル調整 --- */
-@media (max-width: 599px) {
-  body { padding: 8px; }
-  section, .free {
-    padding: 4px;
-    box-shadow: none;
-  }
-  table {
-    font-size: 0.85em;
-  }
-  th, td {
-    padding: 4px;
-  }
-}
-
-/* --- PC表示の幅制限 --- */
-@media (min-width: 600px) {
-  body {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 14px;
-  }
-}
-
-/* --- ▼ index.html専用パッチ ▼ --- */
-/* （他ページには影響なし） */
-body#index-page section, 
-body#index-page .free {
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0;
-  margin: 16px 0;
-}
-
-body#index-page h2 {
-  border-left: 4px solid #333;
-  padding-left: 8px;
-  margin: 24px 0 12px;
-  line-height: 1.2;
-}
-
-body#index-page section:first-of-type h2 {
+h1 {
+  font-size: 20px;
   margin-top: 0;
+  color: #555;
 }
 
-body#index-page ul {
-  padding-left: 16px;
-  line-height: 1.6;
+input[type="text"], input[type="date"] {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
 }
 
-body#index-page h2 + p,
-body#index-page h2 + ul {
-  margin-top: 4px;
-  margin-bottom: 20px;
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 14px;
+  width: 100%;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:active {
+  background-color: #45a049;
+}
+
+.reset-btn {
+  background-color: #e0e0e0;
+  color: #333;
+  margin-top: 20px;
+}
+
+/* 結果表示エリアのスタイル */
+#result-area {
+  display: none; /* 初期状態は非表示 */
+}
+
+.result-name {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.result-days {
+  font-size: 40px;
+  color: #ff7043;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.result-days span {
+  font-size: 20px;
+  color: #333;
 }

@@ -4,85 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>生まれてから何日目？</title>
-  <style>
-    body {
-      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-      background-color: #f7f9fc;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .container {
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 24px;
-      width: 100%;
-      max-width: 400px;
-      box-sizing: border-box;
-      text-align: center;
-    }
-    h1 {
-      font-size: 20px;
-      margin-top: 0;
-      color: #555;
-    }
-    input[type="text"], input[type="date"] {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 14px;
-      width: 100%;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:active {
-      background-color: #45a049;
-    }
-    .reset-btn {
-      background-color: #e0e0e0;
-      color: #333;
-      margin-top: 20px;
-    }
-    /* 結果表示エリアのスタイル */
-    #result-area {
-      display: none; /* 初期状態は非表示 */
-    }
-    .result-name {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .result-days {
-      font-size: 40px;
-      color: #ff7043;
-      font-weight: bold;
-      margin: 20px 0;
-    }
-    .result-days span {
-      font-size: 20px;
-      color: #333;
-    }
-  </style>
+  <!-- CSSを読み込む -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="container">
+    <!-- 入力フォームエリア -->
     <div id="form-area">
       <h1>情報を登録する</h1>
       <input type="text" id="nameInput" placeholder="お名前">
@@ -90,84 +18,16 @@
       <button onclick="saveData()">登録する</button>
     </div>
 
+    <!-- 結果表示エリア -->
     <div id="result-area">
       <div class="result-name" id="displayName"></div>
-      <div>が生まれてから今日で</div>
+      <div>生まれてから今日で</div>
       <div class="result-days" id="displayDays">0<span>日目</span></div>
       <button class="reset-btn" onclick="resetData()">登録情報をリセット</button>
     </div>
   </div>
 
-  <script>
-    // ページ読み込み時に保存されたデータをチェック
-    window.onload = function() {
-      loadData();
-    };
-
-    // 日数を計算する関数
-    function calculateDays(birthDateString) {
-      const birthDate = new Date(birthDateString);
-      birthDate.setHours(0, 0, 0, 0); // 時間をリセット
-      
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // 時間をリセット
-
-      // ミリ秒の差分を計算し、日数に変換
-      const diffTime = today - birthDate;
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      return diffDays;
-    }
-
-    // データを保存して表示を切り替える処理
-    function saveData() {
-      const name = document.getElementById('nameInput').value;
-      const date = document.getElementById('dateInput').value;
-
-      if (!name || !date) {
-        alert("名前と生年月日を入力してください。");
-        return;
-      }
-
-      const babyData = { name: name, birthDate: date };
-      // ブラウザのlocalStorageに保存
-      localStorage.setItem('babyData', JSON.stringify(babyData));
-      
-      loadData();
-    }
-
-    // データを読み込んで画面に表示する処理
-    function loadData() {
-      const savedData = localStorage.getItem('babyData');
-      
-      if (savedData) {
-        const babyData = JSON.parse(savedData);
-        const days = calculateDays(babyData.birthDate);
-
-        document.getElementById('displayName').innerText = babyData.name;
-        // 0日目（当日）ではなく「1日目」と数える場合は +1 してください
-        document.getElementById('displayDays').innerHTML = `${days}<span>日目</span>`;
-
-        // フォームを隠して結果を表示
-        document.getElementById('form-area').style.display = 'none';
-        document.getElementById('result-area').style.display = 'block';
-      }
-    }
-
-    // データを削除して入力フォームに戻る処理
-    function resetData() {
-      if (confirm("登録情報を削除して最初からやり直しますか？")) {
-        localStorage.removeItem('babyData');
-        
-        // 入力欄をクリア
-        document.getElementById('nameInput').value = '';
-        document.getElementById('dateInput').value = '';
-
-        // 結果を隠してフォームを表示
-        document.getElementById('form-area').style.display = 'block';
-        document.getElementById('result-area').style.display = 'none';
-      }
-    }
-  </script>
+  <!-- JavaScriptを読み込む -->
+  <script src="script.js"></script>
 </body>
 </html>
