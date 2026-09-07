@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>生まれてから何日目？</title>
+  
+  <!-- ここから追加 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <link rel="apple-touch-icon" href="icon-192.png"> <!-- iPhone用アイコン -->
+  <!-- ここまで追加 -->
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -33,7 +40,7 @@
       
       <!-- 生年月日と今日の日付を表示するエリア (下に移動) -->
       <div class="date-info">
-        <p>🎂 生年月日：<span id="displayBirthDate"></span></p>
+        <p>🎂 生まれた日：<span id="displayBirthDate"></span></p>
         <p>📅 今日の日付：<span id="displayTodayDate"></span></p>
       </div><!-- /.date-info -->
       
@@ -72,5 +79,20 @@
   </div><!-- /.container -->
 
   <script src="script.js"></script>
+  
+  <!-- ここから追加：Service Workerの登録 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').then(function(registration) {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+  </script>
+  <!-- ここまで追加 -->
+
 </body>
 </html>
