@@ -43,7 +43,7 @@ function loadData() {
     const days = calculateDays(babyData.birthDate);
 
     document.getElementById('displayName').innerText = babyData.name;
-    document.getElementById('displayDays').innerHTML = `${days}<span>日目</span>`;
+    document.getElementById('displayDays').innerText = days;
 
     // 生年月日と今日の日付を表示にセット
     document.getElementById('displayBirthDate').innerText = formatDate(babyData.birthDate);

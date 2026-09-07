@@ -38,15 +38,20 @@ button:active { background-color: #45a049; }
 .back-btn { background-color: #9e9e9e; margin-top: 20px; }
 
 #result-area, #milestone-list-area { display: none; }
-.result-name { font-size: 24px; font-weight: bold; margin-bottom: 12px; }
 
-/* 追加：日付情報エリアのスタイル */
+/* メッセージ部分のスタイル調整 */
+.days-prefix { font-size: 16px; color: #555; margin-bottom: 8px; }
+.result-name { font-size: 24px; font-weight: bold; color: #333; margin-right: 4px; }
+.result-days-wrapper { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 24px; }
+.result-days { font-size: 48px; color: #ff7043; margin: 0 8px; }
+
+/* 日付情報エリアのスタイル (下に余白を追加) */
 .date-info {
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   font-size: 14px;
   color: #555;
   text-align: left;
@@ -55,10 +60,6 @@ button:active { background-color: #45a049; }
   box-sizing: border-box;
 }
 .date-info p { margin: 4px 0; font-weight: 500; }
-
-.days-prefix { font-size: 14px; color: #666; }
-.result-days { font-size: 40px; color: #ff7043; font-weight: bold; margin: 12px 0 24px 0; }
-.result-days span { font-size: 20px; color: #333; }
 
 /* --- 成長目安カード (単体) --- */
 .current-milestone-card {

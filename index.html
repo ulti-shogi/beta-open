@@ -9,51 +9,67 @@
 <body>
 
   <div class="container">
-    <!-- 入力フォームエリア -->
+    
+    <!-- =========================
+         入力フォームエリア
+    ========================== -->
     <div id="form-area">
       <h1>情報を登録する</h1>
       <input type="text" id="nameInput" placeholder="お名前">
       <input type="date" id="dateInput">
       <button onclick="saveData()">登録する</button>
-    </div>
+    </div><!-- /#form-area -->
 
-    <!-- 結果表示エリア (ホーム画面) -->
+<!-- =========================
+         結果表示エリア (ホーム画面)
+    ========================== -->
     <div id="result-area">
-      <div class="result-name" id="displayName"></div>
       
-      <!-- 追加：生年月日と今日の日付を表示するエリア -->
+      <!-- 「〇〇が生まれてから」の行 -->
+      <div class="days-prefix"><span class="result-name" id="displayName"></span>が生まれてから</div><!-- /.days-prefix -->
+      
+      <!-- 「今日は〇日目」の行 -->
+      <div class="result-days-wrapper">今日は<span class="result-days" id="displayDays">0</span>日目</div><!-- /.result-days-wrapper -->
+      
+      <!-- 生年月日と今日の日付を表示するエリア (下に移動) -->
       <div class="date-info">
-        <p>🎂 生まれた日：<span id="displayBirthDate"></span></p>
+        <p>🎂 生年月日：<span id="displayBirthDate"></span></p>
         <p>📅 今日の日付：<span id="displayTodayDate"></span></p>
-      </div>
-
-      <div class="days-prefix">が生まれてから今日で</div>
-      <div class="result-days" id="displayDays">0<span>日目</span></div>
+      </div><!-- /.date-info -->
       
       <!-- いまの成長目安表示カード -->
       <div class="current-milestone-card card-current" id="currentMilestoneCard">
+        
         <div class="milestone-header">
           <button class="nav-arrow" onclick="prevMilestone()" id="prevArrow">◀</button>
-          <div class="milestone-label" id="milestoneLabel">📍 いまの成長の目安</div>
+          <div class="milestone-label" id="milestoneLabel">📍 いまの成長の目安</div><!-- /.milestone-label #milestoneLabel -->
           <button class="nav-arrow" onclick="nextMilestone()" id="nextArrow">▶</button>
-        </div>
-        <div class="milestone-period" id="currentPeriod"></div>
-        <div class="milestone-title" id="currentTitle"></div>
-        <div class="milestone-desc" id="currentDesc"></div>
-      </div>
+        </div><!-- /.milestone-header -->
+        
+        <div class="milestone-period" id="currentPeriod"></div><!-- /.milestone-period #currentPeriod -->
+        <div class="milestone-title" id="currentTitle"></div><!-- /.milestone-title #currentTitle -->
+        <div class="milestone-desc" id="currentDesc"></div><!-- /.milestone-desc #currentDesc -->
+        
+      </div><!-- /.current-milestone-card #currentMilestoneCard -->
 
       <button class="list-btn" onclick="showMilestoneList()">成長の目安一覧を見る</button>
       <button class="reset-btn" onclick="resetData()">登録情報をリセット</button>
-    </div>
+    </div><!-- /#result-area -->
 
-    <!-- 成長の目安一覧エリア -->
+    <!-- =========================
+         成長の目安一覧エリア
+    ========================== -->
     <div id="milestone-list-area">
       <h2>成長の目安一覧</h2>
       <p class="milestone-note">※成長のスピードには個人差があります。あくまで目安としてお楽しみください。</p>
-      <div id="milestoneListContainer"></div>
+      
+      <!-- JSでリストが生成されてここに入る -->
+      <div id="milestoneListContainer"></div><!-- /#milestoneListContainer -->
+      
       <button class="back-btn" onclick="hideMilestoneList()">ホームに戻る</button>
-    </div>
-  </div>
+    </div><!-- /#milestone-list-area -->
+
+  </div><!-- /.container -->
 
   <script src="script.js"></script>
 </body>
